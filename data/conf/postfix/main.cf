@@ -124,3 +124,9 @@ smtp_sasl_auth_enable = yes
 smtp_sasl_password_maps = proxy:mysql:/opt/postfix/conf/sql/mysql_sasl_passwd_maps.cf
 smtp_sasl_security_options = 
 smtp_sasl_mechanism_filter = plain, login
+
+# Additional Mailman config
+unknown_local_recipient_reject_code = 550
+owner_request_special = no
+transport_maps = regexp:/opt/mailman/postfix_lmtp
+local_recipient_maps = regexp:/opt/mailman/postfix_lmtp

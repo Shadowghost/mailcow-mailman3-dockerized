@@ -12,26 +12,28 @@ services:
       restart: always
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.22.1}.254
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.5
           aliases:
             - unbound
 
     mysql-mailcow:
       image: mariadb:10.2
+      command: myslqd --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
       volumes:
         - mysql-vol-1:/var/lib/mysql/
         - ./data/conf/mysql/:/etc/mysql/conf.d/:ro
       environment:
         - TZ=${TZ}
-        - MYSQL_ROOT_PASSWORD=${DBROOT}
-        - MYSQL_DATABASE=${DBNAME}
-        - MYSQL_USER=${DBUSER}
-        - MYSQL_PASSWORD=${DBPASS}
+        - MYSQL_ROOT_PASSWORD=${MCDBROOT}
+        - MYSQL_DATABASE=${MCDBNAME}
+        - MYSQL_USER=${MCDBUSER}
+        - MYSQL_PASSWORD=${MCDBPASS}
       restart: always
       dns:
-        - ${IPV4_NETWORK:-172.22.1}.254
+        - ${IPV4_NETWORK:-172.19.199}.5
       networks:
         mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.6
           aliases:
             - mysql
 
@@ -43,10 +45,10 @@ services:
       environment:
         - TZ=${TZ}
       dns:
-        - ${IPV4_NETWORK:-172.22.1}.254
+        - ${IPV4_NETWORK:-172.19.199}.5
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.22.1}.249
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.7
           aliases:
             - redis
 
@@ -60,9 +62,10 @@ services:
       volumes:
         - ./data/conf/clamav/:/etc/clamav/
       dns:
-        - ${IPV4_NETWORK:-172.22.1}.254
+        - ${IPV4_NETWORK:-172.19.199}.5
       networks:
         mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.8
           aliases:
             - clamd
 
@@ -83,10 +86,11 @@ services:
         - rspamd-vol-1:/var/lib/rspamd
       restart: always
       dns:
-        - ${IPV4_NETWORK:-172.22.1}.254
+        - ${IPV4_NETWORK:-172.19.199}.5
       hostname: rspamd
       networks:
         mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.9
           aliases:
             - rspamd
 
@@ -107,9 +111,9 @@ services:
       environment:
         - LOG_LINES=${LOG_LINES:-9999}
         - TZ=${TZ}
-        - DBNAME=${DBNAME}
-        - DBUSER=${DBUSER}
-        - DBPASS=${DBPASS}
+        - DBNAME=${MCDBNAME}
+        - DBUSER=${MCDBUSER}
+        - DBPASS=${MCDBPASS}
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
         - IMAP_PORT=${IMAP_PORT:-143}
         - IMAPS_PORT=${IMAPS_PORT:-993}
@@ -121,9 +125,10 @@ services:
         - SMTP_PORT=${SMTP_PORT:-25}
       restart: always
       dns:
-        - ${IPV4_NETWORK:-172.22.1}.254
+        - ${IPV4_NETWORK:-172.19.199}.5
       networks:
         mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.10
           aliases:
             - phpfpm
 
@@ -131,9 +136,9 @@ services:
       image: mailcow/sogo:1.15
       build: ./data/Dockerfiles/sogo
       environment:
-        - DBNAME=${DBNAME}
-        - DBUSER=${DBUSER}
-        - DBPASS=${DBPASS}
+        - DBNAME=${MCDBNAME}
+        - DBUSER=${MCDBUSER}
+        - DBPASS=${MCDBPASS}
         - TZ=${TZ}
         - LOG_LINES=${LOG_LINES:-9999}
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
@@ -141,10 +146,10 @@ services:
         - ./data/conf/sogo/:/etc/sogo/
       restart: always
       dns:
-        - ${IPV4_NETWORK:-172.22.1}.254
+        - ${IPV4_NETWORK:-172.19.199}.5
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.22.1}.248
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.11
           aliases:
             - sogo
 
@@ -161,9 +166,9 @@ services:
         - crypt-vol-1:/mail_crypt/
       environment:
         - LOG_LINES=${LOG_LINES:-9999}
-        - DBNAME=${DBNAME}
-        - DBUSER=${DBUSER}
-        - DBPASS=${DBPASS}
+        - DBNAME=${MCDBNAME}
+        - DBUSER=${MCDBUSER}
+        - DBPASS=${MCDBPASS}
         - TZ=${TZ}
       ports:
         - "${DOVEADM_PORT:-127.0.0.1:19991}:12345"
@@ -179,10 +184,11 @@ services:
           soft: 20000
           hard: 40000
       dns:
-        - ${IPV4_NETWORK:-172.22.1}.254
+        - ${IPV4_NETWORK:-172.19.199}.5
       hostname: ${MAILCOW_HOSTNAME}
       networks:
         mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.12
           aliases:
             - dovecot
 
@@ -197,9 +203,9 @@ services:
       environment:
         - LOG_LINES=${LOG_LINES:-9999}
         - TZ=${TZ}
-        - DBNAME=${DBNAME}
-        - DBUSER=${DBUSER}
-        - DBPASS=${DBPASS}
+        - DBNAME=${MCDBNAME}
+        - DBUSER=${MCDBUSER}
+        - DBPASS=${MCDBPASS}
       cap_add:
         - NET_BIND_SERVICE
       ports:
@@ -208,10 +214,11 @@ services:
         - "${SUBMISSION_PORT:-587}:587"
       restart: always
       dns:
-        - ${IPV4_NETWORK:-172.22.1}.254
+        - ${IPV4_NETWORK:-172.19.199}.5
       hostname: ${MAILCOW_HOSTNAME}
       networks:
         mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.13
           aliases:
             - postfix
 
@@ -219,9 +226,10 @@ services:
       image: memcached:alpine
       restart: always
       dns:
-        - ${IPV4_NETWORK:-172.22.1}.254
+        - ${IPV4_NETWORK:-172.19.199}.5
       networks:
         mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.14
           aliases:
             - memcached
 
@@ -245,7 +253,7 @@ services:
         - HTTPS_PORT=${HTTPS_PORT:-443}
         - HTTP_PORT=${HTTP_PORT:-80}
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
-        - IPV4_NETWORK=${IPV4_NETWORK:-172.22.1}
+        - IPV4_NETWORK=${IPV4_NETWORK:-172.19.199}
       volumes:
         - ./data/web:/web:ro
         - ./data/conf/rspamd/dynmaps:/dynmaps:ro
@@ -257,9 +265,10 @@ services:
         - "${HTTP_BIND:-0.0.0.0}:${HTTP_PORT:-80}:${HTTP_PORT:-80}"
       restart: always
       dns:
-        - ${IPV4_NETWORK:-172.22.1}.254
+        - ${IPV4_NETWORK:-172.19.199}.5
       networks:
         mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.15
           aliases:
             - nginx
 
@@ -287,6 +296,7 @@ services:
       restart: always
       networks:
         mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.16
           aliases:
             - acme
 
@@ -305,10 +315,10 @@ services:
       environment:
         - TZ=${TZ}
         - SKIP_FAIL2BAN=${SKIP_FAIL2BAN:-n}
-        - IPV4_NETWORK=${IPV4_NETWORK:-172.22.1}
+        - IPV4_NETWORK=${IPV4_NETWORK:-72.19.199}
       network_mode: "host"
       dns:
-        - ${IPV4_NETWORK:-172.22.1}.254
+        - ${IPV4_NETWORK:-172.19.199}.5
       volumes:
         - /lib/modules:/lib/modules:ro
 
@@ -323,14 +333,15 @@ services:
       environment:
         - LOG_LINES=${LOG_LINES:-9999}
         - TZ=${TZ}
-        - DBNAME=${DBNAME}
-        - DBUSER=${DBUSER}
-        - DBPASS=${DBPASS}
+        - DBNAME=${MCDBNAME}
+        - DBUSER=${MCDBUSER}
+        - DBPASS=${MCDBPASS}
         - USE_WATCHDOG=${USE_WATCHDOG:-n}
         - WATCHDOG_NOTIFY_EMAIL=${WATCHDOG_NOTIFY_EMAIL}
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
       networks:
         mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.17
           aliases:
             - watchdog
 
@@ -346,6 +357,7 @@ services:
         - ./data/conf/rspamd/override.d/worker-controller-password.inc:/access.inc:rw
       networks:
         mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.18
           aliases:
             - dockerapi
 
@@ -358,6 +370,71 @@ services:
         - /var/run/docker.sock:/var/run/docker.sock:ro
         - /lib/modules:/lib/modules:ro
 
+    mailman-core:
+      image: maxking/mailman-core:latest
+      container_name: mailman-core
+      domainname: ${DOMAINNAME}
+      hostname: ${HOSTNAME}
+      restart: always
+      volumes:
+        - /opt/mailman/core:/opt/mailman/
+      ports:
+        - "8024:8024"
+      links:
+        - database:database
+      depends_on:
+        - database
+      environment:
+        - DATABASE_URL=mysql+pymysql://mailman:${MMDBPASS}@database/mailmandb?charset=utf8mb4&use_unicode=1
+        - DATABASE_TYPE=mysql
+        - DATABASE_CLASS=mailman.database.mysql.MySQLDatabase
+        - HYPERKITTY_API_KEY=${HKAPIKEY}
+      networks:
+        mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.2
+
+    mailman-web:
+      image: maxking/mailman-web:latest
+      container_name: mailman-web
+      domainname: ${DOMAINNAME}
+      hostname: ${HOSTNAME}
+      restart: always
+      links:
+        - mailman-core:mailman-core
+        - database:database
+      depends_on:
+        - database
+      volumes:
+        - /opt/mailman/web:/opt/mailman-web-data
+      environment:
+        - DATABASE_URL=mysql://mailman:${MMDBPASS}@database/mailmandb?charset=utf8mb4&use_unicode=1
+        - DATABASE_TYPE=mysql
+        - HYPERKITTY_API_KEY=${HKAPIKEY}
+        - SECRET_KEY=${DJSECRET}
+        - DYLD_LIBRARY_PATH=/usr/local/mysql/lib/
+        - SERVE_FROM_DOMAIN=lists.${HOSTNAME}
+        - UWSGI_STATIC_MAP=/static=/opt/mailman-web-data/static
+      networks:
+        mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.3
+
+    database:
+      environment:
+        MYSQL_DATABASE: mailmandb
+        MYSQL_USER: mailman
+        MYSQL_PASSWORD: ${MMDBPASS}
+        MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+      restart: always
+      image: mariadb:10.3
+      volumes:
+        - /opt/mailman/database:/var/lib/mysql
+      networks:
+        mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.4
+            aliases:
+              - database
+
 networks:
   mailcow-network:
     driver: bridge
@@ -365,7 +442,7 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: ${IPV4_NETWORK:-172.22.1}.0/24
+        - subnet: ${IPV4_NETWORK:-172.19.199}.0/24
         - subnet: ${IPV6_NETWORK:-fd4d:6169:6c63:6f77::/64}
 
 volumes:

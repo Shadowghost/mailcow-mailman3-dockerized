@@ -1,10 +1,10 @@
 #!/bin/bash
 
-if [[ -f mailcow.conf ]]; then
+if [[ -f .env ]]; then
   read -r -p "A config file exists and will be overwritten, are you sure you want to contine? [y/N] " response
   case $response in
     [yY][eE][sS]|[yY])
-      mv mailcow.conf mailcow.conf_backup
+      mv .env .env_backup
       ;;
     *)
       exit 1
@@ -13,7 +13,15 @@ if [[ -f mailcow.conf ]]; then
 fi
 
 if [ -z "$MAILCOW_HOSTNAME" ]; then
-  read -p "Hostname (FQDN - example.org is not a valid FQDN): " -ei "mx.example.org" MAILCOW_HOSTNAME
+  read -p "Hostname which serves the mailcow UI: " -ei "mail.example.org" MAILCOW_HOSTNAME
+fi
+
+if [ -z "$DOMAINNAME" ]; then
+  read -p "Domainname which servers mailman3: " -ei "example.org" DOMAINNAME
+fi
+
+if [ -z "$HOSTNAME" ]; then
+  read -p "Hostname for mailman3 containers (if nothing special, use the mailcow subdomain): " -ei "mail" HOSTNAME
 fi
 
 if [[ -a /etc/timezone ]]; then
@@ -29,42 +37,48 @@ else
 fi
 
 cat << EOF > mailcow.conf
-# ------------------------------
-# mailcow web ui configuration
-# ------------------------------
+# ------------------------------------
+# Main configuration
+# ------------------------------------
 # example.org is _not_ a valid hostname, use a fqdn here.
 # Default admin user is "admin"
 # Default password is "moohoo"
 MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
+DOMAINNAME=${DOMAINNAME}
+HOSTNAME=${HOSTNAME}
 
-# ------------------------------
-# SQL database configuration
-# ------------------------------
-DBNAME=mailcow
+# ------------------------------------
+# Mailcow SQL database configuration
+# ------------------------------------
+MCDBNAME=mailcow
 DBUSER=mailcow
-
 # Please use long, random alphanumeric strings (A-Za-z0-9)
-DBPASS=$(</dev/urandom tr -dc A-Za-z0-9 | head -c 28)
-DBROOT=$(</dev/urandom tr -dc A-Za-z0-9 | head -c 28)
+MCDBPASS=$(</dev/urandom tr -dc A-Za-z0-9 | head -c 28)
+MCDBROOT=$(</dev/urandom tr -dc A-Za-z0-9 | head -c 28)
 
-# ------------------------------
+# ------------------------------------
+# Mailman3 configuration
+# ------------------------------------
+HKAPIKEY=$(</dev/urandom tr -dc A-Za-z0-9 | head -c 28)
+MMDBPASS=$(</dev/urandom tr -dc A-Za-z0-9 | head -c 28)
+MMDBROOT=$(</dev/urandom tr -dc A-Za-z0-9 | head -c 28)
+DJSECRET=$(</dev/urandom tr -dc A-Za-z0-9 | head -c 28)
+
+# ------------------------------------
 # HTTP/S Bindings
-# ------------------------------
-
+# ------------------------------------
 # You should use HTTPS, but in case of SSL offloaded reverse proxies:
-HTTP_PORT=80
-HTTP_BIND=0.0.0.0
+HTTP_PORT=8080
+HTTP_BIND=127.0.0.1
+HTTPS_PORT=8443
+HTTPS_BIND=127.0.0.1
 
-HTTPS_PORT=443
-HTTPS_BIND=0.0.0.0
-
-# ------------------------------
+# ------------------------------------
 # Other bindings
-# ------------------------------
+# ------------------------------------
 # You should leave that alone
 # Format: 11.22.33.44:25 or 0.0.0.0:465 etc.
 # Do _not_ use IP:PORT in HTTP(S)_BIND or HTTP(S)_PORT
-
 SMTP_PORT=25
 SMTPS_PORT=465
 SUBMISSION_PORT=587
@@ -79,14 +93,14 @@ DOVEADM_PORT=127.0.0.1:19991
 TZ=${TZ}
 
 # Fixed project name
-COMPOSE_PROJECT_NAME=mailcow-dockerized
+COMPOSE_PROJECT_NAME=mailcow-mailman3-dockerized
 
 # Additional SAN for the certificate
 ADDITIONAL_SAN=
 
-
 # Skip running ACME (acme-mailcow, Let's Encrypt certs) - y/n
-SKIP_LETS_ENCRYPT=n
+SKIP_LETS_ENCRYPT=y
+
 # Skip IPv4 check in ACME container - y/n
 SKIP_IP_CHECK=n
 
@@ -98,22 +112,29 @@ SKIP_CLAMD=n
 
 # Enable watchdog (watchdog-mailcow) to restart unhealthy containers (experimental)
 USE_WATCHDOG=n
+
 # Send notifications by mail (no DKIM signature, sent from watchdog@MAILCOW_HOSTNAME)
 #WATCHDOG_NOTIFY_EMAIL=
 
 # Max log lines per service to keep in Redis logs
 LOG_LINES=9999
 
+# ------------------------------------
+# Network configuration
+# ------------------------------------
 # Internal IPv4 /24 subnet, format n.n.n. (expands to n.n.n.0/24)
-IPV4_NETWORK=172.22.1
+IPV4_NETWORK=172.19.199
 
 # Internal IPv6 subnet in fd00::/8
 IPV6_NETWORK=fd4d:6169:6c63:6f77::/64
 
-
 EOF
 
-mkdir -p data/assets/ssl
+echo "Creating needed directories."
+mkdir -p ./data/assets/ssl
+mkdir -p /opt/mailman/core
+mkdir -p /opt/mailman/web
 
-# copy but don't overwrite existing certificate
-cp -n data/assets/ssl-example/*.pem data/assets/ssl/
+echo "Copying mailman configuration and selfsigned SSL-certificates until new ones are installed."
+cp ./templates/mailman/mailman-extra.cfg /opt/mailman/core/mailman-extra.cfg
+cp -n ./data/assets/ssl-example/*.pem ./data/assets/ssl/
