@@ -36,7 +36,7 @@ else
   read -p "Timezone: " -ei ${TZ} TZ
 fi
 
-cat << EOF > mailcow.conf
+cat << EOF > .env
 # ------------------------------------
 # Main configuration
 # ------------------------------------
