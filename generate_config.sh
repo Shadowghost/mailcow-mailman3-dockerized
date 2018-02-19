@@ -51,7 +51,7 @@ HOSTNAME=${HOSTNAME}
 # Mailcow SQL database configuration
 # ------------------------------------
 MCDBNAME=mailcow
-DBUSER=mailcow
+MCDBUSER=mailcow
 # Please use long, random alphanumeric strings (A-Za-z0-9)
 MCDBPASS=$(</dev/urandom tr -dc A-Za-z0-9 | head -c 28)
 MCDBROOT=$(</dev/urandom tr -dc A-Za-z0-9 | head -c 28)
