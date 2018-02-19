@@ -284,9 +284,9 @@ services:
         - LOG_LINES=${LOG_LINES:-9999}
         - ADDITIONAL_SAN=${ADDITIONAL_SAN}
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
-        - DBNAME=${DBNAME}
-        - DBUSER=${DBUSER}
-        - DBPASS=${DBPASS}
+        - DBNAME=${MCDBNAME}
+        - DBUSER=${MCDBUSER}
+        - DBPASS=${MCDBPASS}
         - SKIP_LETS_ENCRYPT=${SKIP_LETS_ENCRYPT:-n}
         - SKIP_IP_CHECK=${SKIP_IP_CHECK:-n}
       volumes:
