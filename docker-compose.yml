@@ -434,8 +434,8 @@ services:
       networks:
         mailcow-network:
           ipv4_address: ${IPV4_NETWORK:-172.19.199}.4
-            aliases:
-              - database
+          aliases:
+            - database
 
 networks:
   mailcow-network:
