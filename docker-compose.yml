@@ -279,7 +279,7 @@ services:
       image: mailcow/acme:1.28
       build: ./data/Dockerfiles/acme
       dns:
-        - ${IPV4_NETWORK:-172.22.1}.254
+        - ${IPV4_NETWORK:-172.19.199}.5
       environment:
         - LOG_LINES=${LOG_LINES:-9999}
         - ADDITIONAL_SAN=${ADDITIONAL_SAN}
@@ -315,7 +315,7 @@ services:
       environment:
         - TZ=${TZ}
         - SKIP_FAIL2BAN=${SKIP_FAIL2BAN:-n}
-        - IPV4_NETWORK=${IPV4_NETWORK:-72.19.199}
+        - IPV4_NETWORK=${IPV4_NETWORK:-172.19.199}
       network_mode: "host"
       dns:
         - ${IPV4_NETWORK:-172.19.199}.5
