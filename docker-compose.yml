@@ -339,6 +339,8 @@ services:
         - USE_WATCHDOG=${USE_WATCHDOG:-n}
         - WATCHDOG_NOTIFY_EMAIL=${WATCHDOG_NOTIFY_EMAIL}
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
+      dns:
+        - ${IPV4_NETWORK:-172.19.199}.5
       networks:
         mailcow-network:
           ipv4_address: ${IPV4_NETWORK:-172.19.199}.17
