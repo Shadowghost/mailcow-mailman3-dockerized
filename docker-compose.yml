@@ -18,7 +18,7 @@ services:
 
     mysql-mailcow:
       image: mariadb:10.2
-      command: myslqd --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+      command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
       volumes:
         - mysql-vol-1:/var/lib/mysql/
         - ./data/conf/mysql/:/etc/mysql/conf.d/:ro
