@@ -22,7 +22,7 @@ services:
       restart: always
       environment:
         - TZ=${TZ}
-        - MYSQL_ROOT_PASSWORD=${MCDBROOT}
+        - MYSQL_RANDOM_ROOT_PASSWORD=yes
         - MYSQL_DATABASE=${MCDBNAME}
         - MYSQL_USER=${MCDBUSER}
         - MYSQL_PASSWORD=${MCDBPASS}
@@ -409,7 +409,7 @@ services:
         - HYPERKITTY_API_KEY=${HKAPIKEY}
         - SECRET_KEY=${DJSECRET}
         - DYLD_LIBRARY_PATH=/usr/local/mysql/lib/
-        - SERVE_FROM_DOMAIN=lists.${HOSTNAME}
+        - SERVE_FROM_DOMAIN=lists.${DOMAINNAME}
         - UWSGI_STATIC_MAP=/static=/opt/mailman-web-data/static
       volumes:
         - /opt/mailman/web:/opt/mailman-web-data
@@ -427,7 +427,7 @@ services:
         - MYSQL_DATABASE=mailmandb
         - MYSQL_USER=mailman
         - MYSQL_PASSWORD=${MMDBPASS}
-        - MYSQL_ROOT_PASSWORD=${MMDBROOT}
+        - MYSQL_RANDOM_ROOT_PASSWORD=yes
       volumes:
         - /opt/mailman/database:/var/lib/mysql
       dns:
