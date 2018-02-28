@@ -103,9 +103,6 @@ SKIP_LETS_ENCRYPT=y
 # Skip IPv4 check in ACME container - y/n
 SKIP_IP_CHECK=n
 
-# Skip Fail2ban implementation (fail2ban-mailcow) - y/n
-SKIP_FAIL2BAN=n
-
 # Skip ClamAV (clamd-mailcow) anti-virus (Rspamd will auto-detect a missing ClamAV container) - y/n
 SKIP_CLAMD=n
 
@@ -126,6 +123,15 @@ IPV4_NETWORK=172.19.199
 
 # Internal IPv6 subnet in fd00::/8
 IPV6_NETWORK=fd4d:6169:6c63:6f77::/64
+
+# Use this IP for outgoing connections (SNAT)' >> mailcow.conf
+#SNAT_TO_SOURCE=" >> .env
+
+# Disable IPv6
+# mailcow-network will still be created as IPv6 enabled, all containers will be created
+# without IPv6 support.
+# Use 1 for disabled, 0 for enabled
+SYSCTL_IPV6_DISABLED=0
 
 EOF
 

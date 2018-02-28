@@ -53,7 +53,7 @@ services:
             - redis
 
     clamd-mailcow:
-      image: mailcow/clamd:1.8
+      image: mailcow/clamd:1.9
       build: ./data/Dockerfiles/clamd
       restart: always
       environment:
@@ -70,7 +70,7 @@ services:
             - clamd
 
     rspamd-mailcow:
-      image: mailcow/rspamd:1.16
+      image: mailcow/rspamd:1.17
       build: ./data/Dockerfiles/rspamd
       stop_grace_period: 30s
       restart: always
@@ -95,7 +95,7 @@ services:
             - rspamd
 
     php-fpm-mailcow:
-      image: mailcow/phpfpm:1.9
+      image: mailcow/phpfpm:1.12
       build: ./data/Dockerfiles/phpfpm
       command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
       restart: always
@@ -133,7 +133,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.15
+      image: mailcow/sogo:1.19
       build: ./data/Dockerfiles/sogo
       restart: always
       environment:
@@ -154,7 +154,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.20
+      image: mailcow/dovecot:1.24
       build: ./data/Dockerfiles/dovecot
       restart: always
       cap_add:
@@ -193,7 +193,7 @@ services:
             - dovecot
 
     postfix-mailcow:
-      image: mailcow/postfix:1.13
+      image: mailcow/postfix:1.14
       build: ./data/Dockerfiles/postfix
       restart: always
       cap_add:
@@ -300,10 +300,10 @@ services:
           ipv4_address: ${IPV4_NETWORK:-172.19.199}.16
           aliases:
             - acme
-
-    fail2ban-mailcow:
-      image: mailcow/fail2ban:1.11
-      build: ./data/Dockerfiles/fail2ban
+   
+    netfilter-mailcow:
+      image: mailcow/netfilter:1.11
+      build: ./data/Dockerfiles/netfilter
       restart: always
       privileged: true
       stop_grace_period: 30s
@@ -315,7 +315,7 @@ services:
         - redis-mailcow
       environment:
         - TZ=${TZ}
-        - SKIP_FAIL2BAN=${SKIP_FAIL2BAN:-n}
+        - SNAT_TO_SOURCE=${SNAT_TO_SOURCE:-n}
         - IPV4_NETWORK=${IPV4_NETWORK:-172.19.199}
       volumes:
         - /lib/modules:/lib/modules:ro
@@ -324,10 +324,12 @@ services:
         - ${IPV4_NETWORK:-172.19.199}.5
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.13
+      image: mailcow/watchdog:1.14
       build: ./data/Dockerfiles/watchdog
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
       # Debug
-      command: /watchdog.sh
+      #command: /watchdog.sh
       restart: always
       environment:
         - LOG_LINES=${LOG_LINES:-9999}
@@ -339,7 +341,7 @@ services:
         - WATCHDOG_NOTIFY_EMAIL=${WATCHDOG_NOTIFY_EMAIL}
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
       volumes:
-        - vmail-vol-1:/vmail:ro
+        - rspamd-sock:/rspamd-sock
       dns:
         - ${IPV4_NETWORK:-172.19.199}.5
       networks:
@@ -349,8 +351,10 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.5
+      image: mailcow/dockerapi:1.9
       build: ./data/Dockerfiles/dockerapi
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
       restart: always
       oom_score_adj: -10
       environment:
