@@ -96,6 +96,7 @@ services:
         - ./data/conf/rspamd/local.d/:/etc/rspamd/local.d:ro
         - ./data/conf/rspamd/lua/:/etc/rspamd/lua/:ro
         - rspamd-sock:/rspamd-sock
+        - rspamd-vol-1:/var/lib/rspamd
       dns:
         - ${IPV4_NETWORK:-172.19.199}.5
       hostname: rspamd
@@ -493,3 +494,4 @@ volumes:
   postfix-vol-1:
   crypt-vol-1:
   rspamd-sock:
+  rspamd-vol-1:
