@@ -32,6 +32,16 @@ docker-compose up -d
 docker exec -it mailman-web python manage.py createsuperuser
 ```
 
+## Migrating from mailcow-dockerized
+To migrate your existing mailcow-dockerized installation to mailcow-mailman3-dockerized, you need to do the following steps:
+
+1.  Clone this repository
+2.  Generate .env-file by running `generate_config.sh`
+3.  Copy the password-strings and other configuration parameter from your existing mailcow-dockerized install to the newly created .env
+4.  To use the existing volumes created by mailcow-dockerized, change `COMPOSE_PROJECT_NAME` to `mailcow-dockerized`
+5.  run `docker-compose pull && docker-compose up -d` to pull the additional mailman3 images and start the whole thing up.
+6.  Check your data and settings in the mailcow web-interface.
+
 # Additional notes
 This setup is built to run behind a webserver proxying mailcow and mailman3. Within `templates/apache2` are some configurations you might find useful. They are intended to work with apache2 and certificates by [Let's encrypt](https://letsencrypt.org). You'll also need some additional apache2-modules installed:
 ```
