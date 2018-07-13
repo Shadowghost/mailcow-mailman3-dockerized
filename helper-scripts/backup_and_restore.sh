@@ -81,13 +81,13 @@ function backup() {
         debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_postfix.tar.gz /postfix
       ;;&
     mysql|all)
-      SQLIMAGE=$(grep -iEo '(mysql|mariadb)\:.+' ${COMPOSE_FILE})
+      SQLIMAGE1='mariadb:10.2'
       docker run --rm \
         --network $(docker network ls -qf name=${CMPS_PRJ}_mailcow-network) \
         -v $(docker volume ls -qf name=${CMPS_PRJ}_mysql-vol-1):/var/lib/mysql/ \
         --entrypoint= \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
-        ${SQLIMAGE} /bin/sh -c "mysqldump -hmysql -uroot -p${MCDBROOT} --all-databases | gzip > /backup/backup_mysql.gz"
+        ${SQLIMAGE1} /bin/sh -c "mysqldump -hmysql -uroot -p${MCDBROOT} --all-databases | gzip > /backup/backup_mysql.gz"
       ;;&
     mailman-core|all)
       docker run --rm \
@@ -95,13 +95,14 @@ function backup() {
         -v $(docker volume ls -qf name=${CMPS_PRJ}_mailman-core-vol-1):/mailman-core \
         debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_mailman-core.tar.gz /mailman-core
       ;;&
-	mailman-db|all)
+    mailman-db|all)
+	  SQLIMAGE2='mariadb:10.3'
       docker run --rm \
         --network $(docker network ls -qf name=${CMPS_PRJ}_mailcow-network) \
         -v $(docker volume ls -qf name=${CMPS_PRJ}_mailman-database-vol-1):/var/lib/mysql/ \
         --entrypoint= \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
-        ${SQLIMAGE} /bin/sh -c "mysqldump -hmysql -uroot -p${MMDBROOT} --all-databases | gzip > /backup/backup_mailman_mysql.gz"
+        ${SQLIMAGE2} /bin/sh -c "mysqldump -hmysql -uroot -p${MMDBROOT} --all-databases | gzip > /backup/backup_mailman_mysql.gz"
       ;;&
 	mailman-web|all)
 	  /bin/tar --warning='no-file-ignored' -Pcvpzf ${BACKUP_LOCATION}/mailcowmailman3-${DATE}/backup_mailman-web.tar.gz ../data/mailman/web

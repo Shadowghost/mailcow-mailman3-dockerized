@@ -60,7 +60,7 @@ services:
         - MYSQL_DATABASE=mailmandb
         - MYSQL_USER=mailman
         - MYSQL_PASSWORD=${MMDBPASS}
-        - MYSQL_RANDOM_ROOT_PASSWORD=yes
+        - MYSQL_ROOT_PASSWORD=${MMDBROOT}
       volumes:
         - mailman-database-vol-1:/var/lib/mysql
       restart: always

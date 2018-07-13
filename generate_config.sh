@@ -78,6 +78,7 @@ MCDBROOT=$(</dev/urandom tr -dc A-Za-z0-9 | head -c 28)
 # ------------------------------------
 HKAPIKEY=$(</dev/urandom tr -dc A-Za-z0-9 | head -c 28)
 MMDBPASS=$(</dev/urandom tr -dc A-Za-z0-9 | head -c 28)
+MMDBROOT=$(</dev/urandom tr -dc A-Za-z0-9 | head -c 28)
 DJSECRET=$(</dev/urandom tr -dc A-Za-z0-9 | head -c 28)
 
 # ------------------------------
