@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+# Wait for MySQL to warm-up
+while ! mysqladmin ping --host mysql -u${DBUSER} -p${DBPASS} --silent; do
+  echo "Waiting for database to come up..."
+  sleep 2
+done
+
 # Hard-code env vars to imapsync due to cron not passing them to the perl script
 sed -i "/^\$DBUSER/c\\\$DBUSER='${DBUSER}';" /usr/local/bin/imapsync_cron.pl
 sed -i "/^\$DBPASS/c\\\$DBPASS='${DBPASS}';" /usr/local/bin/imapsync_cron.pl
@@ -77,14 +83,20 @@ map {
 EOF
 
 
-# Create user and pass dict for Dovecot
+# Create userdb dict for Dovecot
+cat <<EOF > /usr/local/etc/dovecot/sql/dovecot-dict-sql-userdb.conf
+driver = mysql
+connect = "host=mysql dbname=${DBNAME} user=${DBUSER} password=${DBPASS}"
+user_query = SELECT CONCAT('maildir:/var/vmail/',maildir) AS mail, 5000 AS uid, 5000 AS gid, concat('*:bytes=', quota) AS quota_rule FROM mailbox WHERE username = '%u' AND active = '1'
+iterate_query = SELECT username FROM mailbox WHERE active='1';
+EOF
+
+# Create pass dict for Dovecot
 cat <<EOF > /usr/local/etc/dovecot/sql/dovecot-dict-sql-passdb.conf
 driver = mysql
 connect = "host=mysql dbname=${DBNAME} user=${DBUSER} password=${DBPASS}"
 default_pass_scheme = SSHA256
 password_query = SELECT password FROM mailbox WHERE username = '%u' AND domain IN (SELECT domain FROM domain WHERE domain='%d' AND active='1') AND JSON_EXTRACT(attributes, '$.force_pw_update') NOT LIKE '%%1%%'
-user_query = SELECT CONCAT('maildir:/var/vmail/',maildir) AS mail, 5000 AS uid, 5000 AS gid, concat('*:bytes=', quota) AS quota_rule FROM mailbox WHERE username = '%u' AND active = '1'
-iterate_query = SELECT username FROM mailbox WHERE active='1';
 EOF
 
 # Create global sieve_after script
@@ -122,5 +134,9 @@ touch /etc/crontab /etc/cron.*/*
 
 # Clean old PID if any
 [[ -f /usr/local/var/run/dovecot/master.pid ]] && rm /usr/local/var/run/dovecot/master.pid
+
+# Clean stopped imapsync jobs
+IMAPSYNC_TABLE=$(mysql -h mysql-mailcow -u ${DBUSER} -p${DBPASS} ${DBNAME} -e "SHOW TABLES LIKE 'imapsync'" -Bs)
+[[ ! -z ${IMAPSYNC_TABLE} ]] && mysql -h mysql-mailcow -u ${DBUSER} -p${DBPASS} ${DBNAME} -e "UPDATE imapsync SET is_running='0'"
 
 exec "$@"

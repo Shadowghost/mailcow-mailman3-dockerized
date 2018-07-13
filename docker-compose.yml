@@ -1,120 +1,202 @@
 version: '2.1'
 services:
 
+    mailman-core:
+      image: maxking/mailman-core:latest
+      domainname: ${DOMAINNAME}
+      hostname: ${HOSTNAME}
+      depends_on:
+        - database
+      environment:
+        - DATABASE_URL=mysql+pymysql://mailman:${MMDBPASS}@database/mailmandb?charset=utf8mb4&use_unicode=1
+        - DATABASE_TYPE=mysql
+        - DATABASE_CLASS=mailman.database.mysql.MySQLDatabase
+        - HYPERKITTY_API_KEY=${HKAPIKEY}
+      volumes:
+        - mailman-core-vol-1:/opt/mailman/
+      restart: always
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
+      dns:
+        - ${IPV4_NETWORK:-172.19.199}.254
+      networks:
+        mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.2
+          aliases:
+            - mailman-core
+
+    mailman-web:
+      image: maxking/mailman-web:latest
+      domainname: ${DOMAINNAME}
+      hostname: ${HOSTNAME}
+      depends_on:
+        - database
+        - mailman-core
+      environment:
+        - DATABASE_URL=mysql://mailman:${MMDBPASS}@database/mailmandb?charset=utf8mb4&use_unicode=1
+        - DATABASE_TYPE=mysql
+        - HYPERKITTY_API_KEY=${HKAPIKEY}
+        - SECRET_KEY=${DJSECRET}
+        - DYLD_LIBRARY_PATH=/usr/local/mysql/lib/
+        - SERVE_FROM_DOMAIN=lists.${DOMAINNAME}
+        - UWSGI_STATIC_MAP=/static=/opt/mailman-web-data/static
+      volumes:
+        - ./data/mailman/web:/opt/mailman-web-data
+      restart: always
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
+      dns:
+        - ${IPV4_NETWORK:-172.19.199}.254
+      networks:
+        mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.3
+          aliases:
+            - mailman-web
+
+    database:
+      image: mariadb:10.3
+      command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+      environment:
+        - MYSQL_DATABASE=mailmandb
+        - MYSQL_USER=mailman
+        - MYSQL_PASSWORD=${MMDBPASS}
+        - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      volumes:
+        - mailman-database-vol-1:/var/lib/mysql
+      restart: always
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
+      dns:
+        - ${IPV4_NETWORK:-172.19.199}.254
+      networks:
+        mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.4
+          aliases:
+            - database
+
     unbound-mailcow:
       image: mailcow/unbound:1.1
       build: ./data/Dockerfiles/unbound
       command: /usr/sbin/unbound
-      sysctls:
-        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
-      restart: always
       environment:
         - TZ=${TZ}
       volumes:
         - ./data/conf/unbound/unbound.conf:/etc/unbound/unbound.conf:ro
+      restart: always
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.5
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.254
           aliases:
             - unbound
 
     mysql-mailcow:
       image: mariadb:10.2
-      command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-      sysctls:
-        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
-      restart: always
-      environment:
-        - TZ=${TZ}
-        - MYSQL_RANDOM_ROOT_PASSWORD=yes
-        - MYSQL_DATABASE=${MCDBNAME}
-        - MYSQL_USER=${MCDBUSER}
-        - MYSQL_PASSWORD=${MCDBPASS}
+      depends_on:
+        - mailman-web
       volumes:
         - mysql-vol-1:/var/lib/mysql/
         - ./data/conf/mysql/:/etc/mysql/conf.d/:ro
+      environment:
+        - TZ=${TZ}
+        - MYSQL_ROOT_PASSWORD=${MCDBROOT}
+        - MYSQL_DATABASE=${MCDBNAME}
+        - MYSQL_USER=${MCDBUSER}
+        - MYSQL_PASSWORD=${MCDBPASS}
+      restart: always
+      dns:
+        - ${IPV4_NETWORK:-172.19.199}.254
       ports:
         - "${SQL_PORT:-127.0.0.1:13306}:3306"
-      dns:
-        - ${IPV4_NETWORK:-172.19.199}.5
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.6
           aliases:
             - mysql
 
     redis-mailcow:
-      image: redis:alpine
-      sysctls:
-        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
+      image: redis:4-alpine
+      depends_on:
+        - mailman-web
+      volumes:
+        - redis-vol-1:/data/
       restart: always
       environment:
         - TZ=${TZ}
-      volumes:
-        - redis-vol-1:/data/
       dns:
-        - ${IPV4_NETWORK:-172.19.199}.5
+        - ${IPV4_NETWORK:-172.19.199}.254
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.7
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.249
           aliases:
             - redis
 
     clamd-mailcow:
-      image: mailcow/clamd:1.9
+      image: mailcow/clamd:1.12
       build: ./data/Dockerfiles/clamd
-      sysctls:
-        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
+      depends_on:
+        - mailman-web
       restart: always
+      tty: true
       environment:
         - TZ=${TZ}
         - SKIP_CLAMD=${SKIP_CLAMD:-n}
       volumes:
         - ./data/conf/clamav/:/etc/clamav/
       dns:
-        - ${IPV4_NETWORK:-172.19.199}.5
+        - ${IPV4_NETWORK:-172.19.199}.254
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.8
           aliases:
             - clamd
 
     rspamd-mailcow:
-      image: mailcow/rspamd:1.17
+      image: mailcow/rspamd:1.22
       build: ./data/Dockerfiles/rspamd
-      sysctls:
-        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
       stop_grace_period: 30s
-      restart: always
       depends_on:
         - nginx-mailcow
       environment:
         - TZ=${TZ}
       volumes:
         - ./data/conf/rspamd/custom/:/etc/rspamd/custom:ro
-        - ./data/conf/rspamd/override.d/:/etc/rspamd/override.d:ro
+        - ./data/conf/rspamd/override.d/:/etc/rspamd/override.d:rw
         - ./data/conf/rspamd/local.d/:/etc/rspamd/local.d:ro
         - ./data/conf/rspamd/lua/:/etc/rspamd/lua/:ro
         - rspamd-sock:/rspamd-sock
         - rspamd-vol-1:/var/lib/rspamd
+      restart: always
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
       dns:
-        - ${IPV4_NETWORK:-172.19.199}.5
+        - ${IPV4_NETWORK:-172.19.199}.254
       hostname: rspamd
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.9
           aliases:
             - rspamd
 
     php-fpm-mailcow:
-      image: mailcow/phpfpm:1.12
+      image: mailcow/phpfpm:1.18
       build: ./data/Dockerfiles/phpfpm
       command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
-      sysctls:
-        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
-      restart: always
       depends_on:
         - redis-mailcow
+      volumes:
+        - ./data/web:/web:rw
+        - ./data/conf/rspamd/dynmaps:/dynmaps:ro
+        - rspamd-sock:/rspamd-sock
+        - ./data/conf/rspamd/meta_exporter:/meta_exporter:ro
+        - ./data/conf/phpfpm/php-fpm.d/pools.conf:/usr/local/etc/php-fpm.d/z-pools.conf
+        - ./data/conf/phpfpm/php-conf.d/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini
+        - ./data/conf/phpfpm/php-conf.d/upload.ini:/usr/local/etc/php/conf.d/upload.ini
+        - ./data/conf/phpfpm/php-conf.d/other.ini:/usr/local/etc/php/conf.d/zzz-other.ini
       environment:
         - LOG_LINES=${LOG_LINES:-9999}
         - TZ=${TZ}
@@ -130,29 +212,23 @@ services:
         - SUBMISSION_PORT=${SUBMISSION_PORT:-587}
         - SMTPS_PORT=${SMTPS_PORT:-465}
         - SMTP_PORT=${SMTP_PORT:-25}
-      volumes:
-        - ./data/web:/web:rw
-        - ./data/conf/rspamd/dynmaps:/dynmaps:ro
-        - rspamd-sock:/rspamd-sock
-        - ./data/conf/rspamd/meta_exporter:/meta_exporter:ro
-        - ./data/conf/phpfpm/php-fpm.d/www.conf:/usr/local/etc/php-fpm.d/www.conf
-        - ./data/conf/phpfpm/php-fpm.d/system.conf:/usr/local/etc/php-fpm.d/system.conf
-        - ./data/conf/phpfpm/php-conf.d/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini
-        - ./data/conf/phpfpm/php-conf.d/upload.ini:/usr/local/etc/php/conf.d/upload.ini
+        - API_KEY=${API_KEY:-invalid}
+        - API_ALLOW_FROM=${API_ALLOW_FROM:-invalid}
+      restart: always
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
       dns:
-        - ${IPV4_NETWORK:-172.19.199}.5
+        - ${IPV4_NETWORK:-172.19.199}.254
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.10
           aliases:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.19
+      image: mailcow/sogo:1.28
       build: ./data/Dockerfiles/sogo
-      sysctls:
-        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
-      restart: always
+      depends_on:
+        - mailman-web
       environment:
         - DBNAME=${MCDBNAME}
         - DBUSER=${MCDBUSER}
@@ -162,39 +238,37 @@ services:
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
       volumes:
         - ./data/conf/sogo/:/etc/sogo/
+      restart: always
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
       dns:
-        - ${IPV4_NETWORK:-172.19.199}.5
+        - ${IPV4_NETWORK:-172.19.199}.254
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.11
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.248
           aliases:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.24
+      image: mailcow/dovecot:1.30
       build: ./data/Dockerfiles/dovecot
-      sysctls:
-        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
-      restart: always
+      depends_on:
+        - mysql-mailcow
       cap_add:
         - NET_BIND_SERVICE
-      environment:
-        - LOG_LINES=${LOG_LINES:-9999}
-        - DBNAME=${MCDBNAME}
-        - DBUSER=${MCDBUSER}
-        - DBPASS=${MCDBPASS}
-        - TZ=${TZ}
-      ulimits:
-        nproc: 65535
-        nofile:
-          soft: 20000
-          hard: 40000
       volumes:
         - ./data/conf/dovecot:/usr/local/etc/dovecot
         - ./data/assets/ssl:/etc/ssl/mail/:ro
         - ./data/conf/sogo/:/etc/sogo/
         - vmail-vol-1:/var/vmail
         - crypt-vol-1:/mail_crypt/
+        - rspamd-sock:/rspamd-sock
+      environment:
+        - LOG_LINES=${LOG_LINES:-9999}
+        - DBNAME=${MCDBNAME}
+        - DBUSER=${MCDBUSER}
+        - DBPASS=${MCDBPASS}
+        - TZ=${TZ}
       ports:
         - "${DOVEADM_PORT:-127.0.0.1:19991}:12345"
         - "${IMAP_PORT:-143}:143"
@@ -202,62 +276,75 @@ services:
         - "${POP_PORT:-110}:110"
         - "${POPS_PORT:-995}:995"
         - "${SIEVE_PORT:-4190}:4190"
+      restart: always
+      ulimits:
+        nproc: 65535
+        nofile:
+          soft: 20000
+          hard: 40000
       dns:
-        - ${IPV4_NETWORK:-172.19.199}.5
+        - ${IPV4_NETWORK:-172.19.199}.254
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
       hostname: ${MAILCOW_HOSTNAME}
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.12
           aliases:
             - dovecot
 
     postfix-mailcow:
-      image: mailcow/postfix:1.14
+      image: mailcow/postfix:1.16
       build: ./data/Dockerfiles/postfix
-      sysctls:
-        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
-      restart: always
-      cap_add:
-        - NET_BIND_SERVICE
+      depends_on:
+        - mailman-web
+      volumes:
+        - ./data/conf/postfix:/opt/postfix/conf
+        - ./data/assets/ssl:/etc/ssl/mail/:ro
+        - postfix-vol-1:/var/spool/postfix
+        - crypt-vol-1:/var/lib/zeyple
+        - mailman-core-vol-1:/opt/mailman/core/
       environment:
         - LOG_LINES=${LOG_LINES:-9999}
         - TZ=${TZ}
         - DBNAME=${MCDBNAME}
         - DBUSER=${MCDBUSER}
         - DBPASS=${MCDBPASS}
-      volumes:
-        - ./data/conf/postfix:/opt/postfix/conf
-        - ./data/assets/ssl:/etc/ssl/mail/:ro
-        - postfix-vol-1:/var/spool/postfix
-        - crypt-vol-1:/var/lib/zeyple
-        - /opt/mailman/core/var/data/:/opt/mailman/
+      cap_add:
+        - NET_BIND_SERVICE
       ports:
         - "${SMTP_PORT:-25}:25"
         - "${SMTPS_PORT:-465}:465"
         - "${SUBMISSION_PORT:-587}:587"
+      restart: always
       dns:
-        - ${IPV4_NETWORK:-172.19.199}.5
+        - ${IPV4_NETWORK:-172.19.199}.254
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
       hostname: ${MAILCOW_HOSTNAME}
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.13
           aliases:
             - postfix
 
     memcached-mailcow:
       image: memcached:alpine
+      depends_on:
+        - mailman-web
+      restart: always
       sysctls:
         - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
-      restart: always
       dns:
-        - ${IPV4_NETWORK:-172.19.199}.5
+        - ${IPV4_NETWORK:-172.19.199}.254
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.14
           aliases:
             - memcached
 
     nginx-mailcow:
+      depends_on:
+        - sogo-mailcow
+        - php-fpm-mailcow
+        - redis-mailcow
       image: nginx:mainline-alpine
       command: /bin/sh -c "envsubst < /etc/nginx/conf.d/templates/listen_plain.template > /etc/nginx/conf.d/listen_plain.active &&
         envsubst < /etc/nginx/conf.d/templates/listen_ssl.template > /etc/nginx/conf.d/listen_ssl.active &&
@@ -270,18 +357,12 @@ services:
         until ping redis -c1 > /dev/null; do sleep 1; done &&
         until ping rspamd -c1 > /dev/null; do sleep 1; done &&
         exec nginx -g 'daemon off;'"
-      sysctls:
-        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
-      restart: always
-      depends_on:
-        - sogo-mailcow
-        - php-fpm-mailcow
-        - redis-mailcow
       environment:
         - HTTPS_PORT=${HTTPS_PORT:-443}
         - HTTP_PORT=${HTTP_PORT:-80}
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
         - IPV4_NETWORK=${IPV4_NETWORK:-172.19.199}
+        - TZ=${TZ}
       volumes:
         - ./data/web:/web:ro
         - ./data/conf/rspamd/dynmaps:/dynmaps:ro
@@ -289,25 +370,28 @@ services:
         - ./data/conf/nginx/:/etc/nginx/conf.d/:rw
         - ./data/conf/rspamd/meta_exporter:/meta_exporter:ro
       ports:
-        - "${HTTPS_BIND:-0.0.0.0}:${HTTPS_PORT:-443}:${HTTPS_PORT:-443}"
-        - "${HTTP_BIND:-0.0.0.0}:${HTTP_PORT:-80}:${HTTP_PORT:-80}"
+        - "${HTTPS_BIND:-127.0.0.1}:${HTTPS_PORT:-8443}:${HTTPS_PORT:-8443}"
+        - "${HTTP_BIND:-127.0.0.1}:${HTTP_PORT:-8080}:${HTTP_PORT:-8080}"
+      restart: always
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
       dns:
-        - ${IPV4_NETWORK:-172.19.199}.5
+        - ${IPV4_NETWORK:-172.19.199}.254
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.15
           aliases:
             - nginx
 
     acme-mailcow:
-      image: mailcow/acme:1.28
-      build: ./data/Dockerfiles/acme
-      sysctls:
-        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
-      restart: always
       depends_on:
         - nginx-mailcow
         - mysql-mailcow
+      image: mailcow/acme:1.34
+      build: ./data/Dockerfiles/acme
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
+      dns:
+        - ${IPV4_NETWORK:-172.19.199}.254
       environment:
         - LOG_LINES=${LOG_LINES:-9999}
         - ADDITIONAL_SAN=${ADDITIONAL_SAN}
@@ -317,47 +401,53 @@ services:
         - DBPASS=${MCDBPASS}
         - SKIP_LETS_ENCRYPT=${SKIP_LETS_ENCRYPT:-n}
         - SKIP_IP_CHECK=${SKIP_IP_CHECK:-n}
+        - TZ=${TZ}
       volumes:
         - ./data/web/.well-known/acme-challenge:/var/www/acme:rw
         - ./data/assets/ssl:/var/lib/acme/:rw
         - ./data/assets/ssl-example:/var/lib/ssl-example/:ro
-      dns:
-        - ${IPV4_NETWORK:-172.19.199}.5
+      restart: always
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.16
           aliases:
             - acme
-   
+
     netfilter-mailcow:
-      image: mailcow/netfilter:1.11
+      image: mailcow/netfilter:1.17
       build: ./data/Dockerfiles/netfilter
-      restart: always
-      privileged: true
       stop_grace_period: 30s
       depends_on:
+        - mailman-web
         - dovecot-mailcow
         - postfix-mailcow
         - sogo-mailcow
         - php-fpm-mailcow
         - redis-mailcow
+      restart: always
+      privileged: true
       environment:
         - TZ=${TZ}
-        - SNAT_TO_SOURCE=${SNAT_TO_SOURCE:-n}
         - IPV4_NETWORK=${IPV4_NETWORK:-172.19.199}
-      volumes:
-        - /lib/modules:/lib/modules:ro
+        - IPV6_NETWORK=${IPV6_NETWORK:-fd4d:6169:6c63:6f77::/64}
+        - SNAT_TO_SOURCE=${SNAT_TO_SOURCE:-n}
+        - SNAT6_TO_SOURCE=${SNAT6_TO_SOURCE:-n}
       network_mode: "host"
       dns:
-        - ${IPV4_NETWORK:-172.19.199}.5
+        - ${IPV4_NETWORK:-172.19.199}.254
+      volumes:
+        - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.14
-      build: ./data/Dockerfiles/watchdog
-      sysctls:
-        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
+      image: mailcow/watchdog:1.19
       # Debug
       #command: /watchdog.sh
+      build: ./data/Dockerfiles/watchdog
+      depends_on:
+        - mailman-web
+      sysctls:
+        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
+      volumes:
+        - rspamd-sock:/rspamd-sock
       restart: always
       environment:
         - LOG_LINES=${LOG_LINES:-9999}
@@ -368,22 +458,22 @@ services:
         - USE_WATCHDOG=${USE_WATCHDOG:-n}
         - WATCHDOG_NOTIFY_EMAIL=${WATCHDOG_NOTIFY_EMAIL}
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
-      volumes:
-        - rspamd-sock:/rspamd-sock
+        - IPV4_NETWORK=${IPV4_NETWORK:-172.19.199}
       dns:
-        - ${IPV4_NETWORK:-172.19.199}.5
+        - ${IPV4_NETWORK:-172.19.199}.254
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.17
           aliases:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.9
+      image: mailcow/dockerapi:1.13
+      restart: always
       build: ./data/Dockerfiles/dockerapi
+      depends_on:
+        - mailman-web
       sysctls:
         - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
-      restart: always
       oom_score_adj: -10
       environment:
         - TZ=${TZ}
@@ -392,90 +482,19 @@ services:
         - ./data/conf/rspamd/override.d/worker-controller-password.inc:/access.inc:rw
       networks:
         mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.18
           aliases:
             - dockerapi
 
     ipv6nat:
       image: robbertkl/ipv6nat
+      depends_on:
+        - mailman-web
       restart: always
       privileged: true
       network_mode: "host"
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock:ro
         - /lib/modules:/lib/modules:ro
-
-    mailman-core:
-      image: maxking/mailman-core:latest
-      sysctls:
-        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
-      restart: always
-      container_name: mailman-core
-      domainname: ${DOMAINNAME}
-      hostname: ${HOSTNAME}
-      depends_on:
-        - database
-      environment:
-        - DATABASE_URL=mysql+pymysql://mailman:${MMDBPASS}@database/mailmandb?charset=utf8mb4&use_unicode=1
-        - DATABASE_TYPE=mysql
-        - DATABASE_CLASS=mailman.database.mysql.MySQLDatabase
-        - HYPERKITTY_API_KEY=${HKAPIKEY}
-      volumes:
-        - /opt/mailman/core:/opt/mailman/
-      ports:
-        - "8024:8024"
-      dns:
-        - ${IPV4_NETWORK:-${IPV4_NETWORK:-172.19.199}.5
-      networks:
-        mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.2
-
-    mailman-web:
-      image: maxking/mailman-web:latest
-      sysctls:
-        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
-      restart: always
-      container_name: mailman-web
-      domainname: ${DOMAINNAME}
-      hostname: ${HOSTNAME}
-      depends_on:
-        - database
-      environment:
-        - DATABASE_URL=mysql://mailman:${MMDBPASS}@database/mailmandb?charset=utf8mb4&use_unicode=1
-        - DATABASE_TYPE=mysql
-        - HYPERKITTY_API_KEY=${HKAPIKEY}
-        - SECRET_KEY=${DJSECRET}
-        - DYLD_LIBRARY_PATH=/usr/local/mysql/lib/
-        - SERVE_FROM_DOMAIN=lists.${DOMAINNAME}
-        - UWSGI_STATIC_MAP=/static=/opt/mailman-web-data/static
-      volumes:
-        - /opt/mailman/web:/opt/mailman-web-data
-      dns:
-        - ${IPV4_NETWORK:-${IPV4_NETWORK:-172.19.199}.5
-      networks:
-        mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.3
-
-    database:
-      image: mariadb:10.3
-      command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-      sysctls:
-        - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
-      restart: always
-      environment:
-        - MYSQL_DATABASE=mailmandb
-        - MYSQL_USER=mailman
-        - MYSQL_PASSWORD=${MMDBPASS}
-        - MYSQL_RANDOM_ROOT_PASSWORD=yes
-      volumes:
-        - /opt/mailman/database:/var/lib/mysql
-      dns:
-        - ${IPV4_NETWORK:-${IPV4_NETWORK:-172.19.199}.5
-      networks:
-        mailcow-network:
-          ipv4_address: ${IPV4_NETWORK:-172.19.199}.4
-          aliases:
-            - database
 
 networks:
   mailcow-network:
@@ -491,7 +510,9 @@ volumes:
   vmail-vol-1:
   mysql-vol-1:
   redis-vol-1:
+  rspamd-vol-1:
   postfix-vol-1:
   crypt-vol-1:
   rspamd-sock:
-  rspamd-vol-1:
+  mailman-core-vol-1:
+  mailman-database-vol-1:

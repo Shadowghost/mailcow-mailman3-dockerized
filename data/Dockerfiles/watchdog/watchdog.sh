@@ -63,14 +63,26 @@ function mail_error() {
 
 get_container_ip() {
   # ${1} is container
-  CONTAINER_ID=
+  CONTAINER_ID=()
   CONTAINER_IP=
   LOOP_C=1
   until [[ ${CONTAINER_IP} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] || [[ ${LOOP_C} -gt 5 ]]; do
-    sleep 1
-    CONTAINER_ID=$(curl --silent http://dockerapi:8080/containers/json | jq -r ".[] | {name: .Config.Labels[\"com.docker.compose.service\"], id: .Id}" | jq -rc "select( .name | tostring | contains(\"${1}\")) | .id")
+    sleep 0.5
+    # get long container id for exact match
+    CONTAINER_ID=($(curl --silent http://dockerapi:8080/containers/json | jq -r ".[] | {name: .Config.Labels[\"com.docker.compose.service\"], id: .Id}" | jq -rc "select( .name | tostring == \"${1}\") | .id"))
+    # returned id can have multiple elements (if scaled), shuffle for random test
+    CONTAINER_ID=($(printf "%s\n" "${CONTAINER_ID[@]}" | shuf))
     if [[ ! -z ${CONTAINER_ID} ]]; then
-      CONTAINER_IP=$(curl --silent http://dockerapi:8080/containers/${CONTAINER_ID}/json | jq -r '.NetworkSettings.Networks[].IPAddress')
+      for matched_container in "${CONTAINER_ID[@]}"; do
+        CONTAINER_IP=$(curl --silent http://dockerapi:8080/containers/${matched_container}/json | jq -r '.NetworkSettings.Networks[].IPAddress')
+        # grep will do nothing if one of these vars is empty
+        [[ -z ${CONTAINER_IP} ]] && continue
+        [[ -z ${IPV4_NETWORK} ]] && continue
+        # only return ips that are part of our network
+        if ! grep -q ${IPV4_NETWORK} <(echo ${CONTAINER_IP}); then
+          CONTAINER_IP=
+        fi
+      done
     fi
     LOOP_C=$((LOOP_C + 1))
   done
@@ -128,7 +140,7 @@ sogo_checks() {
     host_ip=$(get_container_ip sogo-mailcow)
     err_c_cur=${err_count}
     /usr/lib/nagios/plugins/check_http -4 -H ${host_ip} -u /WebServerResources/css/theme-default.css -p 9192 -R md-default-theme 1>&2; err_count=$(( ${err_count} + $? ))
-    /usr/lib/nagios/plugins/check_http -4 -H ${host_ip} -u /SOGo.index/ -p 20000 -R "SOGo\sGroupware" 1>&2; err_count=$(( ${err_count} + $? ))
+    /usr/lib/nagios/plugins/check_http -4 -H ${host_ip} -u /SOGo.index/ -p 20000 -R "SOGo\.MainUI" 1>&2; err_count=$(( ${err_count} + $? ))
     [ ${err_c_cur} -eq ${err_count} ] && [ ! $((${err_count} - 1)) -lt 0 ] && err_count=$((${err_count} - 1)) diff_c=1
     [ ${err_c_cur} -ne ${err_count} ] && diff_c=$(( ${err_c_cur} - ${err_count} ))
     progress "SOGo" ${THRESHOLD} $(( ${THRESHOLD} - ${err_count} )) ${diff_c}
@@ -190,8 +202,8 @@ phpfpm_checks() {
   while [ ${err_count} -lt ${THRESHOLD} ]; do
     host_ip=$(get_container_ip php-fpm-mailcow)
     err_c_cur=${err_count}
-    cgi-fcgi -bind -connect ${host_ip}:9000 | grep "Content-type" 1>&2; err_count=$(( ${err_count} + ($? * 2)))
-    cgi-fcgi -bind -connect ${host_ip}:9001 | grep "Content-type" 1>&2; err_count=$(( ${err_count} + ($? * 2)))
+    nc -z ${host_ip} 9001 ; err_count=$(( ${err_count} + ($? * 2)))
+    nc -z ${host_ip} 9002 ; err_count=$(( ${err_count} + ($? * 2)))
     /usr/lib/nagios/plugins/check_ping -4 -H ${host_ip} -w 2000,10% -c 4000,100% -p2 1>&2; err_count=$(( ${err_count} + $? ))
     [ ${err_c_cur} -eq ${err_count} ] && [ ! $((${err_count} - 1)) -lt 0 ] && err_count=$((${err_count} - 1)) diff_c=1
     [ ${err_c_cur} -ne ${err_count} ] && diff_c=$(( ${err_c_cur} - ${err_count} ))

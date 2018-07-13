@@ -5,6 +5,7 @@
 
 $lang['footer']['loading'] = 'Einen Moment bitte...';
 $lang['header']['restart_sogo'] = 'SOGo neustarten';
+$lang['header']['restart_netfilter'] = 'Netfilter neustarten';
 $lang['footer']['restart_container'] = 'Container neustarten';
 $lang['footer']['restart_now'] = 'Jetzt neustarten';
 $lang['footer']['restart_container_info'] = '<b>Wichtig:</b> Ein korrekter Neustart eines Containers kann eine Weile in Anspruch nehmen, bitte warten Sie, bis der Prozess vollständig beendet wurde.';
@@ -185,7 +186,12 @@ $lang['header']['mailcow_settings'] = 'Konfiguration';
 $lang['header']['administration'] = 'Administration';
 $lang['header']['mailboxes'] = 'Mailboxen';
 $lang['header']['user_settings'] = 'Benutzereinstellungen';
-$lang['header']['logged_in_as_logout_dual'] = 'Eingeloggt als <b>%s <span class="text-info">[%s]</span></b>';
+$lang['mailbox']['booking_0'] = 'Immer als verfügbar anzeigen';
+$lang['mailbox']['booking_lt0'] = 'Unbegrenzt, jedoch anzeigen, wenn gebucht';
+$lang['mailbox']['booking_custom'] = 'Benutzerdefiniertes Limit';
+$lang['mailbox']['booking_0_short'] = 'Immer verfügbar';
+$lang['mailbox']['booking_lt0_short'] = 'Weiches Limit';
+$lang['mailbox']['booking_custom_short'] = 'Hartes Limit';
 $lang['mailbox']['domain'] = 'Domain';
 $lang['mailbox']['spam_aliases'] = 'Temp. Alias';
 $lang['mailbox']['alias'] = 'Alias';
@@ -213,6 +219,8 @@ $lang['mailbox']['in_use'] = 'Prozentualer Gebrauch';
 $lang['mailbox']['msg_num'] = 'Anzahl Nachrichten';
 $lang['mailbox']['remove'] = 'Entfernen';
 $lang['mailbox']['edit'] = 'Bearbeiten';
+$lang['mailbox']['no_record'] = 'Kein Eintrag für Objekt %s';
+$lang['mailbox']['no_record_single'] = 'Kein Eintrag';
 $lang['mailbox']['add_domain'] = 'Domain hinzufügen';
 $lang['mailbox']['add_domain_alias'] = 'Domain-Alias hinzufügen';
 $lang['mailbox']['add_mailbox'] = 'Mailbox hinzufügen';
@@ -295,6 +303,7 @@ $lang['edit']['delete2duplicates'] = 'Lösche Duplikate im Ziel';
 $lang['edit']['delete1'] = 'Lösche Nachricht nach Übertragung vom Quell-Server';
 $lang['edit']['delete2'] = 'Lösche Nachrichten von Ziel-Server, die nicht auf Quell-Server vorhanden sind';
 
+$lang['add']['domain_matches_hostname'] = 'Domain %s darf nicht dem Hostnamen entsprechen';
 $lang['add']['domain'] = 'Domain';
 $lang['add']['active'] = 'Aktiv';
 $lang['add']['multiple_bookings'] = 'Mehrfaches Buchen möglich';
@@ -365,7 +374,11 @@ $lang['tfa']['scan_qr_code'] = "Bitte scannen Sie jetzt den angezeigten QR-Code:
 $lang['tfa']['enter_qr_code'] = "Falls Sie den angezeigten QR-Code nicht scannen können, verwenden Sie bitte nachstehenden Sicherheitsschlüssel";
 $lang['tfa']['confirm_totp_token'] = "Bitte bestätigen Sie die Änderung durch Eingabe eines generierten Tokens";
 
+$lang['admin']['rspamd-com_settings'] = '<a href="https://rspamd.com/doc/configuration/settings.html#settings-structure" target="_blank">Rspamd docs</a>
+  - Ein Name wird automatisch generiert. Beispielinhalte zur Einsicht stehen nachstehend bereit.';
+  
 $lang['admin']['no_new_rows'] = 'Keine weiteren Zeilen vorhanden';
+$lang['admin']['additional_rows'] = ' zusätzliche Zeilen geladen'; // parses to 'n additional rows were added'
 $lang['admin']['private_key'] = 'Private Key';
 $lang['admin']['import'] = 'Importieren';
 $lang['admin']['import_private_key'] = 'Private Key importieren';
@@ -395,6 +408,15 @@ $lang['admin']['active'] = 'Aktiv';
 $lang['admin']['inactive'] = 'Inaktiv';
 $lang['admin']['action'] = 'Aktion';
 $lang['admin']['add_domain_admin'] = 'Domain-Administrator hinzufügen';
+$lang['admin']['add_settings_rule'] = 'Rspamd Setting hinzufügen';
+$lang['admin']['rsetting_desc'] = 'Kurze Beschreibung';
+$lang['admin']['rsetting_content'] = 'Regelinhalt';
+$lang['admin']['rsetting_none'] = 'Keine Regel hinterlegt';
+$lang['admin']['rsetting_no_selection'] = 'Bitte eine Regel auswählen';
+$lang['admin']['rsettings_preset_1'] = 'Alles außer DKIM and Ratelimits für authentifizierte Benutzer deaktivieren"';
+$lang['admin']['rsettings_preset_2'] = 'Spam an Postmaster-Addressen nicht blockieren';
+$lang['admin']['rsettings_insert_preset'] = 'Beispiel "%s" laden';
+$lang['admin']['rsetting_add_rule'] = 'Regel hinzufügen';
 $lang['admin']['admin_domains'] = 'Domain-Zuweisungen';
 $lang['admin']['domain_admins'] = 'Domain-Administratoren';
 $lang['admin']['username'] = 'Benutzername';
@@ -410,9 +432,12 @@ $lang['admin']['access'] = 'Zugang';
 $lang['admin']['no_record'] = 'Kein Eintrag';
 $lang['admin']['filter_table'] = 'Tabelle Filtern';
 $lang['admin']['empty'] = 'Keine Einträge vorhanden';
+$lang['admin']['time'] = 'Zeit';
+$lang['admin']['priority'] = 'Gewichtung';
 $lang['admin']['refresh'] = 'Neu laden';
 $lang['admin']['to_top'] = 'Nach oben';
 $lang['admin']['in_use_by'] = 'Verwendet von';
+$lang['admin']['message'] = 'Nachricht';
 $lang['admin']['forwarding_hosts'] = 'Weiterleitungs-Hosts';
 $lang['admin']['forwarding_hosts_hint'] = 'Eingehende Nachrichten werden von den hier gelisteten Hosts bedingungslos akzeptiert. Diese Hosts werden dann nicht mit DNSBLs abgeglichen oder Greylisting unterworfen. Von ihnen empfangener Spam wird nie abgelehnt, optional kann er aber in den Spam-Ordner einsortiert werden. Die übliche Verwendung für diese Funktion ist, um Mailserver anzugeben, auf denen eine Weiterleitung zu Ihrem mailcow-Server eingerichtet wurde.';
 $lang['admin']['forwarding_hosts_add_hint'] = 'Sie können entweder IPv4/IPv6-Adressen, Netzwerke in CIDR-Notation, Hostnamen (die zu IP-Adressen aufgelöst werden), oder Domainnamen (die zu IP-Adressen aufgelöst werden, indem ihr SPF-Record abgefragt wird oder, in dessen Abwesenheit, ihre MX-Records) angeben.';
@@ -426,10 +451,14 @@ $lang['admin']['api_allow_from'] = "IP-Adressen für Zugriff";
 $lang['admin']['api_key'] = "API-Key";
 $lang['admin']['activate_api'] = "API aktivieren";
 $lang['admin']['regen_api_key'] = "API-Key regenerieren";
+$lang['admin']['ban_list_info'] = "Übersicht ausgesperrter Netzwerke: <b>Netzwerk (verbleibende Banzeit) - [Aktionen]</b>.<br />IPs, die zum Unban eingereiht werden, verlassen die Liste aktiver Bans nach wenigen Sekunden.<br />Rote Labels sind Indikatoren für aktive Blacklisteinträge.";
+$lang['admin']['unban_pending'] = "ausstehend";
+$lang['admin']['queue_unban'] = "Unban einreihen";
+$lang['admin']['no_active_bans'] = "Keine aktiven Bans";
 
 $lang['admin']['quarantine'] = "Quarantäne";
-$lang['admin']['quarantine_retention_size'] = "Rückhaltungen pro Mailbox:";
-$lang['admin']['quarantine_max_size'] = "Maximale Größe in MiB (größere Elemente werden verworfen):";
+$lang['admin']['quarantine_retention_size'] = "Rückhaltungen pro Mailbox<br />0 bedeutet <b>inaktiv</b>!";
+$lang['admin']['quarantine_max_size'] = "Maximale Größe in MiB (größere Elemente werden verworfen)<br />0 bedeutet <b>nicht</b> unlimitert!";
 $lang['admin']['quarantine_exclude_domains'] = "Domains und Alias-Domains ausschließen:";
 
 $lang['success']['forwarding_host_removed'] = "Weiterleitungs-Host %s wurde entfernt";
@@ -529,3 +558,4 @@ $lang['mailbox']['recipient_map_info'] = 'Empfängerumschreibung ersetzen den Em
 $lang['mailbox']['recipient_map_old'] = 'Original Empfänger';
 $lang['mailbox']['recipient_map_new'] = 'Neuer Empfänger';
 $lang['mailbox']['add_recipient_map_entry'] = 'Empfängerumschreibung hinzufügen';
+$lang['mailbox']['add_sender_map_entry'] = 'Senderumschreibung hinzufügen';

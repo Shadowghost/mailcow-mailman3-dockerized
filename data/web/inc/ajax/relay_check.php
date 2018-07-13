@@ -23,7 +23,14 @@ if (isset($_SESSION['mailcow_cc_role']) && $_SESSION['mailcow_cc_role'] == "admi
     $password = $relayhost_details['password'];
 
     $mail = new PHPMailer;
-
+    $mail->Timeout = 10;
+    $mail->SMTPOptions = array(
+      'ssl' => array(
+        'verify_peer' => false,
+        'verify_peer_name' => false,
+        'allow_self_signed' => true
+      )
+    );
     $mail->SMTPDebug = 3;
     $mail->Debugoutput = function($str, $level) {
       foreach(preg_split("/((\r?\n)|(\r\n?)|\n)/", $str) as $line){
@@ -57,8 +64,8 @@ if (isset($_SESSION['mailcow_cc_role']) && $_SESSION['mailcow_cc_role'] == "admi
       $mail->SMTPAuth = true;
       $mail->Username = $username;
       $mail->Password = $password;
-      $mail->Port = $port;
     }
+    $mail->Port = $port;
     $mail->setFrom($mail_from, 'Mailer');
     $mail->Subject = 'A subject for a SMTP test';
     $mail->addAddress($RELAY_TO, 'Joe Null');

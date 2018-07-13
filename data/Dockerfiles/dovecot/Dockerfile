@@ -3,8 +3,8 @@ LABEL maintainer "Andre Peters <andre.peters@servercow.de>"
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV LC_ALL C
-ENV DOVECOT_VERSION 2.2.33.2
-ENV PIGEONHOLE_VERSION 0.4.21
+ENV DOVECOT_VERSION 2.3.2.1
+ENV PIGEONHOLE_VERSION 0.5.2
 
 RUN apt-get update && apt-get -y --no-install-recommends install \
   automake \
@@ -27,9 +27,11 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
   libauthen-ntlm-perl \
   libbz2-dev \
   libcrypt-ssleay-perl \
+  libcurl4-openssl-dev \
   libdbd-mysql-perl \
   libdbi-perl \
   libdigest-hmac-perl \
+  libexpat1-dev \
   libfile-copy-recursive-perl \
   libio-compress-perl \
   libio-socket-inet6-perl \
@@ -54,6 +56,7 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
   liburi-perl \
   lzma-dev \
   make \
+  mysql-client \
   procps \
   supervisor \
   cron \
@@ -62,25 +65,21 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
   syslog-ng-mod-redis \
   && rm -rf /var/lib/apt/lists/*
 
-
-RUN curl https://www.dovecot.org/releases/2.2/dovecot-$DOVECOT_VERSION.tar.gz | tar xvz  \
+RUN curl https://www.dovecot.org/releases/2.3/dovecot-$DOVECOT_VERSION.tar.gz | tar xvz  \
   && cd dovecot-$DOVECOT_VERSION \
-  && curl -o src/lib-auth/auth-client-request.c https://mailcow.email/dovecot-patch1/auth-client-request.c \
-  && curl -o src/lib-auth/auth-server-connection.c https://mailcow.email/dovecot-patch1/auth-server-connection.c \
-  && curl -o src/lib-auth/auth-server-connection.h https://mailcow.email/dovecot-patch1/auth-server-connection.h \
-  && ./configure --with-mysql --with-lzma --with-lz4 --with-ssl=openssl --with-notify=inotify --with-storages=mdbox,sdbox,maildir,mbox,imapc,pop3c --with-bzlib --with-zlib \
+  && ./configure --with-solr --with-mysql --with-lzma --with-lz4 --with-ssl=openssl --with-notify=inotify --with-storages=mdbox,sdbox,maildir,mbox,imapc,pop3c --with-bzlib --with-zlib \
   && make -j3 \
   && make install \
   && make clean \
   && cd .. && rm -rf dovecot-$DOVECOT_VERSION \
-  && curl https://pigeonhole.dovecot.org/releases/2.2/dovecot-2.2-pigeonhole-$PIGEONHOLE_VERSION.tar.gz | tar xvz  \
-  && cd dovecot-2.2-pigeonhole-$PIGEONHOLE_VERSION \
+  && curl https://pigeonhole.dovecot.org/releases/2.3/dovecot-2.3-pigeonhole-$PIGEONHOLE_VERSION.tar.gz | tar xvz  \
+  && cd dovecot-2.3-pigeonhole-$PIGEONHOLE_VERSION \
   && ./configure \
   && make -j3 \
   && make install \
   && make clean \
   && cd .. \
-  && rm -rf dovecot-2.2-pigeonhole-$PIGEONHOLE_VERSION
+  && rm -rf dovecot-2.3-pigeonhole-$PIGEONHOLE_VERSION
 
 RUN cpanm Data::Uniqid Mail::IMAPClient String::Util
 RUN echo '* * * * *   root   /usr/local/bin/imapsync_cron.pl' > /etc/cron.d/imapsync
@@ -111,7 +110,7 @@ RUN groupadd -g 5000 vmail \
   && useradd -c "Dovecot login user" -d /dev/null -u 402 -g dovenull -s /bin/false dovenull
 
 RUN touch /etc/default/locale
-RUN apt-get purge -y build-essential automake autotools-dev \
+RUN apt-get purge -y build-essential automake autotools-dev default-libmysqlclient-dev libbz2-dev libcurl4-openssl-dev libexpat1-dev liblz-dev liblz4-dev liblzma-dev libpam-dev libssl-dev lzma-dev \
   && apt-get autoremove --purge -y
 
 ENTRYPOINT ["/docker-entrypoint.sh"]

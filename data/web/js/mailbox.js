@@ -168,7 +168,7 @@ jQuery(function($){
           return Number(res[0]);
         },
         },
-        {"name":"max_quota_for_mbox","title":lang.mailbox_quota,"breakpoints":"xs sm"},
+        {"name":"max_quota_for_mbox","title":lang.mailbox_quota,"breakpoints":"xs sm","style":{"width":"125px"}},
         {"name":"backupmx","filterable": false,"style":{"maxWidth":"120px","width":"120px"},"title":lang.backup_mx,"breakpoints":"xs sm"},
         {"name":"active","filterable": false,"style":{"maxWidth":"80px","width":"80px"},"title":lang.active},
         {"name":"action","filterable": false,"sortable": false,"style":{"text-align":"right","maxWidth":"240px","width":"240px"},"type":"html","title":lang.action,"breakpoints":"xs sm"}
@@ -233,7 +233,10 @@ jQuery(function($){
         },
         },
         {"name":"spam_aliases","filterable": false,"title":lang.spam_aliases,"breakpoints":"xs sm md"},
-        {"name":"in_use","filterable": false,"type":"html","title":lang.in_use},
+        {"name":"in_use","filterable": false,"type":"html","title":lang.in_use,"sortValue": function(value){
+          return Number($(value).find(".progress-bar").attr('aria-valuenow'));
+        },
+        },
         {"name":"messages","filterable": false,"title":lang.msg_num,"breakpoints":"xs sm md"},
         {"name":"active","filterable": false,"title":lang.active},
         {"name":"action","filterable": false,"sortable": false,"style":{"text-align":"right","min-width":"250px"},"type":"html","title":lang.action,"breakpoints":"xs sm md"}
@@ -294,7 +297,7 @@ jQuery(function($){
         {"sorted": true,"name":"description","title":lang.description,"style":{"width":"250px"}},
         {"name":"kind","title":lang.kind},
         {"name":"domain","title":lang.domain,"breakpoints":"xs sm"},
-        {"name":"multiple_bookings","filterable": false,"style":{"maxWidth":"120px","width":"120px"},"title":lang.multiple_bookings,"breakpoints":"xs sm"},
+        {"name":"multiple_bookings","filterable": false,"style":{"maxWidth":"150px","width":"140px"},"title":lang.multiple_bookings,"breakpoints":"xs sm"},
         {"name":"active","filterable": false,"style":{"maxWidth":"80px","width":"80px"},"title":lang.active},
         {"name":"action","filterable": false,"sortable": false,"style":{"text-align":"right","maxWidth":"180px","width":"180px"},"type":"html","title":lang.action,"breakpoints":"xs sm"}
       ],
@@ -308,9 +311,16 @@ jQuery(function($){
         },
         success: function (data) {
           $.each(data, function (i, item) {
+            if (item.multiple_bookings == '0') {
+              item.multiple_bookings = '<span id="active-script" class="label label-success">' + lang.booking_0_short + '</span>';
+            } else if (item.multiple_bookings == '-1') {
+              item.multiple_bookings = '<span id="active-script" class="label label-warning">' + lang.booking_lt0_short + '</span>';
+            } else {
+              item.multiple_bookings = '<span id="active-script" class="label label-danger">' + lang.booking_custom_short + ' (' + item.multiple_bookings + ')</span>';
+            }
             item.action = '<div class="btn-group">' +
               '<a href="/edit.php?resource=' + encodeURIComponent(item.name) + '" class="btn btn-xs btn-default"><span class="glyphicon glyphicon-pencil"></span> ' + lang.edit + '</a>' +
-              '<a href="#" id="delete_selected" data-id="single-resource" data-api-url="delete/resource" data-item="' + encodeURIComponent(item.name) + '" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-trash"></span> ' + lang.remove + '</a>' +
+              '<a href="#" id="delete_selected" data-id="single-resource" data-api-url="delete/resource" data-item="' + item.name + '" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-trash"></span> ' + lang.remove + '</a>' +
               '</div>';
             item.chkbox = '<input type="checkbox" data-id="resource" name="multi_select" value="' + encodeURIComponent(item.name) + '" />';
             item.name = escapeHtml(item.name);
@@ -459,7 +469,7 @@ jQuery(function($){
               '<a href="#" id="delete_selected" data-id="single-alias" data-api-url="delete/alias" data-item="' + encodeURIComponent(item.address) + '" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-trash"></span> ' + lang.remove + '</a>' +
               '</div>';
             item.chkbox = '<input type="checkbox" data-id="alias" name="multi_select" value="' + encodeURIComponent(item.address) + '" />';
-            item.goto = escapeHtml(item.goto);
+            item.goto = escapeHtml(item.goto.replace(/,/g, " "));
             if (item.is_catch_all == 1) {
               item.address = '<div class="label label-default">Catch-All</div> ' + escapeHtml(item.address);
             }

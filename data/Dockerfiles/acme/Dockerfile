@@ -11,8 +11,10 @@ RUN apk add --update --no-cache \
   jq \
   mariadb-client \
   redis \
-  tini
+  tini \
+  tzdata
 
 COPY docker-entrypoint.sh /srv/docker-entrypoint.sh
+COPY expand6.sh /srv/expand6.sh
 
 CMD ["/sbin/tini", "-g", "--", "/srv/docker-entrypoint.sh"]
