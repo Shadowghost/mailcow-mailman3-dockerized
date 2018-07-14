@@ -96,17 +96,17 @@ function backup() {
         debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_mailman-core.tar.gz /mailman-core
       ;;&
     mailman-db|all)
-	  SQLIMAGE2='mariadb:10.3'
+      SQLIMAGE2='mariadb:10.3'
       docker run --rm \
         --network $(docker network ls -qf name=${CMPS_PRJ}_mailcow-network) \
         -v $(docker volume ls -qf name=${CMPS_PRJ}_mailman-database-vol-1):/var/lib/mysql/ \
         --entrypoint= \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
-        ${SQLIMAGE2} /bin/sh -c "mysqldump -hmysql -uroot -p${MMDBROOT} --all-databases | gzip > /backup/backup_mailman_mysql.gz"
+        ${SQLIMAGE2} /bin/sh -c "mysqldump -hdatabase -uroot -p${MMDBROOT} --all-databases | gzip > /backup/backup_mailman_mysql.gz"
       ;;&
-	mailman-web|all)
-	  /bin/tar --warning='no-file-ignored' -Pcvpzf ${BACKUP_LOCATION}/mailcowmailman3-${DATE}/backup_mailman-web.tar.gz ../data/mailman/web
-	  ;;
+    mailman-web|all)
+      /bin/tar --warning='no-file-ignored' -Pcvpzf ${BACKUP_LOCATION}/mailcowmailman3-${DATE}/backup_mailman-web.tar.gz ../data/mailman/web
+      ;;
     esac
     shift
   done
@@ -162,7 +162,7 @@ function restore() {
       docker start $(docker ps -aqf name=postfix-mailcow)
       ;;
     mysql)
-      SQLIMAGE=$(grep -iEo '(mysql|mariadb)\:.+' ${COMPOSE_FILE})
+      SQLIMAGE1='mariadb:10.2'
       docker stop $(docker ps -qf name=mysql-mailcow)
       docker run \
         -it --rm \
@@ -170,14 +170,14 @@ function restore() {
         --entrypoint= \
         -u mysql \
         -v ${RESTORE_LOCATION}:/backup \
-        ${SQLIMAGE} /bin/sh -c "mysqld --skip-grant-tables & \
+        ${SQLIMAGE1} /bin/sh -c "mysqld --skip-grant-tables & \
         until mysqladmin ping; do sleep 3; done && \
         echo Restoring... && \
         gunzip < backup/backup_mysql.gz | mysql -uroot && \
         mysql -uroot -e SHUTDOWN;"
       docker start $(docker ps -aqf name=mysql-mailcow)
       ;;
-	mailman-core)
+    mailman-core)
       docker stop $(docker ps -qf name=mailman-core)
       docker run -it --rm \
         -v ${RESTORE_LOCATION}:/backup \
@@ -186,7 +186,7 @@ function restore() {
       docker start $(docker ps -aqf name=mailman-core)
       ;;
     mailman-db)
-      SQLIMAGE=$(grep -iEo '(mysql|mariadb)\:.+' ${COMPOSE_FILE})
+      SQLIMAGE2='mariadb:10.3'
       docker stop $(docker ps -qf name=database)
       docker run \
         -it --rm \
@@ -194,14 +194,14 @@ function restore() {
         --entrypoint= \
         -u mysql \
         -v ${RESTORE_LOCATION}:/backup \
-        ${SQLIMAGE} /bin/sh -c "mysqld --skip-grant-tables & \
+        ${SQLIMAGE2} /bin/sh -c "mysqld --skip-grant-tables & \
         until mysqladmin ping; do sleep 3; done && \
         echo Restoring... && \
         gunzip < backup/backup_mailman_mysql.gz | mysql -uroot && \
         mysql -uroot -e SHUTDOWN;"
       docker start $(docker ps -aqf name=database)
       ;;&
-	mailman-web)
+    mailman-web)
 	  docker stop $(docker ps -qf name=mailman-web)
 	  mkdir -p ../data/mailman/web
 	  /bin/tar -Pxvzf ${RESTORE_LOCATION}/backup_mailman-web.tar.gz ../data/mailman/web
@@ -262,7 +262,7 @@ elif [[ ${1} == "restore" ]]; then
       ((i++))
 	elif [[ ${file} =~ mailman-core ]]; then
       echo "[ ${i} ] - Mailman3 core data"
-      FILE_SELECTION[${i}]="mmailman-core"
+      FILE_SELECTION[${i}]="mailman-core"
       ((i++))
 	elif [[ ${file} =~ mailman-db ]]; then
       echo "[ ${i} ] - Mailman3 DB"
