@@ -27,10 +27,16 @@ docker-compose pull
 docker-compose up -d
 ```
 
-3.  Create mailman admin (you need to **manually** create this mail address in the mailcowUI)
+3. Check `mailman-web` logs to make sure the database is initialized and all migrations ran (you need to wait some time)
 
 ```bash
-docker exec -it mailman-web python manage.py createsuperuser
+docker-compose logs -f mailman-web
+```
+
+4.  Create mailman admin user (you need to **manually** create this mail address in the mailcowUI); replace `<project-name>` with your project name (commonly `mailcowdockerized`).
+
+```bash
+docker exec -it <project-name>_mailman-web python manage.py createsuperuser
 ```
 
 ## Migrating from mailcow-dockerized
