@@ -170,8 +170,8 @@ echo "Create mailman volume, copy mailman configuration and selfsigned SSL-certi
 docker volume create "${PN}"_mailman-core-vol-1
 docker run -d \
   --name devtest \
-  --mount source="${PN}"_mailman-core-volume-1,target=/app \
+  --mount source="${PN}"_mailman-core-vol-1,target=/app \
   nginx:mainline-alpine
-docker cp ./templates/mailman/core devtest:/app/
-docker container stop devtest
+docker cp ./templates/mailman/mailman-extra.cfg devtest:/app/
+docker container stop devtest && docker container rm devtest
 cp -n ./data/assets/ssl-example/*.pem ./data/assets/ssl/
