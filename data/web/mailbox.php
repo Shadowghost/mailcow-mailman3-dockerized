@@ -30,7 +30,10 @@ $_SESSION['return_to'] = $_SERVER['REQUEST_URI'];
         <div role="tabpanel" class="tab-pane active" id="tab-domains">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title"><?=$lang['mailbox']['domains'];?></h3>
+              <?=$lang['mailbox']['domains'];?> <span class="badge badge-info table-lines"></span>
+              <div class="btn-group pull-right">
+                <button class="btn btn-xs btn-default refresh_table" data-draw="draw_domain_table" data-table="domain_table"><?=$lang['admin']['refresh'];?></button>
+              </div>
             </div>
             <div class="table-responsive">
               <table id="domain_table" class="table table-striped"></table>
@@ -58,7 +61,10 @@ $_SESSION['return_to'] = $_SERVER['REQUEST_URI'];
         <div role="tabpanel" class="tab-pane" id="tab-mailboxes">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title"><?=$lang['mailbox']['mailboxes'];?></h3>
+              <?=$lang['mailbox']['mailboxes'];?> <span class="badge badge-info table-lines"></span>
+              <div class="btn-group pull-right">
+                <button class="btn btn-xs btn-default refresh_table" data-draw="draw_mailbox_table" data-table="mailbox_table"><?=$lang['admin']['refresh'];?></button>
+              </div>
             </div>
             <div class="table-responsive">
               <table id="mailbox_table" class="table table-striped"></table>
@@ -82,7 +88,10 @@ $_SESSION['return_to'] = $_SERVER['REQUEST_URI'];
         <div role="tabpanel" class="tab-pane" id="tab-resources">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title"><?=$lang['mailbox']['resources'];?></h3>
+              <?=$lang['mailbox']['resources'];?> <span class="badge badge-info table-lines"></span>
+              <div class="btn-group pull-right">
+                <button class="btn btn-xs btn-default refresh_table" data-draw="draw_resource_table" data-table="resource_table"><?=$lang['admin']['refresh'];?></button>
+              </div>
             </div>
             <div class="table-responsive">
               <table id="resource_table" class="table table-striped"></table>
@@ -112,10 +121,10 @@ $_SESSION['return_to'] = $_SERVER['REQUEST_URI'];
         <div role="tabpanel" class="tab-pane" id="tab-domain-aliases">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <div class="pull-right">
-                <a href="#" data-toggle="modal" data-target="#addAliasDomainModal" ><span class="glyphicon glyphicon-plus"></span></a>
+              <?=$lang['mailbox']['domain_aliases'];?> <span class="badge badge-info table-lines"></span>
+              <div class="btn-group pull-right">
+                <button class="btn btn-xs btn-default refresh_table" data-draw="draw_aliasdomain_table" data-table="aliasdomain_table"><?=$lang['admin']['refresh'];?></button>
               </div>
-              <h3 class="panel-title"><?=$lang['mailbox']['domain_aliases'];?></h3>
             </div>
             <div class="table-responsive">
               <table id="aliasdomain_table" class="table table-striped"></table>
@@ -139,7 +148,10 @@ $_SESSION['return_to'] = $_SERVER['REQUEST_URI'];
         <div role="tabpanel" class="tab-pane" id="tab-mbox-aliases">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title"><?=$lang['mailbox']['aliases'];?></h3>
+              <?=$lang['mailbox']['aliases'];?> <span class="badge badge-info table-lines"></span>
+              <div class="btn-group pull-right">
+                <button class="btn btn-xs btn-default refresh_table" data-draw="draw_alias_table" data-table="alias_table"><?=$lang['admin']['refresh'];?></button>
+              </div>
             </div>
             <div class="table-responsive">
               <table id="alias_table" class="table table-striped"></table>
@@ -163,13 +175,16 @@ $_SESSION['return_to'] = $_SERVER['REQUEST_URI'];
         <div role="tabpanel" class="tab-pane" id="tab-syncjobs">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title"><?=$lang['mailbox']['sync_jobs'];?></h3>
+              <?=$lang['mailbox']['sync_jobs'];?> <span class="badge badge-info table-lines"></span>
+              <div class="btn-group pull-right">
+                <button class="btn btn-xs btn-default refresh_table" data-draw="draw_sync_job_table" data-table="sync_job_table"><?=$lang['admin']['refresh'];?></button>
+              </div>
             </div>
             <div class="table-responsive">
               <table class="table table-striped" id="sync_job_table"></table>
             </div>
             <div class="mass-actions-mailbox">
-              <div class="btn-group">
+              <div class="btn-group" data-acl="<?=$_SESSION['acl']['syncjobs'];?>">
                 <a class="btn btn-sm btn-default" id="toggle_multi_select_all" data-id="syncjob" href="#"><span class="glyphicon glyphicon-check" aria-hidden="true"></span> <?=$lang['mailbox']['toggle_all'];?></a>
                 <a class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown" href="#"><?=$lang['mailbox']['quick_actions'];?> <span class="caret"></span></a>
                 <ul class="dropdown-menu">
@@ -189,14 +204,17 @@ $_SESSION['return_to'] = $_SERVER['REQUEST_URI'];
         <div role="tabpanel" class="tab-pane" id="tab-filters">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title"><?=$lang['mailbox']['filters'];?></h3>
+              <?=$lang['mailbox']['filters'];?> <span class="badge badge-info table-lines"></span>
+              <div class="btn-group pull-right">
+                <button class="btn btn-xs btn-default refresh_table" data-draw="draw_filter_table" data-table="filter_table"><?=$lang['admin']['refresh'];?></button>
+              </div>
             </div>
             <p style="margin:10px" class="help-block"><?=$lang['mailbox']['sieve_info'];?></p>
             <div class="table-responsive">
               <table class="table table-striped" id="filter_table"></table>
             </div>
             <div class="mass-actions-mailbox">
-              <div class="btn-group">
+              <div class="btn-group" data-acl="<?=$_SESSION['acl']['filters'];?>">
                 <a class="btn btn-sm btn-default" id="toggle_multi_select_all" data-id="filter_item" href="#"><span class="glyphicon glyphicon-check" aria-hidden="true"></span> <?=$lang['mailbox']['toggle_all'];?></a>
                 <a class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown" href="#"><?=$lang['mailbox']['quick_actions'];?> <span class="caret"></span></a>
                 <ul class="dropdown-menu">
@@ -217,14 +235,17 @@ $_SESSION['return_to'] = $_SERVER['REQUEST_URI'];
         <div role="tabpanel" class="tab-pane" id="tab-bcc">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title"><?=$lang['mailbox']['bcc_maps'];?></h3>
+              <?=$lang['mailbox']['bcc_maps'];?> <span class="badge badge-info table-lines"></span>
+              <div class="btn-group pull-right">
+                <button class="btn btn-xs btn-default refresh_table" data-draw="draw_bcc_table" data-table="bcc_table"><?=$lang['admin']['refresh'];?></button>
+              </div>
             </div>
             <p style="margin:10px" class="help-block"><?=$lang['mailbox']['bcc_info'];?></p>
             <div class="table-responsive">
               <table class="table table-striped" id="bcc_table"></table>
             </div>
             <div class="mass-actions-mailbox">
-              <div class="btn-group">
+              <div class="btn-group" data-acl="<?=$_SESSION['acl']['bcc_maps'];?>">
                 <a class="btn btn-sm btn-default" id="toggle_multi_select_all" data-id="bcc" href="#"><span class="glyphicon glyphicon-check" aria-hidden="true"></span> <?=$lang['mailbox']['toggle_all'];?></a>
                 <a class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown" href="#"><?=$lang['mailbox']['quick_actions'];?> <span class="caret"></span></a>
                 <ul class="dropdown-menu">
@@ -240,20 +261,17 @@ $_SESSION['return_to'] = $_SERVER['REQUEST_URI'];
               </div>
             </div>
           </div>
-          <div class="panel panel-default">
+          <div class="panel panel-default <?=($_SESSION['mailcow_cc_role'] == "admin") ?: 'hidden';?>">
             <div class="panel-heading">
-              <h3 class="panel-title"><?=$lang['mailbox']['recipient_maps'];?></h3>
+              <?=$lang['mailbox']['recipient_maps'];?> <span class="badge badge-info table-lines"></span>
+              <div class="btn-group pull-right">
+                <button class="btn btn-xs btn-default refresh_table" data-draw="draw_recipient_map_table" data-table="recipient_map_table"><?=$lang['admin']['refresh'];?></button>
+              </div>
             </div>
             <p style="margin:10px" class="help-block"><?=$lang['mailbox']['recipient_map_info'];?></p>
             <div class="table-responsive">
               <table class="table table-striped" id="recipient_map_table"></table>
             </div>
-<?php
-if (isset($_SESSION['mailcow_cc_role']) && ($_SESSION['mailcow_cc_role'] == "admin"))
-  $display = 'block';
-else
-  $display = 'none';
-?>
             <div class="mass-actions-mailbox" style="display: <?php echo $display; ?>">
               <div class="btn-group">
                 <a class="btn btn-sm btn-default" id="toggle_multi_select_all" data-id="recipient_map" href="#"><span class="glyphicon glyphicon-check" aria-hidden="true"></span> <?=$lang['mailbox']['toggle_all'];?></a>
@@ -280,9 +298,12 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/modals/mailbox.php';
 <?php
 $lang_mailbox = json_encode($lang['mailbox']);
 echo "var lang = ". $lang_mailbox . ";\n";
+echo "var acl = '". json_encode($_SESSION['acl']) . "';\n";
 echo "var csrf_token = '". $_SESSION['CSRF']['TOKEN'] . "';\n";
 $role = ($_SESSION['mailcow_cc_role'] == "admin") ? 'admin' : 'domainadmin';
+$is_dual = (!empty($_SESSION["dual-login"]["username"])) ? 'true' : 'false';
 echo "var role = '". $role . "';\n";
+echo "var is_dual = " . $is_dual . ";\n";
 echo "var pagination_size = '". $PAGINATION_SIZE . "';\n";
 ?>
 </script>

@@ -16,16 +16,19 @@ if (isset($_POST["login_user"]) && isset($_POST["pass_user"])) {
 	if ($as == "admin") {
 		$_SESSION['mailcow_cc_username'] = $login_user;
 		$_SESSION['mailcow_cc_role'] = "admin";
+    $_SESSION['mailcow_cc_last_login'] = last_login($login_user);
 		header("Location: /admin.php");
 	}
 	elseif ($as == "domainadmin") {
 		$_SESSION['mailcow_cc_username'] = $login_user;
 		$_SESSION['mailcow_cc_role'] = "domainadmin";
+    $_SESSION['mailcow_cc_last_login'] = last_login($login_user);
 		header("Location: /mailbox.php");
 	}
 	elseif ($as == "user") {
 		$_SESSION['mailcow_cc_username'] = $login_user;
 		$_SESSION['mailcow_cc_role'] = "user";
+    $_SESSION['mailcow_cc_last_login'] = last_login($login_user);
 		header("Location: /user.php");
 	}
 	elseif ($as != "pending") {
@@ -34,14 +37,10 @@ if (isset($_POST["login_user"]) && isset($_POST["pass_user"])) {
     unset($_SESSION['pending_tfa_method']);
 		unset($_SESSION['mailcow_cc_username']);
 		unset($_SESSION['mailcow_cc_role']);
-		$_SESSION['return'] = array(
-			'type' => 'danger',
-			'msg' => $lang['danger']['login_failed']
-		);
 	}
 }
 
-if (isset($_SESSION['mailcow_cc_role']) && $_SESSION['mailcow_cc_role'] == "admin") {
+if (isset($_SESSION['mailcow_cc_role']) && $_SESSION['acl']['login_as'] == "1") {
 	if (isset($_GET["duallogin"])) {
     $duallogin = html_entity_decode(rawurldecode($_GET["duallogin"]));
     if (filter_var($duallogin, FILTER_VALIDATE_EMAIL)) {
@@ -50,6 +49,15 @@ if (isset($_SESSION['mailcow_cc_role']) && $_SESSION['mailcow_cc_role'] == "admi
         $_SESSION["dual-login"]["role"]     = $_SESSION['mailcow_cc_role'];
         $_SESSION['mailcow_cc_username']    = $duallogin;
         $_SESSION['mailcow_cc_role']        = "user";
+        header("Location: /user.php");
+      }
+    }
+    else {
+      if (!empty(domain_admin('details', $duallogin))) {
+        $_SESSION["dual-login"]["username"] = $_SESSION['mailcow_cc_username'];
+        $_SESSION["dual-login"]["role"]     = $_SESSION['mailcow_cc_role'];
+        $_SESSION['mailcow_cc_username']    = $duallogin;
+        $_SESSION['mailcow_cc_role']        = "domainadmin";
         header("Location: /user.php");
       }
     }

@@ -74,7 +74,7 @@ if (!isset($autodiscover_config['sieve'])) {
 
 // Init records array
 $spf_link = '<a href="http://www.openspf.org/SPF_Record_Syntax" target="_blank">SPF Record Syntax</a><br />';
-$dmarc_link = '<a href="http://www.kitterman.com/dmarc/assistant.html" target="_blank">DMARC Assistant</a>';
+$dmarc_link = '<a href="https://www.kitterman.com/dmarc/assistant.html" target="_blank">DMARC Assistant</a>';
 
 $records = array();
 if ($_SESSION['mailcow_cc_role'] == "admin") {
@@ -368,8 +368,9 @@ foreach ($records as $record) {
     elseif ($current['type'] == 'TXT' &&
       stripos($current['txt'], 'v=dkim') === 0 &&
       stripos($record[2], 'v=dkim') === 0) {
-        $current['txt'] = str_replace(' ', '', $current['txt']);
-        if ($current[$data_field[$current['type']]] == $record[2]) {
+        preg_match('/v=DKIM1;.*k=rsa;.*p=(.*)/i', $current[$data_field[$current['type']]], $dkim_matches_current);
+        preg_match('/v=DKIM1;.*k=rsa;.*p=(.*)/i', $record[2], $dkim_matches_good);
+        if ($dkim_matches_current[1] == $dkim_matches_good[1]) {
           $state = state_good;
         }
     }

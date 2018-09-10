@@ -5,16 +5,8 @@ table.footable>tbody>tr.footable-empty>td {
 .pagination a {
   text-decoration: none !important;
 }
-.panel panel-default {
-  overflow: visible !important;
-}
-.table-responsive {
-  overflow: visible !important;
-}
-@media screen and (max-width: 767px) {
-  .table-responsive {
-    overflow-x: scroll !important;
-  }
+.btn-group {
+  width: max-content;
 }
 .footer-add-item {
   display:block;
@@ -42,4 +34,11 @@ table.footable>tbody>tr.footable-empty>td {
 .dns-recommended {
   max-width: 150px;
   word-break: break-all;
+}
+.table-lines {
+  vertical-align: inherit;
+}
+#logText {
+  font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;
+  font-size:smaller;
 }

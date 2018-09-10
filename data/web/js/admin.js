@@ -9,6 +9,14 @@ jQuery(function($){
     e.preventDefault();
     $('#import_dkim_arrow').toggleClass("animation"); 
   });
+  $("#duplicate_dkim_legend").on('click', function(e) {
+    e.preventDefault();
+    $('#duplicate_dkim_arrow').toggleClass("animation"); 
+  });
+  $("#api_legend").on('click', function(e) {
+    e.preventDefault();
+    $('#api_arrow').toggleClass("animation"); 
+  });
   $("#rspamd_preset_1").on('click', function(e) {
     e.preventDefault();
     $("form[data-id=rsetting]").find("#desc").val(lang.rsettings_preset_1);
@@ -19,6 +27,14 @@ jQuery(function($){
     $("form[data-id=rsetting]").find("#desc").val(lang.rsettings_preset_2);
     $("form[data-id=rsetting]").find("#content").val('priority = 10;\nrcpt = "/postmaster@.*/";\nwant_spam = yes;');
   });
+  $("#dkim_missing_keys").on('click', function(e) {
+    e.preventDefault();
+     var domains = [];
+     $('.dkim_missing').each(function() {
+       domains.push($(this).val());
+     });
+     $('#dkim_add_domains').val(domains);
+  });
   function draw_domain_admins() {
     ft_domainadmins = FooTable.init('#domainadminstable', {
       "columns": [
@@ -27,7 +43,7 @@ jQuery(function($){
         {"name":"selected_domains","title":lang.admin_domains,"breakpoints":"xs sm"},
         {"name":"tfa_active","title":"TFA", "filterable": false,"style":{"maxWidth":"80px","width":"80px"}},
         {"name":"active","filterable": false,"style":{"maxWidth":"80px","width":"80px"},"title":lang.active},
-        {"name":"action","filterable": false,"sortable": false,"style":{"text-align":"right","maxWidth":"180px","width":"180px"},"type":"html","title":lang.action,"breakpoints":"xs sm"}
+        {"name":"action","filterable": false,"sortable": false,"style":{"text-align":"right","maxWidth":"250px","width":"250px"},"type":"html","title":lang.action,"breakpoints":"xs sm"}
       ],
       "rows": $.ajax({
         dataType: 'json',
@@ -42,7 +58,7 @@ jQuery(function($){
       }),
       "empty": lang.empty,
       "paging": {"enabled": true,"limit": 5,"size": log_pagination_size},
-      "filtering": {"enabled": true,"position": "left","connectors": false,"placeholder": lang.filter_table
+      "filtering": {"enabled": true,"delay": 1,"position": "left","connectors": false,"placeholder": lang.filter_table
       },
       "sorting": {"enabled": true}
     });
@@ -125,10 +141,12 @@ jQuery(function($){
       });
     } else if (table == 'domainadminstable') {
       $.each(data, function (i, item) {
+        item.selected_domains = escapeHtml(item.selected_domains.toString().replace(/,/g, " "));
         item.chkbox = '<input type="checkbox" data-id="domain_admins" name="multi_select" value="' + item.username + '" />';
         item.action = '<div class="btn-group">' +
           '<a href="/edit.php?domainadmin=' + encodeURI(item.username) + '" class="btn btn-xs btn-default"><span class="glyphicon glyphicon-pencil"></span> ' + lang.edit + '</a>' +
           '<a href="#" id="delete_selected" data-id="single-domain-admin" data-api-url="delete/domain-admin" data-item="' + encodeURI(item.username) + '" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-trash"></span> ' + lang.remove + '</a>' +
+          '<a href="/index.php?duallogin=' + encodeURIComponent(item.username) + '" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-user"></span> Login</a>' +
           '</div>';
       });
     }

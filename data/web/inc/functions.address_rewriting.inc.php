@@ -8,9 +8,10 @@ function bcc($_action, $_data = null, $attr = null) {
   switch ($_action) {
     case 'add':
       if (!isset($_SESSION['acl']['bcc_maps']) || $_SESSION['acl']['bcc_maps'] != "1" ) {
-        $_SESSION['return'] = array(
+        $_SESSION['return'][] = array(
           'type' => 'danger',
-          'msg' => sprintf($lang['danger']['access_denied'])
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => 'access_denied'
         );
         return false;
       }
@@ -19,24 +20,27 @@ function bcc($_action, $_data = null, $attr = null) {
       $active = intval($_data['active']);
       $type = $_data['type'];
       if ($type != 'sender' && $type != 'rcpt') {
-        $_SESSION['return'] = array(
+        $_SESSION['return'][] = array(
           'type' => 'danger',
-          'msg' => 'Invalid BCC map type'
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => 'invalid_bcc_map_type'
         );
         return false;
       }
       if (empty($bcc_dest)) {
-        $_SESSION['return'] = array(
+        $_SESSION['return'][] = array(
           'type' => 'danger',
-          'msg' => 'BCC destination cannot be empty'
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => 'bcc_empty'
         );
         return false;
       }
       if (is_valid_domain_name($local_dest)) {
         if (!hasDomainAccess($_SESSION['mailcow_cc_username'], $_SESSION['mailcow_cc_role'], $local_dest)) {
-          $_SESSION['return'] = array(
+          $_SESSION['return'][] = array(
             'type' => 'danger',
-            'msg' => sprintf($lang['danger']['access_denied'])
+            'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+            'msg' => 'access_denied'
           );
           return false;
         }
@@ -45,9 +49,10 @@ function bcc($_action, $_data = null, $attr = null) {
       }
       elseif (filter_var($local_dest, FILTER_VALIDATE_EMAIL)) {
         if (!hasMailboxObjectAccess($_SESSION['mailcow_cc_username'], $_SESSION['mailcow_cc_role'], $local_dest)) {
-          $_SESSION['return'] = array(
+          $_SESSION['return'][] = array(
             'type' => 'danger',
-            'msg' => sprintf($lang['danger']['access_denied'])
+            'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+            'msg' => 'access_denied'
           );
           return false;
         }
@@ -61,29 +66,24 @@ function bcc($_action, $_data = null, $attr = null) {
         return false;
       }
       if (!filter_var($bcc_dest, FILTER_VALIDATE_EMAIL)) {
-        $_SESSION['return'] = array(
+        $_SESSION['return'][] = array(
           'type' => 'danger',
-          'msg' => 'BCC map must be a valid email address'
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => 'bcc_must_be_email'
         );
         return false;
       }
-      try {
-        $stmt = $pdo->prepare("SELECT `id` FROM `bcc_maps`
-          WHERE `local_dest` = :local_dest AND `type` = :type");
-        $stmt->execute(array(':local_dest' => $local_dest_sane, ':type' => $type));
-        $num_results = count($stmt->fetchAll(PDO::FETCH_ASSOC));
-      }
-      catch(PDOException $e) {
-        $_SESSION['return'] = array(
-          'type' => 'danger',
-          'msg' => 'MySQL: '.$e
-        );
-        return false;
-      }
+
+      $stmt = $pdo->prepare("SELECT `id` FROM `bcc_maps`
+        WHERE `local_dest` = :local_dest AND `type` = :type");
+      $stmt->execute(array(':local_dest' => $local_dest_sane, ':type' => $type));
+      $num_results = count($stmt->fetchAll(PDO::FETCH_ASSOC));
+
       if ($num_results != 0) {
-        $_SESSION['return'] = array(
+        $_SESSION['return'][] = array(
           'type' => 'danger',
-          'msg' => 'A BCC map entry "' . htmlspecialchars($local_dest_sane) . '" exists for type "' . $type . '"'
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => array('bcc_exists', htmlspecialchars($local_dest_sane), $type)
         );
         return false;
       }
@@ -99,22 +99,25 @@ function bcc($_action, $_data = null, $attr = null) {
         ));
       }
       catch (PDOException $e) {
-        $_SESSION['return'] = array(
+        $_SESSION['return'][] = array(
           'type' => 'danger',
-          'msg' => 'MySQL: '.$e
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => array('mysql_error', $e)
         );
         return false;
       }
-      $_SESSION['return'] = array(
+      $_SESSION['return'][] = array(
         'type' => 'success',
-        'msg' => 'BCC map entry saved'
+        'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+        'msg' => 'bcc_saved'
       );
     break;
     case 'edit':
       if (!isset($_SESSION['acl']['bcc_maps']) || $_SESSION['acl']['bcc_maps'] != "1" ) {
-        $_SESSION['return'] = array(
+        $_SESSION['return'][] = array(
           'type' => 'danger',
-          'msg' => sprintf($lang['danger']['access_denied'])
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => 'access_denied'
         );
         return false;
       }
@@ -128,48 +131,45 @@ function bcc($_action, $_data = null, $attr = null) {
           $type = (!empty($_data['type'])) ? $_data['type'] : $is_now['type'];
         }
         else {
-          $_SESSION['return'] = array(
+          $_SESSION['return'][] = array(
             'type' => 'danger',
-            'msg' => sprintf($lang['danger']['access_denied'])
+            'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+            'msg' => 'access_denied'
           );
-          return false;
+          continue;
         }
         $active = intval($_data['active']);
         if (!filter_var($bcc_dest, FILTER_VALIDATE_EMAIL)) {
-          $_SESSION['return'] = array(
+          $_SESSION['return'][] = array(
             'type' => 'danger',
-            'msg' => 'BCC map must be a valid email address'
+            'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+            'msg' => array('bcc_must_be_email', $bcc_dest)
           );
-          return false;
+          continue;
         }
         if (empty($bcc_dest)) {
-          $_SESSION['return'] = array(
+          $_SESSION['return'][] = array(
             'type' => 'danger',
-            'msg' => 'BCC map destination cannot be empty'
+            'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+            'msg' => array('bcc_must_be_email', $bcc_dest)
           );
-          return false;
+          continue;
         }
         try {
           $stmt = $pdo->prepare("SELECT `id` FROM `bcc_maps`
             WHERE `local_dest` = :local_dest AND `type` = :type");
           $stmt->execute(array(':local_dest' => $local_dest, ':type' => $type));
           $id_now = $stmt->fetch(PDO::FETCH_ASSOC)['id'];
-        }
-        catch(PDOException $e) {
-          $_SESSION['return'] = array(
-            'type' => 'danger',
-            'msg' => 'MySQL: '.$e
-          );
-          return false;
-        }
-        if (isset($id_now) && $id_now != $id) {
-          $_SESSION['return'] = array(
-            'type' => 'danger',
-            'msg' => 'A BCC map entry ' . htmlspecialchars($local_dest) . ' exists for this type'
-          );
-          return false;
-        }
-        try {
+
+          if (isset($id_now) && $id_now != $id) {
+            $_SESSION['return'][] = array(
+              'type' => 'danger',
+              'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+              'msg' => array('bcc_exists', htmlspecialchars($local_dest), $type)
+            );
+            continue;
+          }
+
           $stmt = $pdo->prepare("UPDATE `bcc_maps` SET `bcc_dest` = :bcc_dest, `active` = :active, `type` = :type WHERE `id`= :id");
           $stmt->execute(array(
             ':bcc_dest' => $bcc_dest,
@@ -179,42 +179,37 @@ function bcc($_action, $_data = null, $attr = null) {
           ));
         }
         catch (PDOException $e) {
-          $_SESSION['return'] = array(
+          $_SESSION['return'][] = array(
             'type' => 'danger',
-            'msg' => 'MySQL: '.$e
+            'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+            'msg' => array('mysql_error', $e)
           );
-          return false;
+          continue;
         }
+        $_SESSION['return'][] = array(
+          'type' => 'success',
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => array('bcc_edited', $bcc_dest)
+        );
       }
-      $_SESSION['return'] = array(
-        'type' => 'success',
-        'msg' => 'BCC map entry edited'
-      );
     break;
     case 'details':
       $bccdata = array();
       $id = intval($_data);
-      try {
-        $stmt = $pdo->prepare("SELECT `id`,
-          `local_dest`,
-          `bcc_dest`,
-          `active` AS `active_int`,
-          CASE `active` WHEN 1 THEN '".$lang['mailbox']['yes']."' ELSE '".$lang['mailbox']['no']."' END AS `active`,
-          `type`,
-          `created`,
-          `domain`,
-          `modified` FROM `bcc_maps`
-            WHERE `id` = :id");
-        $stmt->execute(array(':id' => $id));
-        $bccdata = $stmt->fetch(PDO::FETCH_ASSOC);
-      }
-      catch(PDOException $e) {
-        $_SESSION['return'] = array(
-          'type' => 'danger',
-          'msg' => 'MySQL: '.$e
-        );
-        return false;
-      }
+
+      $stmt = $pdo->prepare("SELECT `id`,
+        `local_dest`,
+        `bcc_dest`,
+        `active` AS `active_int`,
+        CASE `active` WHEN 1 THEN '".$lang['mailbox']['yes']."' ELSE '".$lang['mailbox']['no']."' END AS `active`,
+        `type`,
+        `created`,
+        `domain`,
+        `modified` FROM `bcc_maps`
+          WHERE `id` = :id");
+      $stmt->execute(array(':id' => $id));
+      $bccdata = $stmt->fetch(PDO::FETCH_ASSOC);
+
       if (!hasDomainAccess($_SESSION['mailcow_cc_username'], $_SESSION['mailcow_cc_role'], $bccdata['domain'])) {
         $bccdata = null;
         return false;
@@ -225,17 +220,10 @@ function bcc($_action, $_data = null, $attr = null) {
       $bccdata = array();
       $all_items = array();
       $id = intval($_data);
-      try {
-        $stmt = $pdo->query("SELECT `id`, `domain` FROM `bcc_maps`");
-        $all_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-      }
-      catch(PDOException $e) {
-        $_SESSION['return'] = array(
-          'type' => 'danger',
-          'msg' => 'MySQL: '.$e
-        );
-        return false;
-      }
+
+      $stmt = $pdo->query("SELECT `id`, `domain` FROM `bcc_maps`");
+      $all_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
       foreach ($all_items as $i) {
         if (hasDomainAccess($_SESSION['mailcow_cc_username'], $_SESSION['mailcow_cc_role'], $i['domain'])) {
           $bccdata[] = $i['id'];
@@ -245,6 +233,14 @@ function bcc($_action, $_data = null, $attr = null) {
       return $bccdata;
     break;
     case 'delete':
+      if (!isset($_SESSION['acl']['bcc_maps']) || $_SESSION['acl']['bcc_maps'] != "1" ) {
+        $_SESSION['return'][] = array(
+          'type' => 'danger',
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => 'access_denied'
+        );
+        return false;
+      }
       $ids = (array)$_data['id'];
       foreach ($ids as $id) {
         if (!is_numeric($id)) {
@@ -255,28 +251,30 @@ function bcc($_action, $_data = null, $attr = null) {
           $stmt->execute(array(':id' => $id));
           $domain = $stmt->fetch(PDO::FETCH_ASSOC)['domain'];
           if (!hasDomainAccess($_SESSION['mailcow_cc_username'], $_SESSION['mailcow_cc_role'], $domain)) {
-            $_SESSION['return'] = array(
+            $_SESSION['return'][] = array(
               'type' => 'danger',
-              'msg' => sprintf($lang['danger']['access_denied'])
+              'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+              'msg' => 'access_denied'
             );
-            return false;
+            continue;
           }
           $stmt = $pdo->prepare("DELETE FROM `bcc_maps` WHERE `id`= :id");
           $stmt->execute(array(':id' => $id));
         }
         catch (PDOException $e) {
-          $_SESSION['return'] = array(
+          $_SESSION['return'][] = array(
             'type' => 'danger',
-            'msg' => 'MySQL: '.$e
+            'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+            'msg' => array('mysql_error', $e)
           );
-          return false;
+          continue;
         }
+        $_SESSION['return'][] = array(
+          'type' => 'success',
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => array('bcc_deleted', $id)
+        );
       }
-      $_SESSION['return'] = array(
-        'type' => 'success',
-        'msg' => 'Deleted BCC map id/s ' . implode(', ', $ids)
-      );
-      return true;
     break;
   }
 }
@@ -289,16 +287,20 @@ function recipient_map($_action, $_data = null, $attr = null) {
   }
   switch ($_action) {
     case 'add':
-      $old_dest = strtolower(trim($_data['recipient_map_old']));
-      $new_dest = array_map('trim', preg_split( "/( |,|;|\n)/", $_data['recipient_map_new']));
-      $active = intval($_data['active']);
-      if (empty($new_dest)) {
-        $_SESSION['return'] = array(
+      if (!isset($_SESSION['acl']['recipient_maps']) || $_SESSION['acl']['recipient_maps'] != "1" ) {
+        $_SESSION['return'][] = array(
           'type' => 'danger',
-          'msg' => 'Recipient map destination cannot be empty'
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => 'access_denied'
         );
         return false;
       }
+      $old_dest = strtolower(trim($_data['recipient_map_old']));
+      if (substr($old_dest, 0, 1) == '@') {
+        $old_dest = substr($old_dest, 1);
+      }
+      $new_dest = strtolower(trim($_data['recipient_map_new']));
+      $active = intval($_data['active']);
       if (is_valid_domain_name($old_dest)) {
         $old_dest_sane = '@' . idn_to_ascii($old_dest);
       }
@@ -306,44 +308,30 @@ function recipient_map($_action, $_data = null, $attr = null) {
         $old_dest_sane = $old_dest;
       }
       else {
-        $_SESSION['return'] = array(
+        $_SESSION['return'][] = array(
           'type' => 'danger',
-          'msg' => 'Invalid original recipient specified: ' . $old_dest
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => array('invalid_recipient_map_old', htmlspecialchars($old_dest))
         );
         return false;
       }
-      foreach ($new_dest as &$new_dest_e) {
-        if (!filter_var($new_dest_e, FILTER_VALIDATE_EMAIL)) {
-          $new_dest_e = null;;
-        }
-        $new_dest_e = strtolower($new_dest_e);
-      }
-      $new_dest = array_filter($new_dest);
-      $new_dest = implode(",", $new_dest);
-      if (empty($new_dest)) {
-        $_SESSION['return'] = array(
+      if (!filter_var($new_dest, FILTER_VALIDATE_EMAIL)) {
+        $_SESSION['return'][] = array(
           'type' => 'danger',
-          'msg' => 'Recipient map destination cannot be empty'
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => array('invalid_recipient_map_new', htmlspecialchars($new_dest))
         );
         return false;
       }
-      try {
-        $stmt = $pdo->prepare("SELECT `id` FROM `recipient_maps`
-          WHERE `old_dest` = :old_dest");
-        $stmt->execute(array(':old_dest' => $old_dest_sane));
-        $num_results = count($stmt->fetchAll(PDO::FETCH_ASSOC));
+      $rmaps = recipient_map('get');
+      foreach ($rmaps as $rmap) {
+        $old_dests_existing[] = recipient_map('details', $rmap)['recipient_map_old'];
       }
-      catch(PDOException $e) {
-        $_SESSION['return'] = array(
+      if (in_array($old_dest_sane, $old_dests_existing)) {
+        $_SESSION['return'][] = array(
           'type' => 'danger',
-          'msg' => 'MySQL: '.$e
-        );
-        return false;
-      }
-      if ($num_results != 0) {
-        $_SESSION['return'] = array(
-          'type' => 'danger',
-          'msg' => 'A Recipient map entry "' . htmlspecialchars($old_dest_sane) . '" exists'
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => array('recipient_map_entry_exists', htmlspecialchars($old_dest))
         );
         return false;
       }
@@ -357,130 +345,136 @@ function recipient_map($_action, $_data = null, $attr = null) {
         ));
       }
       catch (PDOException $e) {
-        $_SESSION['return'] = array(
+        $_SESSION['return'][] = array(
           'type' => 'danger',
-          'msg' => 'MySQL: '.$e
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => array('mysql_error', $e)
         );
         return false;
       }
-      $_SESSION['return'] = array(
+      $_SESSION['return'][] = array(
         'type' => 'success',
-        'msg' => 'Recipient map entry saved'
+        'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+        'msg' => array('recipient_map_entry_saved', htmlspecialchars($old_dest_sane))
       );
     break;
     case 'edit':
+      if (!isset($_SESSION['acl']['recipient_maps']) || $_SESSION['acl']['recipient_maps'] != "1" ) {
+        $_SESSION['return'][] = array(
+          'type' => 'danger',
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => 'access_denied'
+        );
+        return false;
+      }
       $ids = (array)$_data['id'];
       foreach ($ids as $id) {
         $is_now = recipient_map('details', $id);
         if (!empty($is_now)) {
           $active = (isset($_data['active'])) ? intval($_data['active']) : $is_now['active_int'];
           $new_dest = (!empty($_data['recipient_map_new'])) ? $_data['recipient_map_new'] : $is_now['recipient_map_new'];
-          $old_dest = $is_now['old_dest'];
+          $old_dest = (!empty($_data['recipient_map_old'])) ? $_data['recipient_map_old'] : $is_now['recipient_map_old'];
+          if (substr($old_dest, 0, 1) == '@') {
+            $old_dest = substr($old_dest, 1);
+          }
         }
         else {
-          $_SESSION['return'] = array(
+          $_SESSION['return'][] = array(
             'type' => 'danger',
-            'msg' => sprintf($lang['danger']['access_denied'])
+            'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+            'msg' => 'access_denied'
           );
-          return false;
+          continue;
         }
-        $new_dest = array_map('trim', preg_split( "/( |,|;|\n)/", $new_dest));
+        if (is_valid_domain_name($old_dest)) {
+          $old_dest_sane = '@' . idn_to_ascii($old_dest);
+        }
+        elseif (filter_var($old_dest, FILTER_VALIDATE_EMAIL)) {
+          $old_dest_sane = $old_dest;
+        }
+        else {
+          $_SESSION['return'][] = array(
+            'type' => 'danger',
+            'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+            'msg' => array('invalid_recipient_map_old', htmlspecialchars($old_dest))
+          );
+          continue;
+        }
         $active = intval($_data['active']);
-        foreach ($new_dest as &$new_dest_e) {
-          if (!filter_var($new_dest_e, FILTER_VALIDATE_EMAIL)) {
-            $new_dest_e = null;;
-          }
-          $new_dest_e = strtolower($new_dest_e);
-        }
-        $new_dest = array_filter($new_dest);
-        $new_dest = implode(",", $new_dest);
-        if (empty($new_dest)) {
-          $_SESSION['return'] = array(
+        if (!filter_var($new_dest, FILTER_VALIDATE_EMAIL)) {
+          $_SESSION['return'][] = array(
             'type' => 'danger',
-            'msg' => 'Recipient map destination cannot be empty'
+            'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+            'msg' => array('invalid_recipient_map_new', htmlspecialchars($new_dest))
           );
-          return false;
+          continue;
+        }
+        $rmaps = recipient_map('get');
+        foreach ($rmaps as $rmap) {
+          $old_dests_existing[] = recipient_map('details', $rmap)['recipient_map_old'];
+        }
+        if (in_array($old_dest_sane, $old_dests_existing) &&
+          recipient_map('details', $id)['recipient_map_old'] != $old_dest_sane) {
+            $_SESSION['return'][] = array(
+              'type' => 'danger',
+              'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+              'msg' => array('recipient_map_entry_exists', htmlspecialchars($old_dest_sane))
+            );
+            continue;
         }
         try {
-          $stmt = $pdo->prepare("SELECT `id` FROM `recipient_maps`
-            WHERE `old_dest` = :old_dest");
-          $stmt->execute(array(':old_dest' => $old_dest));
-          $id_now = $stmt->fetch(PDO::FETCH_ASSOC)['id'];
-        }
-        catch(PDOException $e) {
-          $_SESSION['return'] = array(
-            'type' => 'danger',
-            'msg' => 'MySQL: '.$e
-          );
-          return false;
-        }
-        if (isset($id_now) && $id_now != $id) {
-          $_SESSION['return'] = array(
-            'type' => 'danger',
-            'msg' => 'A Recipient map entry ' . htmlspecialchars($old_dest) . ' exists'
-          );
-          return false;
-        }
-        try {
-          $stmt = $pdo->prepare("UPDATE `recipient_maps` SET `new_dest` = :new_dest, `active` = :active WHERE `id`= :id");
+          $stmt = $pdo->prepare("UPDATE `recipient_maps` SET
+            `old_dest` = :old_dest,
+            `new_dest` = :new_dest,
+            `active` = :active
+              WHERE `id`= :id");
           $stmt->execute(array(
+            ':old_dest' => $old_dest_sane,
             ':new_dest' => $new_dest,
             ':active' => $active,
             ':id' => $id
           ));
         }
         catch (PDOException $e) {
-          $_SESSION['return'] = array(
+          $_SESSION['return'][] = array(
             'type' => 'danger',
-            'msg' => 'MySQL: '.$e
+            'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+            'msg' => array('mysql_error', $e)
           );
           return false;
         }
+        $_SESSION['return'][] = array(
+          'type' => 'success',
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => array('recipient_map_entry_saved', htmlspecialchars($old_dest_sane))
+        );
       }
-      $_SESSION['return'] = array(
-        'type' => 'success',
-        'msg' => 'Recipient map entry edited'
-      );
     break;
     case 'details':
       $mapdata = array();
       $id = intval($_data);
-      try {
-        $stmt = $pdo->prepare("SELECT `id`,
-          `old_dest` AS `recipient_map_old`,
-          `new_dest` AS `recipient_map_new`,
-          `active` AS `active_int`,
-          CASE `active` WHEN 1 THEN '".$lang['mailbox']['yes']."' ELSE '".$lang['mailbox']['no']."' END AS `active`,
-          `created`,
-          `modified` FROM `recipient_maps`
-            WHERE `id` = :id");
-        $stmt->execute(array(':id' => $id));
-        $mapdata = $stmt->fetch(PDO::FETCH_ASSOC);
-      }
-      catch(PDOException $e) {
-        $_SESSION['return'] = array(
-          'type' => 'danger',
-          'msg' => 'MySQL: '.$e
-        );
-        return false;
-      }
+
+      $stmt = $pdo->prepare("SELECT `id`,
+        `old_dest` AS `recipient_map_old`,
+        `new_dest` AS `recipient_map_new`,
+        `active` AS `active_int`,
+        CASE `active` WHEN 1 THEN '".$lang['mailbox']['yes']."' ELSE '".$lang['mailbox']['no']."' END AS `active`,
+        `created`,
+        `modified` FROM `recipient_maps`
+          WHERE `id` = :id");
+      $stmt->execute(array(':id' => $id));
+      $mapdata = $stmt->fetch(PDO::FETCH_ASSOC);
+
       return $mapdata;
     break;
     case 'get':
       $mapdata = array();
       $all_items = array();
       $id = intval($_data);
-      try {
-        $stmt = $pdo->query("SELECT `id` FROM `recipient_maps`");
-        $all_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-      }
-      catch(PDOException $e) {
-        $_SESSION['return'] = array(
-          'type' => 'danger',
-          'msg' => 'MySQL: '.$e
-        );
-        return false;
-      }
+
+      $stmt = $pdo->query("SELECT `id` FROM `recipient_maps`");
+      $all_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
       foreach ($all_items as $i) {
         $mapdata[] = $i['id'];
       }
@@ -488,6 +482,14 @@ function recipient_map($_action, $_data = null, $attr = null) {
       return $mapdata;
     break;
     case 'delete':
+      if (!isset($_SESSION['acl']['recipient_maps']) || $_SESSION['acl']['recipient_maps'] != "1" ) {
+        $_SESSION['return'][] = array(
+          'type' => 'danger',
+          'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+          'msg' => 'access_denied'
+        );
+        return false;
+      }
       $ids = (array)$_data['id'];
       foreach ($ids as $id) {
         if (!is_numeric($id)) {
@@ -498,16 +500,17 @@ function recipient_map($_action, $_data = null, $attr = null) {
           $stmt->execute(array(':id' => $id));
         }
         catch (PDOException $e) {
-          $_SESSION['return'] = array(
+          $_SESSION['return'][] = array(
             'type' => 'danger',
-            'msg' => 'MySQL: '.$e
+            'log' => array(__FUNCTION__, $_action, $_data, $_attr),
+            'msg' => array('mysql_error', $e)
           );
           return false;
         }
       }
-      $_SESSION['return'] = array(
+      $_SESSION['return'][] = array(
         'type' => 'success',
-        'msg' => 'Deleted Recipient map id/s ' . implode(', ', $ids)
+        'msg' => array('recipient_map_entry_deleted', htmlspecialchars($old_dest))
       );
       return true;
     break;

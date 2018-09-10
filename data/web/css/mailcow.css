@@ -101,6 +101,7 @@ legend {
   -ms-user-select: none
   -o-user-select: none;
   user-select: none;
+  font-size: 12pt;
 }
 .navbar .navbar-brand {
   padding-top: 5px;
@@ -135,4 +136,25 @@ nav .glyphicon {
 }
 #top {
   padding-top: 70px;
+}
+.bootstrap-select.btn-group .no-results {
+  display: none;
+}
+.dropdown-desc {
+  display: block;
+  padding: 3px 10px;
+  clear: both;
+  font-weight: bold;
+  color: #5a5a5a;
+  white-space: nowrap;
+}
+.haveibeenpwned {
+  cursor: pointer;
+  -webkit-user-select: none;  
+  -moz-user-select: none;    
+  -ms-user-select: none;      
+  user-select: none;
+}
+.full-width-select {
+  width: 100%!important;  
 }

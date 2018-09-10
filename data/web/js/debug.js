@@ -1,44 +1,35 @@
 jQuery(function($){
+  if (localStorage.getItem("current_page") === null) {
+    var current_page = {};
+  } else {
+    var current_page = JSON.parse(localStorage.getItem('current_page'));
+  }
   // http://stackoverflow.com/questions/24816/escaping-html-strings-with-jquery
   var entityMap={"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;","/":"&#x2F;","`":"&#x60;","=":"&#x3D;"};
   function escapeHtml(n){return String(n).replace(/[&<>"'`=\/]/g,function(n){return entityMap[n]})}
   function humanFileSize(i){if(Math.abs(i)<1024)return i+" B";var B=["KiB","MiB","GiB","TiB","PiB","EiB","ZiB","YiB"],e=-1;do{i/=1024,++e}while(Math.abs(i)>=1024&&e<B.length-1);return i.toFixed(1)+" "+B[e]}
-  $("#refresh_postfix_log").on('click', function(e) {
+  $(".refresh_table").on('click', function(e) {
     e.preventDefault();
-    draw_postfix_logs();
+    var table_name = $(this).data('table');
+    $('#' + table_name).find("tr.footable-empty").remove();
+    draw_table = $(this).data('draw');
+    eval(draw_table + '()');
   });
-  $("#refresh_autodiscover_log").on('click', function(e) {
-    e.preventDefault();
-    draw_autodiscover_logs();
-  });
-  $("#refresh_dovecot_log").on('click', function(e) {
-    e.preventDefault();
-    draw_dovecot_logs();
-  });
-  $("#refresh_sogo_log").on('click', function(e) {
-    e.preventDefault();
-    draw_sogo_logs();
-  });
-  $("#refresh_watchdog_log").on('click', function(e) {
-    e.preventDefault();
-    draw_watchdog_logs();
-  });
-  $("#refresh_api_log").on('click', function(e) {
-    e.preventDefault();
-    draw_api_logs();
-  });
-  $("#refresh_acme_log").on('click', function(e) {
-    e.preventDefault();
-    draw_acme_logs();
-  });
-  $("#refresh_netfilter_log").on('click', function(e) {
-    e.preventDefault();
-    draw_netfilter_logs();
-  });
-  $("#refresh_rspamd_history").on('click', function(e) {
-    e.preventDefault();
-    draw_rspamd_history();
-  });
+  function table_log_ready(ft, name) {
+    heading = ft.$el.parents('.tab-pane').find('.panel-heading')
+    var ft_paging = ft.use(FooTable.Paging)
+    $(heading).children('.table-lines').text(function(){
+      return ft_paging.totalRows;
+    })
+    if (current_page[name]) {
+      ft_paging.goto(parseInt(current_page[name]))
+    }
+  }
+  function table_log_paging(ft, name) {
+    var ft_paging = ft.use(FooTable.Paging)
+    current_page[name] = ft_paging.current;
+    localStorage.setItem('current_page', JSON.stringify(current_page));
+  }
   function draw_autodiscover_logs() {
     ft_autodiscover_logs = FooTable.init('#autodiscover_log', {
       "columns": [
@@ -60,14 +51,14 @@ jQuery(function($){
       }),
       "empty": lang.empty,
       "paging": {"enabled": true,"limit": 5,"size": log_pagination_size},
-      "filtering": {"enabled": true,"position": "left","placeholder": lang.filter_table},
+      "filtering": {"enabled": true,"delay": 1,"position": "left","placeholder": lang.filter_table},
       "sorting": {"enabled": true},
-      "on": {"ready.ft.table": function(e, ft){
-          heading = ft.$el.parents('.tab-pane').find('.panel-heading')
-          $(heading).children('.log-lines').text(function(){
-            var ft_paging = ft.use(FooTable.Paging)
-            return ft_paging.totalRows;
-          })
+      "on": {
+        "ready.ft.table": function(e, ft){
+          table_log_ready(ft, 'autodiscover_logs');
+        },
+        "after.ft.paging": function(e, ft){
+          table_log_paging(ft, 'autodiscover_logs');
         }
       }
     });
@@ -92,15 +83,14 @@ jQuery(function($){
       }),
       "empty": lang.empty,
       "paging": {"enabled": true,"limit": 5,"size": log_pagination_size},
-      "filtering": {"enabled": true,"position": "left","placeholder": lang.filter_table},
+      "filtering": {"enabled": true,"delay": 1,"position": "left","placeholder": lang.filter_table},
       "sorting": {"enabled": true},
       "on": {
         "ready.ft.table": function(e, ft){
-          heading = ft.$el.parents('.tab-pane').find('.panel-heading')
-          $(heading).children('.log-lines').text(function(){
-            var ft_paging = ft.use(FooTable.Paging)
-            return ft_paging.totalRows;
-          })
+          table_log_ready(ft, 'postfix_logs');
+        },
+        "after.ft.paging": function(e, ft){
+          table_log_paging(ft, 'postfix_logs');
         }
       }
     });
@@ -126,15 +116,14 @@ jQuery(function($){
       }),
       "empty": lang.empty,
       "paging": {"enabled": true,"limit": 5,"size": log_pagination_size},
-      "filtering": {"enabled": true,"position": "left","connectors": false,"placeholder": lang.filter_table},
+      "filtering": {"enabled": true,"delay": 1,"position": "left","connectors": false,"placeholder": lang.filter_table},
       "sorting": {"enabled": true},
       "on": {
         "ready.ft.table": function(e, ft){
-          heading = ft.$el.parents('.tab-pane').find('.panel-heading')
-          $(heading).children('.log-lines').text(function(){
-            var ft_paging = ft.use(FooTable.Paging)
-            return ft_paging.totalRows;
-          })
+          table_log_ready(ft, 'postfix_logs');
+        },
+        "after.ft.paging": function(e, ft){
+          table_log_paging(ft, 'postfix_logs');
         }
       }
     });
@@ -146,7 +135,7 @@ jQuery(function($){
         {"name":"uri","title":"URI","style":{"width":"310px"}},
         {"name":"method","title":"Method","style":{"width":"80px"}},
         {"name":"remote","title":"IP","style":{"width":"80px"}},
-        {"name":"data","title":"Data","style":{"word-break":"break-all"}},
+        {"name":"data","title":"Data","breakpoints": "all","style":{"word-break":"break-all"}},
       ],
       "rows": $.ajax({
         dataType: 'json',
@@ -161,15 +150,51 @@ jQuery(function($){
       }),
       "empty": lang.empty,
       "paging": {"enabled": true,"limit": 5,"size": log_pagination_size},
-      "filtering": {"enabled": true,"position": "left","connectors": false,"placeholder": lang.filter_table},
+      "filtering": {"enabled": true,"delay": 1,"position": "left","connectors": false,"placeholder": lang.filter_table},
       "sorting": {"enabled": true},
       "on": {
         "ready.ft.table": function(e, ft){
-          heading = ft.$el.parents('.tab-pane').find('.panel-heading')
-          $(heading).children('.log-lines').text(function(){
-            var ft_paging = ft.use(FooTable.Paging)
-            return ft_paging.totalRows;
-          })
+          table_log_ready(ft, 'api_logs');
+        },
+        "after.ft.paging": function(e, ft){
+          table_log_paging(ft, 'api_logs');
+        }
+      }
+    });
+  }
+  function draw_ui_logs() {
+    ft_api_logs = FooTable.init('#ui_logs', {
+      "columns": [
+        {"name":"time","formatter":function unix_time_format(tm) { var date = new Date(tm ? tm * 1000 : 0); return date.toLocaleString();},"title":lang.time,"style":{"width":"170px"}},
+        {"name":"type","title":"Type"},
+        {"name":"task","title":"Task"},
+        {"name":"user","title":"User"},
+        {"name":"role","title":"Role"},
+        {"name":"remote","title":"IP"},
+        {"name":"msg","title":lang.message,"style":{"word-break":"break-all"}},
+        {"name":"call","title":"Call","breakpoints": "all"},
+      ],
+      "rows": $.ajax({
+        dataType: 'json',
+        url: '/api/v1/get/logs/ui',
+        jsonp: false,
+        error: function () {
+          console.log('Cannot draw ui log table');
+        },
+        success: function (data) {
+          return process_table_data(data, 'mailcow_ui');
+        }
+      }),
+      "empty": lang.empty,
+      "paging": {"enabled": true,"limit": 5,"size": log_pagination_size},
+      "filtering": {"enabled": true,"delay": 1,"position": "left","connectors": false,"placeholder": lang.filter_table},
+      "sorting": {"enabled": true},
+      "on": {
+        "ready.ft.table": function(e, ft){
+          table_log_ready(ft, 'ui_logs');
+        },
+        "after.ft.paging": function(e, ft){
+          table_log_paging(ft, 'ui_logs');
         }
       }
     });
@@ -193,15 +218,14 @@ jQuery(function($){
       }),
       "empty": lang.empty,
       "paging": {"enabled": true,"limit": 5,"size": log_pagination_size},
-      "filtering": {"enabled": true,"position": "left","connectors": false,"placeholder": lang.filter_table},
+      "filtering": {"enabled": true,"delay": 1,"position": "left","connectors": false,"placeholder": lang.filter_table},
       "sorting": {"enabled": true},
       "on": {
         "ready.ft.table": function(e, ft){
-          heading = ft.$el.parents('.tab-pane').find('.panel-heading')
-          $(heading).children('.log-lines').text(function(){
-            var ft_paging = ft.use(FooTable.Paging)
-            return ft_paging.totalRows;
-          })
+          table_log_ready(ft, 'acme_logs');
+        },
+        "after.ft.paging": function(e, ft){
+          table_log_paging(ft, 'acme_logs');
         }
       }
     });
@@ -226,15 +250,14 @@ jQuery(function($){
       }),
       "empty": lang.empty,
       "paging": {"enabled": true,"limit": 5,"size": log_pagination_size},
-      "filtering": {"enabled": true,"position": "left","connectors": false,"placeholder": lang.filter_table},
+      "filtering": {"enabled": true,"delay": 1,"position": "left","connectors": false,"placeholder": lang.filter_table},
       "sorting": {"enabled": true},
       "on": {
         "ready.ft.table": function(e, ft){
-          heading = ft.$el.parents('.tab-pane').find('.panel-heading')
-          $(heading).children('.log-lines').text(function(){
-            var ft_paging = ft.use(FooTable.Paging)
-            return ft_paging.totalRows;
-          })
+          table_log_ready(ft, 'netfilter_logs');
+        },
+        "after.ft.paging": function(e, ft){
+          table_log_paging(ft, 'netfilter_logs');
         }
       }
     });
@@ -259,15 +282,14 @@ jQuery(function($){
       }),
       "empty": lang.empty,
       "paging": {"enabled": true,"limit": 5,"size": log_pagination_size},
-      "filtering": {"enabled": true,"position": "left","connectors": false,"placeholder": lang.filter_table},
+      "filtering": {"enabled": true,"delay": 1,"position": "left","connectors": false,"placeholder": lang.filter_table},
       "sorting": {"enabled": true},
       "on": {
         "ready.ft.table": function(e, ft){
-          heading = ft.$el.parents('.tab-pane').find('.panel-heading')
-          $(heading).children('.log-lines').text(function(){
-            var ft_paging = ft.use(FooTable.Paging)
-            return ft_paging.totalRows;
-          })
+          table_log_ready(ft, 'sogo_logs');
+        },
+        "after.ft.paging": function(e, ft){
+          table_log_paging(ft, 'sogo_logs');
         }
       }
     });
@@ -292,15 +314,54 @@ jQuery(function($){
       }),
       "empty": lang.empty,
       "paging": {"enabled": true,"limit": 5,"size": log_pagination_size},
-      "filtering": {"enabled": true,"position": "left","connectors": false,"placeholder": lang.filter_table},
+      "filtering": {"enabled": true,"delay": 1,"position": "left","connectors": false,"placeholder": lang.filter_table},
       "sorting": {"enabled": true},
       "on": {
         "ready.ft.table": function(e, ft){
-          heading = ft.$el.parents('.tab-pane').find('.panel-heading')
-          $(heading).children('.log-lines').text(function(){
-            var ft_paging = ft.use(FooTable.Paging)
-            return ft_paging.totalRows;
-          })
+          table_log_ready(ft, 'dovecot_logs');
+        },
+        "after.ft.paging": function(e, ft){
+          table_log_paging(ft, 'dovecot_logs');
+        }
+      }
+    });
+  }
+  function rspamd_pie_graph() {
+    $.ajax({
+      url: '/api/v1/get/rspamd/actions',
+      success: function(graphdata){
+        graphdata.unshift(['Type', 'Count']);
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+
+        function drawChart() {
+
+          var data = google.visualization.arrayToDataTable(graphdata);
+
+          var options = {
+            is3D: true,
+            sliceVisibilityThreshold: 0,
+            pieSliceText: 'percentage',
+            chartArea: {
+              left: 0,
+              right: 0,
+              top: 20,
+              width: '100%',
+              height: '100%'
+            },
+      
+            slices: {
+              0: { color: '#DC3023' },
+              1: { color: '#59ABE3' },
+              2: { color: '#FFA400' },
+              3: { color: '#FFA400' },
+              4: { color: '#26A65B' }
+            }
+          };
+
+          var chart = new google.visualization.PieChart(document.getElementById('rspamd_donut'));
+
+          chart.draw(data, options);
         }
       }
     });
@@ -334,49 +395,20 @@ jQuery(function($){
       }),
       "empty": lang.empty,
       "paging": {"enabled": true,"limit": 5,"size": log_pagination_size},
-      "filtering": {"enabled": true,"position": "left","connectors": false,"placeholder": lang.filter_table},
+      "filtering": {"enabled": true,"delay": 1,"position": "left","connectors": false,"placeholder": lang.filter_table},
       "sorting": {"enabled": true},
       "on": {
         "ready.ft.table": function(e, ft){
+          table_log_ready(ft, 'rspamd_history');
           heading = ft.$el.parents('.tab-pane').find('.panel-heading')
-          $(heading).children('.log-lines').text(function(){
+          $(heading).children('.table-lines').text(function(){
             var ft_paging = ft.use(FooTable.Paging)
             return ft_paging.totalRows;
           })
-          $.ajax({
-            url: '/api/v1/get/rspamd/actions',
-            success: function(data){
-              var total = 0;
-              $(data).map(function(){total += this[1];})
-              rspamd_labels = $.makeArray($(data).map(function(){return "<h5>" + this[0] + " (" + this[1] + ") " + Math.round(this[1]/total * 100) + "%</h5>";}));
-              rspamd_donut_plot = $.jqplot('rspamd_donut', [data],
-                {
-                  seriesDefaults: {
-                    renderer: jQuery.jqplot.DonutRenderer,
-                    rendererOptions: {
-                      showDataLabels: true,
-                      dataLabels: rspamd_labels,
-                      dataLabelThreshold: 1,
-                      sliceMargin: 5,
-                      totalLabel: true
-                    },
-                    shadow: false,
-                    seriesColors: ['#FF4136', '#75CAEB', '#FF851B', '#FF851B', '#28B62C']
-                  },
-                  legend: {
-                    show:false,
-                  },
-                  grid: {
-                    drawGridLines: true,
-                    gridLineColor: '#efefef',
-                    background: '#ffffff',
-                    borderWidth: 0,
-                    shadow: false,
-                  }
-                }
-              );
-            }
-          });
+          rspamd_pie_graph();
+        },
+        "after.ft.paging": function(e, ft){
+          table_log_paging(ft, 'rspamd_history');
         }
       }
     });
@@ -471,6 +503,13 @@ jQuery(function($){
           item.service = '';
         }
       });
+    } else if (table == 'mailcow_ui') {
+      $.each(data, function (i, item) {
+        if (item === null) { return true; }
+        item.user = escapeHtml(item.user);
+        item.task = '<code>' + item.task + '</code>';
+        item.type = '<span class="label label-' + item.type + '">' + item.type + '</span>';
+      });
     } else if (table == 'general_syslog') {
       $.each(data, function (i, item) {
         if (item === null) { return true; }
@@ -501,7 +540,7 @@ jQuery(function($){
   $('.add_log_lines').on('click', function (e) {
     e.preventDefault();
     var log_table= $(this).data("table")
-    var new_nrows = ($(this).data("nrows") - 1)
+    var new_nrows = $(this).data("nrows")
     var post_process = $(this).data("post-process")
     var log_url = $(this).data("log-url")
     if (log_table === undefined || new_nrows === undefined || post_process === undefined || log_url === undefined) {
@@ -511,12 +550,12 @@ jQuery(function($){
     if (ft = FooTable.get($('#' + log_table))) {
       var heading = ft.$el.parents('.tab-pane').find('.panel-heading')
       var ft_paging = ft.use(FooTable.Paging)
-      var load_rows = ft_paging.totalRows + '-' + (ft_paging.totalRows + new_nrows)
+      var load_rows = (ft_paging.totalRows + 1) + '-' + (ft_paging.totalRows + new_nrows)
       $.get('/api/v1/get/logs/' + log_url + '/' + load_rows).then(function(data){
         if (data.length === undefined) { mailcow_alert_box(lang.no_new_rows, "info"); return; }
         var rows = process_table_data(data, post_process);
         var rows_now = (ft_paging.totalRows + data.length);
-        $(heading).children('.log-lines').text(rows_now)
+        $(heading).children('.table-lines').text(rows_now)
         mailcow_alert_box(data.length + lang.additional_rows, "success");
         ft.rows.load(rows, true);
       });
@@ -530,21 +569,20 @@ jQuery(function($){
   draw_watchdog_logs();
   draw_acme_logs();
   draw_api_logs();
+  draw_ui_logs();
   draw_netfilter_logs();
   draw_rspamd_history();
   $(window).resize(function () {
       var timer;
       clearTimeout(timer);
       timer = setTimeout(function () {
-        if (typeof rspamd_donut_plot !== 'undefined') {
-          rspamd_donut_plot.replot({});
-        }
+        rspamd_pie_graph();
       }, 500);
   });
   $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
     var target = $(e.target).attr("href");
     if ((target == '#tab-rspamd-history')) {
-      rspamd_donut_plot.replot({});
+      rspamd_pie_graph();
     }
   });
 });

@@ -119,9 +119,8 @@ COMPOSE_PROJECT_NAME=mailcowdockerized
 # Additional SAN for the certificate
 ADDITIONAL_SAN=
 
-
 # Skip running ACME (acme-mailcow, Let's Encrypt certs) - y/n
-SKIP_LETS_ENCRYPT=n
+SKIP_LETS_ENCRYPT=y
 
 # Skip IPv4 check in ACME container - y/n
 SKIP_IP_CHECK=n
@@ -137,7 +136,7 @@ USE_WATCHDOG=n
 # Max log lines per service to keep in Redis logs
 LOG_LINES=9999
 
-# Internal IPv4 /24 subnet - DO NOT CHANGE - WILL BREAK MAILMAN!
+# Internal IPv4 /24 subnet, format n.n.n. (expands to n.n.n.0/24)
 IPV4_NETWORK=172.19.199
 
 # Internal IPv6 subnet in fc00::/7
@@ -153,7 +152,7 @@ IPV6_NETWORK=fd4d:6169:6c63:6f77::/64
 # mailcow-network will still be created as IPv6 enabled, all containers will be created
 # without IPv6 support.
 # Use 1 for disabled, 0 for enabled
-SYSCTL_IPV6_DISABLED=0
+SYSCTL_IPV6_DISABLED=1
 
 # Create or override API key for web uI
 # You _must_ define API_ALLOW_FROM, which is a comma separated list of IPs

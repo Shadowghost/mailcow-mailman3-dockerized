@@ -37,7 +37,6 @@ log_msg() {
     redis-cli -h redis LPUSH WATCHDOG_LOG "{\"time\":\"$(date +%s)\",\"message\":\"$(printf '%s' "${1}" | \
       tr '%&;$"_[]{}-\r\n' ' ')\"}" > /dev/null
   fi
-  redis-cli -h redis LTRIM WATCHDOG_LOG 0 ${LOG_LINES} > /dev/null
   echo $(date) $(printf '%s\n' "${1}")
 }
 
@@ -60,10 +59,10 @@ function mail_error() {
   log_msg "Sent notification email to ${1}"
 }
 
-
 get_container_ip() {
   # ${1} is container
   CONTAINER_ID=()
+  CONTAINER_IPS=()
   CONTAINER_IP=
   LOOP_C=1
   until [[ ${CONTAINER_IP} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] || [[ ${LOOP_C} -gt 5 ]]; do
@@ -73,15 +72,21 @@ get_container_ip() {
     # returned id can have multiple elements (if scaled), shuffle for random test
     CONTAINER_ID=($(printf "%s\n" "${CONTAINER_ID[@]}" | shuf))
     if [[ ! -z ${CONTAINER_ID} ]]; then
-      for matched_container in "${CONTAINER_ID[@]}"; do
-        CONTAINER_IP=$(curl --silent http://dockerapi:8080/containers/${matched_container}/json | jq -r '.NetworkSettings.Networks[].IPAddress')
-        # grep will do nothing if one of these vars is empty
-        [[ -z ${CONTAINER_IP} ]] && continue
-        [[ -z ${IPV4_NETWORK} ]] && continue
-        # only return ips that are part of our network
-        if ! grep -q ${IPV4_NETWORK} <(echo ${CONTAINER_IP}); then
-          CONTAINER_IP=
-        fi
+      for matched_container in "${CONTAINER_ID[@]}"; do 
+        CONTAINER_IPS=($(curl --silent http://dockerapi:8080/containers/${matched_container}/json | jq -r '.NetworkSettings.Networks[].IPAddress')) 
+        for ip_match in "${CONTAINER_IPS[@]}"; do 
+          # grep will do nothing if one of these vars is empty
+          [[ -z ${ip_match} ]] && continue
+          [[ -z ${IPV4_NETWORK} ]] && continue
+          # only return ips that are part of our network
+          if ! grep -q ${IPV4_NETWORK} <(echo ${ip_match}); then
+            continue
+          else
+            CONTAINER_IP=${ip_match}
+            break
+          fi
+        done
+        [[ ! -z ${CONTAINER_IP} ]] && break
       done
     fi
     LOOP_C=$((LOOP_C + 1))
@@ -89,7 +94,6 @@ get_container_ip() {
   [[ ${LOOP_C} -gt 5 ]] && echo 240.0.0.0 || echo ${CONTAINER_IP}
 }
 
-# Check functions
 nginx_checks() {
   err_count=0
   diff_c=0
@@ -139,7 +143,6 @@ sogo_checks() {
   while [ ${err_count} -lt ${THRESHOLD} ]; do
     host_ip=$(get_container_ip sogo-mailcow)
     err_c_cur=${err_count}
-    /usr/lib/nagios/plugins/check_http -4 -H ${host_ip} -u /WebServerResources/css/theme-default.css -p 9192 -R md-default-theme 1>&2; err_count=$(( ${err_count} + $? ))
     /usr/lib/nagios/plugins/check_http -4 -H ${host_ip} -u /SOGo.index/ -p 20000 -R "SOGo\.MainUI" 1>&2; err_count=$(( ${err_count} + $? ))
     [ ${err_c_cur} -eq ${err_count} ] && [ ! $((${err_count} - 1)) -lt 0 ] && err_count=$((${err_count} - 1)) diff_c=1
     [ ${err_c_cur} -ne ${err_count} ] && diff_c=$(( ${err_c_cur} - ${err_count} ))

@@ -3,10 +3,13 @@
 trap "postfix stop" EXIT
 
 [[ ! -d /opt/postfix/conf/sql/ ]] && mkdir -p /opt/postfix/conf/sql/
-if [[ -z $(grep null /etc/aliases) ]]; then
-  echo null: /dev/null >> /etc/aliases;
-  newaliases;
-fi
+
+cat <<EOF > /etc/aliases
+null: /dev/null
+ham: "|/usr/local/bin/rspamd-pipe-ham"
+spam: "|/usr/local/bin/rspamd-pipe-spam"
+EOF
+newaliases;
 
 cat <<EOF > /opt/postfix/conf/sql/mysql_relay_recipient_maps.cf
 user = ${DBUSER}
@@ -207,6 +210,7 @@ query = SELECT goto FROM alias
   SELECT logged_in_as FROM sender_acl
     WHERE send_as='@%d'
       OR send_as='%s'
+      OR send_as='*'
       OR send_as IN (
         SELECT CONCAT('@',target_domain) FROM alias_domain
           WHERE alias_domain = '%d')

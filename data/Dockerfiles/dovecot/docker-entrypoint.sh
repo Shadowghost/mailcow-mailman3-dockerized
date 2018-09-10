@@ -7,10 +7,11 @@ while ! mysqladmin ping --host mysql -u${DBUSER} -p${DBPASS} --silent; do
   sleep 2
 done
 
-# Hard-code env vars to imapsync due to cron not passing them to the perl script
+# Hard-code env vars to scripts due to cron not passing them to the perl script
 sed -i "/^\$DBUSER/c\\\$DBUSER='${DBUSER}';" /usr/local/bin/imapsync_cron.pl
 sed -i "/^\$DBPASS/c\\\$DBPASS='${DBPASS}';" /usr/local/bin/imapsync_cron.pl
 sed -i "/^\$DBNAME/c\\\$DBNAME='${DBNAME}';" /usr/local/bin/imapsync_cron.pl
+sed -i "s/LOG_LINES/${LOG_LINES}/g" /usr/local/bin/trim_logs.sh
 
 # Create missing directories
 [[ ! -d /usr/local/etc/dovecot/sql/ ]] && mkdir -p /usr/local/etc/dovecot/sql/
@@ -109,8 +110,9 @@ if [[ $(stat -c %U /var/vmail/) != "vmail" ]] ; then chown -R vmail:vmail /var/v
 # Create random master for SOGo sieve features
 RAND_USER=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 16 | head -n 1)
 RAND_PASS=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 24 | head -n 1)
-echo ${RAND_USER}:$(doveadm pw -s SHA1 -p ${RAND_PASS}) > /usr/local/etc/dovecot/dovecot-master.passwd
-echo ${RAND_USER}:${RAND_PASS} > /etc/sogo/sieve.creds
+
+echo ${RAND_USER}@mailcow.local:$(doveadm pw -s SHA1 -p ${RAND_PASS}) > /usr/local/etc/dovecot/dovecot-master.passwd
+echo ${RAND_USER}@mailcow.local:${RAND_PASS} > /etc/sogo/sieve.creds
 
 # 401 is user dovecot
 if [[ ! -f /mail_crypt/ecprivkey.pem || ! -f /mail_crypt/ecpubkey.pem ]]; then
@@ -136,6 +138,7 @@ touch /etc/crontab /etc/cron.*/*
 [[ -f /usr/local/var/run/dovecot/master.pid ]] && rm /usr/local/var/run/dovecot/master.pid
 
 # Clean stopped imapsync jobs
+rm -f /tmp/imapsync_busy.lock
 IMAPSYNC_TABLE=$(mysql -h mysql-mailcow -u ${DBUSER} -p${DBPASS} ${DBNAME} -e "SHOW TABLES LIKE 'imapsync'" -Bs)
 [[ ! -z ${IMAPSYNC_TABLE} ]] && mysql -h mysql-mailcow -u ${DBUSER} -p${DBPASS} ${DBNAME} -e "UPDATE imapsync SET is_running='0'"
 

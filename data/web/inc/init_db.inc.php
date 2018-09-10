@@ -3,7 +3,7 @@ function init_db_schema() {
   try {
     global $pdo;
 
-    $db_version = "04072018_2119";
+    $db_version = "01092018_1902";
 
     $stmt = $pdo->query("SHOW TABLES LIKE 'versions'");
     $num_results = count($stmt->fetchAll(PDO::FETCH_ASSOC));
@@ -76,7 +76,7 @@ function init_db_schema() {
           "c_cn" => "VARCHAR(255)",
           "mail" => "VARCHAR(255) NOT NULL",
           // TODO -> use TEXT and check if SOGo login breaks on empty aliases
-          "aliases" => "VARCHAR(6144) NOT NULL DEFAULT ''",
+          "aliases" => "TEXT NOT NULL",
           "ad_aliases" => "VARCHAR(6144) NOT NULL DEFAULT ''",
           "home" => "VARCHAR(255)",
           "kind" => "VARCHAR(100) NOT NULL DEFAULT ''",
@@ -112,6 +112,7 @@ function init_db_schema() {
       ),
       "alias" => array(
         "cols" => array(
+          "id" => "INT NOT NULL AUTO_INCREMENT",
           "address" => "VARCHAR(255) NOT NULL",
           "goto" => "TEXT NOT NULL",
           "domain" => "VARCHAR(255) NOT NULL",
@@ -121,7 +122,10 @@ function init_db_schema() {
         ),
         "keys" => array(
           "primary" => array(
-            "" => array("address")
+            "" => array("id")
+          ),
+          "unique" => array(
+            "address" => array("address")
           ),
           "key" => array(
             "domain" => array("domain")
@@ -147,7 +151,7 @@ function init_db_schema() {
               "col" => "username",
               "ref" => "admin.username",
               "delete" => "CASCADE",
-              "update" => "NO ACTION"
+              "update" => "CASCADE"
             )
           )
         ),
@@ -276,10 +280,7 @@ function init_db_schema() {
           "delimiter_action" => "TINYINT(1) NOT NULL DEFAULT '1'",
           "syncjobs" => "TINYINT(1) NOT NULL DEFAULT '1'",
           "eas_reset" => "TINYINT(1) NOT NULL DEFAULT '1'",
-          "filters" => "TINYINT(1) NOT NULL DEFAULT '1'",
           "quarantine" => "TINYINT(1) NOT NULL DEFAULT '1'",
-          "bcc_maps" => "TINYINT(1) NOT NULL DEFAULT '1'",
-          "recipient_maps" => "TINYINT(1) NOT NULL DEFAULT '0'",
           ),
         "keys" => array(
           "primary" => array(
@@ -363,6 +364,25 @@ function init_db_schema() {
         ),
         "attr" => "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC"
       ),
+      "logs" => array(
+        "cols" => array(
+          "id" => "INT NOT NULL AUTO_INCREMENT",
+          "task" => "CHAR(32) NOT NULL DEFAULT '000000'",
+          "type" => "VARCHAR(32) DEFAULT ''",
+          "msg" => "TEXT",
+          "call" => "TEXT",
+          "user" => "VARCHAR(64) NOT NULL",
+          "role" => "VARCHAR(32) NOT NULL",
+          "remote" => "VARCHAR(39) NOT NULL",
+          "time" => "INT(11) NOT NULL"
+        ),
+        "keys" => array(
+          "primary" => array(
+            "" => array("id")
+          )
+        ),
+        "attr" => "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC"
+      ),
       "quota2" => array(
         "cols" => array(
           "username" => "VARCHAR(255) NOT NULL",
@@ -394,6 +414,32 @@ function init_db_schema() {
         ),
         "attr" => "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC"
       ),
+      "da_acl" => array(
+        "cols" => array(
+          "username" => "VARCHAR(255) NOT NULL",
+          "syncjobs" => "TINYINT(1) NOT NULL DEFAULT '1'",
+          "quarantine" => "TINYINT(1) NOT NULL DEFAULT '1'",
+          "login_as" => "TINYINT(1) NOT NULL DEFAULT '1'",
+          "bcc_maps" => "TINYINT(1) NOT NULL DEFAULT '1'",
+          "filters" => "TINYINT(1) NOT NULL DEFAULT '1'",
+          "ratelimit" => "TINYINT(1) NOT NULL DEFAULT '1'",
+          "spam_policy" => "TINYINT(1) NOT NULL DEFAULT '1'",
+          ),
+        "keys" => array(
+          "primary" => array(
+            "" => array("username")
+          ),
+          "fkey" => array(
+            "fk_domain_admin_acl" => array(
+              "col" => "username",
+              "ref" => "domain_admins.username",
+              "delete" => "CASCADE",
+              "update" => "NO ACTION"
+            )
+          )
+        ),
+        "attr" => "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC"
+      ),
       "imapsync" => array(
         "cols" => array(
           "id" => "INT NOT NULL AUTO_INCREMENT",
@@ -417,6 +463,10 @@ function init_db_schema() {
           "delete2" => "TINYINT(1) NOT NULL DEFAULT '0'",
           "automap" => "TINYINT(1) NOT NULL DEFAULT '0'",
           "skipcrossduplicates" => "TINYINT(1) NOT NULL DEFAULT '0'",
+          "custom_params" => "VARCHAR(512) NOT NULL DEFAULT ''",
+          "timeout1" => "SMALLINT NOT NULL DEFAULT '600'",
+          "timeout2" => "SMALLINT NOT NULL DEFAULT '600'",
+          "subscribeall" => "TINYINT(1) NOT NULL DEFAULT '1'",
           "is_running" => "TINYINT(1) NOT NULL DEFAULT '0'",
           "returned_text" => "MEDIUMTEXT",
           "last_run" => "TIMESTAMP NULL DEFAULT NULL",
@@ -732,6 +782,12 @@ function init_db_schema() {
           if ($num_results == 0) {
             if (strpos($type, 'AUTO_INCREMENT') !== false) {
               $type = $type . ' PRIMARY KEY ';
+              // Adding an AUTO_INCREMENT key, need to drop primary keys first, if exists
+              $stmt = $pdo->query("SHOW KEYS FROM `" . $table . "` WHERE Key_name = 'PRIMARY'");
+              $num_results = count($stmt->fetchAll(PDO::FETCH_ASSOC));
+              if ($num_results != 0) {
+                $pdo->query("ALTER TABLE `" . $table . "` DROP PRIMARY KEY");
+              }
             }
             $pdo->query("ALTER TABLE `" . $table . "` ADD `" . $column . "` " . $type);
           }
@@ -911,18 +967,21 @@ DELIMITER ;';
           WHERE `username` = :username");
       $stmt->execute(array(':tls_enforce_in' => $tls_options['tls_enforce_in'], ':tls_enforce_out' => $tls_options['tls_enforce_out'], ':username' => $tls_user));
     }
-    $_SESSION['return'] = array(
+    $_SESSION['return'][] = array(
       'type' => 'success',
-      'msg' => 'Database initialisation completed'
+      'log' => array(__FUNCTION__),
+      'msg' => 'db_init_complete'
     );
 
-    // Fix user_acl
+    // Fix ACL
     $stmt = $pdo->query("INSERT INTO `user_acl` (`username`) SELECT `username` FROM `mailbox` WHERE `kind` = '' AND NOT EXISTS (SELECT `username` FROM `user_acl`);");
+    $stmt = $pdo->query("INSERT INTO `da_acl` (`username`) SELECT DISTINCT `username` FROM `domain_admins` WHERE `username` != 'admin' AND NOT EXISTS (SELECT `username` FROM `da_acl`);");
   }
   catch (PDOException $e) {
-    $_SESSION['return'] = array(
+    $_SESSION['return'][] = array(
       'type' => 'danger',
-      'msg' => 'Database initialisation failed: ' . $e->getMessage()
+      'log' => array(__FUNCTION__),
+      'msg' => array('mysql_error', $e)
     );
   }
 }

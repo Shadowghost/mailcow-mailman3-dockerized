@@ -3,7 +3,11 @@ $(document).ready(function() {
     if ($(elem).data('submitted') == '1') {
       return true;
     } else {
-      $(elem).text(loading_text);
+      var parent_btn_grp = $(elem).parentsUntil(".btn-group").parent();
+      if (parent_btn_grp.hasClass('btn-group')) {
+        parent_btn_grp.replaceWith('<button class="btn btn-default btn-sm" disabled>' + lang_footer.loading + '</a>');
+      }
+      $(elem).text(lang_footer.loading);
       $(elem).attr('data-submitted', '1');
       function disableF5(e) { if ((e.which || e.keyCode) == 116 || (e.which || e.keyCode) == 82) e.preventDefault(); };
       $(document).on("keydown", disableF5);
@@ -80,11 +84,11 @@ $(document).ready(function() {
     // If clicked element #edit_selected is in a form with the same data-id as the button,
     // we merge all input fields by {"name":"value"} into api-attr
     if ($(this).closest("form").data('id') == id) {
-      var req_empty = false;
+      var invalid = false;
       $(this).closest("form").find('select, textarea, input').each(function() {
         if ($(this).prop('required')) {
           if (!$(this).val() && $(this).prop('disabled') === false) {
-            req_empty = true;
+            invalid = true;
             $(this).addClass('inputMissingAttr');
           } else {
             $(this).removeClass('inputMissingAttr');
@@ -106,7 +110,7 @@ $(document).ready(function() {
           }
         }
       });
-      if (!req_empty) {
+      if (!invalid) {
         var attr_to_merge = $(this).closest("form").serializeObject();
         var api_attr = $.extend(api_attr, attr_to_merge)
       } else {
@@ -217,8 +221,23 @@ $(document).ready(function() {
         var response = (data.responseText);
         if (typeof response !== 'undefined' && response.length !== 0) {
           response_obj = JSON.parse(response);
-          if (response_obj.type == 'success') {
+          unset = true;
+          $.each(response_obj, function(i, v) {
+            if (v.type == "danger") {
+              unset = false;
+            }
+          });
+          if (unset === true) {
+            unset = null;
             $('form').formcache('clear');
+            $('form').formcache('destroy');
+            var i = localStorage.length;
+            while(i--) {
+              var key = localStorage.key(i);
+              if(/formcache/.test(key)) {
+                localStorage.removeItem(key);
+              }  
+            }
           }
           else {
             var add_modal = $('.modal.in').attr('id');

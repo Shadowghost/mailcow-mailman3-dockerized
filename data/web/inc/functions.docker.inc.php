@@ -1,5 +1,6 @@
 <?php
-function docker($service_name, $action, $attr1 = null, $attr2 = null, $extra_headers = null) {
+function docker($action, $service_name = null, $attr1 = null, $attr2 = null, $extra_headers = null) {
+  global $DOCKER_TIMEOUT;
   $curl = curl_init();
   curl_setopt($curl, CURLOPT_HTTPHEADER,array( 'Content-Type: application/json' ));
   switch($action) {
@@ -7,42 +8,64 @@ function docker($service_name, $action, $attr1 = null, $attr2 = null, $extra_hea
       curl_setopt($curl, CURLOPT_URL, 'http://dockerapi:8080/containers/json');
       curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
       curl_setopt($curl, CURLOPT_POST, 0);
-      curl_setopt($curl, CURLOPT_TIMEOUT, 10);
+      curl_setopt($curl, CURLOPT_TIMEOUT, $DOCKER_TIMEOUT);
       $response = curl_exec($curl);
       if ($response === false) {
         $err = curl_error($curl);
         curl_close($curl);
+        // logger(array('return' => array(
+          // 'type' => 'danger',
+          // 'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
+          // 'msg' => $err,
+        // )));
         return $err;
       }
       else {
         curl_close($curl);
+        // logger(array('return' => array(
+          // 'type' => 'success',
+          // 'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
+        // )));
         $containers = json_decode($response, true);
         if (!empty($containers)) {
           foreach ($containers as $container) {
-            if ($container['Config']['Labels']['com.docker.compose.service'] == $service_name) {
+            if ($container['Config']['Labels']['com.docker.compose.service'] == $service_name
+              && $container['Config']['Labels']['com.docker.compose.project'] == getenv('COMPOSE_PROJECT_NAME')) {
               return trim($container['Id']);
             }
           }
         }
       }
       return false;
-    case 'states':
+    case 'containers':
       curl_setopt($curl, CURLOPT_URL, 'http://dockerapi:8080/containers/json');
       curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
       curl_setopt($curl, CURLOPT_POST, 0);
-      curl_setopt($curl, CURLOPT_TIMEOUT, 10);
+      curl_setopt($curl, CURLOPT_TIMEOUT, $DOCKER_TIMEOUT);
       $response = curl_exec($curl);
       if ($response === false) {
         $err = curl_error($curl);
         curl_close($curl);
+        // logger(array('return' => array(
+          // 'type' => 'danger',
+          // 'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
+          // 'msg' => $err,
+        // )));
         return $err;
       }
       else {
         curl_close($curl);
+        // logger(array('return' => array(
+          // 'type' => 'success',
+          // 'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
+        // )));
         $containers = json_decode($response, true);
         if (!empty($containers)) {
           foreach ($containers as $container) {
-            $out[$container['Config']['Labels']['com.docker.compose.service']] = $container['State'];
+            if ($container['Config']['Labels']['com.docker.compose.project'] == getenv('COMPOSE_PROJECT_NAME')) {
+              $out[$container['Config']['Labels']['com.docker.compose.service']]['State'] = $container['State'];
+              $out[$container['Config']['Labels']['com.docker.compose.service']]['Config'] = $container['Config'];
+            }
           }
         }
         return (!empty($out)) ? $out : false;
@@ -50,39 +73,80 @@ function docker($service_name, $action, $attr1 = null, $attr2 = null, $extra_hea
       return false;
     break;
     case 'info':
-      $container_id = docker($service_name, 'get_id');
-      if (ctype_xdigit($container_id)) {
-        curl_setopt($curl, CURLOPT_URL, 'http://dockerapi:8080/containers/' . $container_id . '/json');
+      if (empty($service_name)) {
+        curl_setopt($curl, CURLOPT_URL, 'http://dockerapi:8080/containers/json');
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($curl, CURLOPT_POST, 0);
-        curl_setopt($curl, CURLOPT_TIMEOUT, 10);
-        $response = curl_exec($curl);
-        if ($response === false) {
-          $err = curl_error($curl);
-          curl_close($curl);
-          return $err;
-        }
-        else {
-          curl_close($curl);
-          if (empty($response)) {
-            return true;
-          }
-          else {
-            return json_decode($response, true);
-          }
-        }
+        curl_setopt($curl, CURLOPT_TIMEOUT, $DOCKER_TIMEOUT);
       }
       else {
-        return false;
+        $container_id = docker('get_id', $service_name);
+        if (ctype_xdigit($container_id)) {
+          curl_setopt($curl, CURLOPT_URL, 'http://dockerapi:8080/containers/' . $container_id . '/json');
+        }
+        else {
+          // logger(array('return' => array(
+            // 'type' => 'danger',
+            // 'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
+            // 'msg' => 'invalid_container_id'
+          // )));
+          return false;
+        }
+      }
+      curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+      curl_setopt($curl, CURLOPT_POST, 0);
+      curl_setopt($curl, CURLOPT_TIMEOUT, $DOCKER_TIMEOUT);
+      $response = curl_exec($curl);
+      if ($response === false) {
+        $err = curl_error($curl);
+        curl_close($curl);
+        // logger(array('return' => array(
+          // 'type' => 'danger',
+          // 'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
+          // 'msg' => $err,
+        // )));
+        return $err;
+      }
+      else {
+        curl_close($curl);
+        // logger(array('return' => array(
+          // 'type' => 'success',
+          // 'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
+        // )));
+        $decoded_response = json_decode($response, true);
+        if (!empty($decoded_response)) {
+          if (empty($service_name)) {
+            foreach ($decoded_response as $container) {
+              if ($container['Config']['Labels']['com.docker.compose.project'] == getenv('COMPOSE_PROJECT_NAME')) {
+                unset($container['Config']['Env']);
+                $out[$container['Config']['Labels']['com.docker.compose.service']]['State'] = $container['State'];
+                $out[$container['Config']['Labels']['com.docker.compose.service']]['Config'] = $container['Config'];
+              }
+            }
+          }
+          else {
+            if ($decoded_response['Config']['Labels']['com.docker.compose.project'] == getenv('COMPOSE_PROJECT_NAME')) {
+              unset($container['Config']['Env']);
+              $out[$decoded_response['Config']['Labels']['com.docker.compose.service']]['State'] = $decoded_response['State'];
+              $out[$decoded_response['Config']['Labels']['com.docker.compose.service']]['Config'] = $decoded_response['Config'];
+            }
+          }
+        }
+        if (empty($response)) {
+          return true;
+        }
+        else {
+          return (!empty($out)) ? $out : false;
+        }
       }
     break;
     case 'post':
       if (!empty($attr1)) {
-        $container_id = docker($service_name, 'get_id');
+        $container_id = docker('get_id', $service_name);
         if (ctype_xdigit($container_id) && ctype_alnum($attr1)) {
           curl_setopt($curl, CURLOPT_URL, 'http://dockerapi:8080/containers/' . $container_id . '/' . $attr1);
           curl_setopt($curl, CURLOPT_POST, 1);
-          curl_setopt($curl, CURLOPT_TIMEOUT, 10);
+          curl_setopt($curl, CURLOPT_TIMEOUT, $DOCKER_TIMEOUT);
           if (!empty($attr2)) {
             curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($attr2));
           }
@@ -94,10 +158,19 @@ function docker($service_name, $action, $attr1 = null, $attr2 = null, $extra_hea
           if ($response === false) {
             $err = curl_error($curl);
             curl_close($curl);
+            logger(array('return' => array(array(
+              'type' => 'danger',
+              'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
+              'msg' => $err,
+            ))));
             return $err;
           }
           else {
             curl_close($curl);
+            logger(array('return' => array(array(
+              'type' => 'success',
+              'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
+            ))));
             if (empty($response)) {
               return true;
             }

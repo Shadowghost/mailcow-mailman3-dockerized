@@ -1,5 +1,6 @@
 <?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/modals/footer.php';
+logger();
 ?>
 <div style="margin-bottom: 100px;"></div>
 <script src="/js/bootstrap.min.js"></script>
@@ -9,13 +10,22 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/modals/footer.php';
 <script src="/js/bootstrap-filestyle.min.js"></script>
 <script src="/js/notifications.min.js"></script>
 <script src="/js/formcache.min.js"></script>
-<script src="/js/jquery.jqplot.min.js"></script>
-<script src="/js/jqplot.donutRenderer.js"></script>
+<script src="/js/google.charts.loader.js"></script>
 <script src="/js/numberedtextarea.min.js"></script>
+<script src="/js/sha1.min.js"></script>
 <script src="/js/u2f-api.js"></script>
 <script src="/js/api.js"></script>
+<script src="/js/mailcow.js"></script>
 <script>
-var loading_text = '<?= $lang['footer']['loading']; ?>'
+<?php
+$lang_footer = json_encode($lang['footer']);
+$lang_acl = json_encode($lang['acl']);
+$lang_tfa = json_encode($lang['tfa']);
+echo "var lang_footer = ". $lang_footer . ";\n";
+echo "var lang_acl = ". $lang_acl . ";\n";
+echo "var lang_tfa = ". $lang_tfa . ";\n";
+echo "var docker_timeout = ". $DOCKER_TIMEOUT * 1000 . ";\n";
+?>
 $(window).scroll(function() {
   sessionStorage.scrollTop = $(this).scrollTop();
 });
@@ -28,26 +38,19 @@ $(window).load(function() {
   $(".overlay").hide();
 });
 $(document).ready(function() {
-  window.mailcow_alert_box = function(message, type) {
-    msg = $('<span/>').html(message).text();
-    if (type == 'danger') {
-      auto_hide = 0;
-      $('#' + localStorage.getItem("add_modal")).modal('show');
-      localStorage.removeItem("add_modal");
-    } else {
-      auto_hide = 5000;
+  // TFA, CSRF, Alerts in footer.inc.php
+  // Other general functions in mailcow.js
+  <?php
+  $alertbox_log_parser = alertbox_log_parser($_SESSION);
+  if (is_array($alertbox_log_parser)) {
+    foreach($alertbox_log_parser as $log) {
+  ?>
+  mailcow_alert_box(<?=$log['msg'];?>, <?=$log['type'];?>);
+  <?php
     }
-    $.ajax({
-      url: '/inc/ajax/log_driver.php',
-      data: {"type": type,"msg": msg},
-      type: "GET"
-    });
-    $.notify({message: msg},{z_index: 20000, delay: auto_hide, type: type,placement: {from: "bottom",align: "right"},animate: {enter: 'animated fadeInUp',exit: 'animated fadeOutDown'}});
+  unset($_SESSION['return']);
   }
-  $('[data-cached-form="true"]').formcache({key: $(this).data('id')});
-  <?php if (isset($_SESSION['return'])): ?>
-  mailcow_alert_box(<?=json_encode($_SESSION['return']['msg']); ?>,  "<?= $_SESSION['return']['type']; ?>");
-  <?php endif; unset($_SESSION['return']); ?>
+  ?>
   // Confirm TFA modal
   <?php if (isset($_SESSION['pending_tfa_method'])):?>
   $('#ConfirmTFAModal').modal({
@@ -65,7 +68,7 @@ $(document).ready(function() {
           dataType: 'script',
           url: "/api/v1/get/u2f-authentication/<?= (isset($_SESSION['pending_mailcow_cc_username'])) ? rawurlencode($_SESSION['pending_mailcow_cc_username']) : null; ?>",
           complete: function(data){
-            $('#u2f_status_auth').html('<?=$lang['tfa']['waiting_usb_auth'];?>');
+            $('#u2f_status_auth').html(lang_tfa.waiting_usb_auth);
             data;
             setTimeout(function() {
               console.log("Ready to authenticate");
@@ -95,7 +98,6 @@ $(document).ready(function() {
   <?php endif; ?>
 
   // Set TFA modals
-
   $('#selectTFA').change(function () {
     if ($(this).val() == "yubi_otp") {
       $('#YubiOTPModal').modal('show');
@@ -118,7 +120,7 @@ $(document).ready(function() {
           data;
           setTimeout(function() {
             console.log("Ready to register");
-            $('#u2f_status_reg').html('<?=$lang['tfa']['waiting_usb_register'];?>');
+            $('#u2f_status_reg').html(lang_tfa.waiting_usb_register);
             u2f.register(appId, registerRequests, registeredKeys, function(deviceResponse) {
               var form  = document.getElementById('u2f_reg_form');
               var reg   = document.getElementById('u2f_register_data');
@@ -142,90 +144,6 @@ $(document).ready(function() {
       $("option:selected").prop("selected", false);
     }
   });
-
-  $(function () {
-    $('[data-toggle="tooltip"]').tooltip()
-  });
-
-  // Remember last navigation pill
-  (function () {
-    'use strict';
-    if ($('a[data-toggle="tab"]').length) {
-      $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-        if ($(this).data('dont-remember') == 1) {
-          return true;
-        }
-        var id = $(this).parents('[role="tablist"]').attr('id');
-        var key = 'lastTag';
-        if (id) {
-          key += ':' + id;
-        }
-        localStorage.setItem(key, $(e.target).attr('href'));
-      });
-      $('[role="tablist"]').each(function (idx, elem) {
-        var id = $(elem).attr('id');
-        var key = 'lastTag';
-        if (id) {
-          key += ':' + id;
-        }
-        var lastTab = localStorage.getItem(key);
-        if (lastTab) {
-          $('[href="' + lastTab + '"]').tab('show');
-        }
-      });
-    }
-  })();
-
-  // Disable submit after submitting form (not API driven buttons)
-  $('form').submit(function() {
-    if ($('form button[type="submit"]').data('submitted') == '1') {
-      return false;
-    } else {
-      $(this).find('button[type="submit"]').first().text('<?= $lang['footer']['loading']; ?>');
-      $('form button[type="submit"]').attr('data-submitted', '1');
-      function disableF5(e) { if ((e.which || e.keyCode) == 116 || (e.which || e.keyCode) == 82) e.preventDefault(); };
-      $(document).on("keydown", disableF5);
-    }
-  });
-
-  // IE fix to hide scrollbars when table body is empty
-  $('tbody').filter(function (index) {
-    return $(this).children().length < 1;
-  }).remove();
-
-  // Init Bootstrap Selectpicker
-  $('select').selectpicker();
-
-  // Trigger container restart
-  $('#RestartContainer').on('show.bs.modal', function(e) {
-    var container = $(e.relatedTarget).data('container');
-    $('#containerName').text(container);
-    $('#triggerRestartContainer').click(function(){
-      $(this).prop("disabled",true);
-      $(this).html('<span class="glyphicon glyphicon-refresh glyphicon-spin"></span> ');
-      $('#statusTriggerRestartContainer').text('Restarting container, this may take a while... ');
-      $('#statusTriggerRestartContainer2').text('Reloading webpage... ');
-      $.ajax({
-        method: 'get',
-        url: '/inc/ajax/container_ctrl.php',
-        timeout: 10000,
-        data: {
-          'service': container,
-          'action': 'restart'
-        },
-        error: function() {
-          window.location = window.location.href.split("#")[0];
-        },
-        success: function(data) {
-          $('#statusTriggerRestartContainer').append(data);
-          $('#triggerRestartContainer').html('<span class="glyphicon glyphicon-ok"></span> ');
-          $('#statusTriggerRestartContainer2').append(data);
-          $('#triggerRestartContainer').html('<span class="glyphicon glyphicon-ok"></span> ');
-          window.location = window.location.href.split("#")[0];
-        }
-      });
-    });
-  })
 
   // CSRF
   $('<input type="hidden" value="<?= $_SESSION['CSRF']['TOKEN']; ?>">').attr('id', 'csrf_token').attr('name', 'csrf_token').appendTo('form');

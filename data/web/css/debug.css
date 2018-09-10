@@ -35,3 +35,10 @@ table.footable>tbody>tr.footable-empty>td {
 .inputMissingAttr {
   border-color: #FF4136;
 }
+.table-lines {
+  vertical-align: inherit;
+}
+tbody {
+  font-size:14px;
+  color:#333;
+}
