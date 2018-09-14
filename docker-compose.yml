@@ -475,7 +475,7 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.13
+      image: mailcow/dockerapi:1.14
       restart: always
       build: ./data/Dockerfiles/dockerapi
       depends_on:
