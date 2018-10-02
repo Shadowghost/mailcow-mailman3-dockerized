@@ -29,6 +29,7 @@ rspamd_config:register_symbol({
 
     local from_ip_string = tostring(ip)
     ip_check_table = {from_ip_string}
+
     local maxbits = 128
     local minbits = 32
     if ip:get_version() == 4 then

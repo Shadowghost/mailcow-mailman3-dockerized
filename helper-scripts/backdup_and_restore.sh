@@ -5,8 +5,8 @@ if [[ ! ${1} =~ (backup|restore) ]]; then
   exit 1
 fi
 
-if [[ ${1} == "backup" && ! ${2} =~ (crypt|vmail|redis|rspamd|postfix|mysql|all) ]]; then
-  echo "Second parameter needs to be 'vmail', 'crypt', 'redis', 'rspamd', 'postfix', 'mysql' or 'all'"
+if [[ ${1} == "backup" && ! ${2} =~ (crypt<vmail|redis|rspamd|postfix|mysql|mailman-core|mailman-db|all) ]]; then
+  echo "Second parameter needs to be 'vmail', 'redis', 'rspamd', 'postfix', 'mysql', 'mailman-core', 'mailman-db', 'mailman-web' or 'all'"
   exit 1
 fi
 
@@ -46,55 +46,72 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 COMPOSE_FILE=${SCRIPT_DIR}/../docker-compose.yml
 echo "Using ${BACKUP_LOCATION} as backup/restore location."
 echo
-source ${SCRIPT_DIR}/../mailcow.conf
+source ${SCRIPT_DIR}/../.env
 CMPS_PRJ=$(echo $COMPOSE_PROJECT_NAME | tr -cd "[A-Za-z-_]")
 
 function backup() {
   DATE=$(date +"%Y-%m-%d-%H-%M-%S")
-  mkdir -p "${BACKUP_LOCATION}/mailcow-${DATE}"
-  chmod 755 "${BACKUP_LOCATION}/mailcow-${DATE}"
-  cp "${SCRIPT_DIR}/../mailcow.conf" "${BACKUP_LOCATION}/mailcow-${DATE}"
+  mkdir -p "${BACKUP_LOCATION}/mailcowmailman3-${DATE}"
+  chmod 755 "${BACKUP_LOCATION}/mailcowmailman3-${DATE}"
   while (( "$#" )); do
     case "$1" in
     vmail|all)
       docker run --rm \
-        -v ${BACKUP_LOCATION}/mailcow-${DATE}:/backup \
+        -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
         -v $(docker volume ls -qf name=${CMPS_PRJ}_vmail-vol-1):/vmail \
         debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_vmail.tar.gz /vmail
       ;;&
     crypt|all)
       docker run --rm \
-        -v ${BACKUP_LOCATION}/mailcow-${DATE}:/backup \
+        -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
         -v $(docker volume ls -qf name=${CMPS_PRJ}_crypt-vol-1):/crypt \
         debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_crypt.tar.gz /crypt
       ;;&
     redis|all)
       docker exec $(docker ps -qf name=redis-mailcow) redis-cli save
       docker run --rm \
-        -v ${BACKUP_LOCATION}/mailcow-${DATE}:/backup \
+        -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
         -v $(docker volume ls -qf name=${CMPS_PRJ}_redis-vol-1):/redis \
         debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_redis.tar.gz /redis
       ;;&
     rspamd|all)
       docker run --rm \
-        -v ${BACKUP_LOCATION}/mailcow-${DATE}:/backup \
+        -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
         -v $(docker volume ls -qf name=${CMPS_PRJ}_rspamd-vol-1):/rspamd \
         debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_rspamd.tar.gz /rspamd
       ;;&
     postfix|all)
       docker run --rm \
-        -v ${BACKUP_LOCATION}/mailcow-${DATE}:/backup \
+        -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
         -v $(docker volume ls -qf name=${CMPS_PRJ}_postfix-vol-1):/postfix \
         debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_postfix.tar.gz /postfix
       ;;&
     mysql|all)
-      SQLIMAGE=$(grep -iEo '(mysql|mariadb)\:.+' ${COMPOSE_FILE})
+      SQLIMAGE1='mariadb:10.2'
       docker run --rm \
         --network $(docker network ls -qf name=${CMPS_PRJ}_mailcow-network) \
         -v $(docker volume ls -qf name=${CMPS_PRJ}_mysql-vol-1):/var/lib/mysql/ \
         --entrypoint= \
-        -v ${BACKUP_LOCATION}/mailcow-${DATE}:/backup \
-        ${SQLIMAGE} /bin/sh -c "mysqldump -hmysql -uroot -p${DBROOT} --all-databases | gzip > /backup/backup_mysql.gz"
+        -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
+        ${SQLIMAGE1} /bin/sh -c "mysqldump -hmysql -uroot -p${MCDBROOT} --all-databases | gzip > /backup/backup_mysql.gz"
+      ;;&
+    mailman-core|all)
+      docker run --rm \
+        -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
+        -v $(docker volume ls -qf name=${CMPS_PRJ}_mailman-core-vol-1):/mailman-core \
+        debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_mailman-core.tar.gz /mailman-core
+      ;;&
+    mailman-db|all)
+      SQLIMAGE2='mariadb:10.3'
+      docker run --rm \
+        --network $(docker network ls -qf name=${CMPS_PRJ}_mailcow-network) \
+        -v $(docker volume ls -qf name=${CMPS_PRJ}_mailman-database-vol-1):/var/lib/mysql/ \
+        --entrypoint= \
+        -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
+        ${SQLIMAGE2} /bin/sh -c "mysqldump -hdatabase -uroot -p${MMDBROOT} --all-databases | gzip > /backup/backup_mailman_mysql.gz"
+      ;;&
+    mailman-web|all)
+      /bin/tar --warning='no-file-ignored' -Pcvpzf ${BACKUP_LOCATION}/mailcowmailman3-${DATE}/backup_mailman-web.tar.gz ../data/mailman/web
       ;;
     esac
     shift
@@ -159,7 +176,7 @@ function restore() {
       docker start $(docker ps -aqf name=postfix-mailcow)
       ;;
     mysql)
-      SQLIMAGE=$(grep -iEo '(mysql|mariadb)\:.+' ${COMPOSE_FILE})
+      SQLIMAGE1='mariadb:10.2'
       docker stop $(docker ps -qf name=mysql-mailcow)
       docker run \
         -it --rm \
@@ -167,13 +184,42 @@ function restore() {
         --entrypoint= \
         -u mysql \
         -v ${RESTORE_LOCATION}:/backup \
-        ${SQLIMAGE} /bin/sh -c "mysqld --skip-grant-tables & \
+        ${SQLIMAGE1} /bin/sh -c "mysqld --skip-grant-tables & \
         until mysqladmin ping; do sleep 3; done && \
         echo Restoring... && \
         gunzip < backup/backup_mysql.gz | mysql -uroot && \
         mysql -uroot -e SHUTDOWN;"
       docker start $(docker ps -aqf name=mysql-mailcow)
       ;;
+    mailman-core)
+      docker stop $(docker ps -qf name=mailman-core)
+      docker run -it --rm \
+        -v ${RESTORE_LOCATION}:/backup \
+        -v $(docker volume ls -qf name=${CMPS_PRJ}_mailman-core-vol-1):/mailman-core \
+        debian:stretch-slim /bin/tar -Pxvzf /backup/backup_mailman-core.tar.gz
+      docker start $(docker ps -aqf name=mailman-core)
+      ;;
+    mailman-db)
+      SQLIMAGE2='mariadb:10.3'
+      docker stop $(docker ps -qf name=database)
+      docker run \
+        -it --rm \
+        -v $(docker volume ls -qf name=${CMPS_PRJ}_mailman-database-vol-1):/var/lib/mysql/ \
+        --entrypoint= \
+        -u mysql \
+        -v ${RESTORE_LOCATION}:/backup \
+        ${SQLIMAGE2} /bin/sh -c "mysqld --skip-grant-tables & \
+        until mysqladmin ping; do sleep 3; done && \
+        echo Restoring... && \
+        gunzip < backup/backup_mailman_mysql.gz | mysql -uroot && \
+        mysql -uroot -e SHUTDOWN;"
+      docker start $(docker ps -aqf name=database)
+      ;;&
+    mailman-web)
+	  docker stop $(docker ps -qf name=mailman-web)
+	  mkdir -p ../data/mailman/web
+	  /bin/tar -Pxvzf ${RESTORE_LOCATION}/backup_mailman-web.tar.gz ../data/mailman/web
+	  docker start $(docker ps -aqf name=mailman-web)
     esac
     shift
   done
@@ -185,11 +231,11 @@ if [[ ${1} == "backup" ]]; then
 elif [[ ${1} == "restore" ]]; then
   i=1
   declare -A FOLDER_SELECTION
-  if [[ $(find ${BACKUP_LOCATION}/mailcow-* -maxdepth 1 -type d 2> /dev/null| wc -l) -lt 1 ]]; then
+  if [[ $(find ${BACKUP_LOCATION}/mailcowmailman3-* -maxdepth 1 -type d 2> /dev/null| wc -l) -lt 1 ]]; then
     echo "Selected backup location has no subfolders"
     exit 1
   fi
-  for folder in $(ls -d ${BACKUP_LOCATION}/mailcow-*/); do
+  for folder in $(ls -d ${BACKUP_LOCATION}/mailcowmailman3-*/); do
     echo "[ ${i} ] - ${folder}"
     FOLDER_SELECTION[${i}]="${folder}"
     ((i++))
@@ -203,7 +249,7 @@ elif [[ ${1} == "restore" ]]; then
   echo
   declare -A FILE_SELECTION
   RESTORE_POINT="${FOLDER_SELECTION[${input_sel}]}"
-  if [[ -z $(find "${FOLDER_SELECTION[${input_sel}]}" -maxdepth 1 -type f -regex ".*\(redis\|rspamd\|mysql\|crypt\|vmail\|postfix\).*") ]]; then
+  if [[ -z $(find "${FOLDER_SELECTION[${input_sel}]}" -maxdepth 1 -type f -regex ".*\(redis\|rspamd\|mysql\|crypt\|vmail\|postfix\|\mailman-core|\mailman-db|\mailman-web\).*") ]]; then
     echo "No datasets found"
     exit 1
   fi
@@ -231,6 +277,18 @@ elif [[ ${1} == "restore" ]]; then
     elif [[ ${file} =~ mysql ]]; then
       echo "[ ${i} ] - SQL DB"
       FILE_SELECTION[${i}]="mysql"
+      ((i++))
+	elif [[ ${file} =~ mailman-core ]]; then
+      echo "[ ${i} ] - Mailman3 core data"
+      FILE_SELECTION[${i}]="mailman-core"
+      ((i++))
+	elif [[ ${file} =~ mailman-db ]]; then
+      echo "[ ${i} ] - Mailman3 DB"
+      FILE_SELECTION[${i}]="mailman-db"
+      ((i++))
+	elif [[ ${file} =~ mailman-web ]]; then
+      echo "[ ${i} ] - Mailman3 web data"
+      FILE_SELECTION[${i}]="mailman-web"
       ((i++))
     fi
   done
