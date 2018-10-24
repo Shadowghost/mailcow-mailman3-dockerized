@@ -232,7 +232,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.39
+      image: mailcow/sogo:1.40
       build: ./data/Dockerfiles/sogo
       depends_on:
         - mailman-web
@@ -488,7 +488,7 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.19
+      image: mailcow/dockerapi:1.20
       restart: always
       build: ./data/Dockerfiles/dockerapi
       depends_on:
