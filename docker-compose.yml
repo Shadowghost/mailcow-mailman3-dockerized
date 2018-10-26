@@ -232,7 +232,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.40
+      image: mailcow/sogo:1.42
       build: ./data/Dockerfiles/sogo
       depends_on:
         - mailman-web
@@ -258,7 +258,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.41
+      image: mailcow/dovecot:1.43
       build: ./data/Dockerfiles/dovecot
       depends_on:
         - mysql-mailcow
@@ -304,7 +304,7 @@ services:
             - dovecot
 
     postfix-mailcow:
-      image: mailcow/postfix:1.24
+      image: mailcow/postfix:1.25
       build: ./data/Dockerfiles/postfix
       depends_on:
         - mailman-web
@@ -400,7 +400,7 @@ services:
     acme-mailcow:
       depends_on:
         - nginx-mailcow
-      image: mailcow/acme:1.43
+      image: mailcow/acme:1.44
       build: ./data/Dockerfiles/acme
       sysctls:
         - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
@@ -488,7 +488,7 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.20
+      image: mailcow/dockerapi:1.21
       restart: always
       build: ./data/Dockerfiles/dockerapi
       depends_on:

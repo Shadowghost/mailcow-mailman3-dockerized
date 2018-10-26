@@ -35,6 +35,38 @@ function mailq($_action, $_data = null) {
   }
 	global $lang;
   switch ($_action) {
+    case 'get':
+      $mailq_lines = docker('post', 'postfix-mailcow', 'exec', array('cmd' => 'mailq', 'task' => 'list'));
+      $lines = 0;
+      // Hard limit to 10000 items
+      foreach (preg_split("/((\r?\n)|(\r\n?))/", $mailq_lines) as $mailq_item) if ($lines++ < 10000) {
+        if (empty($mailq_item) || $mailq_item == '1') {
+          continue;
+        }
+        $mq_line = json_decode($mailq_item, true);
+        if ($mq_line !== NULL) {
+          $rcpts = array();
+          foreach ($mq_line['recipients'] as $rcpt) {
+            if (isset($rcpt['delay_reason'])) {
+              $rcpts[] = $rcpt['address'] . ' (' . $rcpt['delay_reason'] . ')';
+            }
+            else {
+              $rcpts[] = $rcpt['address'];
+            }
+          }
+          if (!empty($rcpts)) {
+            $mq_line['recipients'] = $rcpts;
+          }
+          $line[] = $mq_line;
+        }
+      }
+      if (!isset($line) || empty($line)) {
+        return '{}';
+      }
+      else {
+        return json_encode($line);
+      }
+    break;
     case 'delete':
       if (!is_array($_data['qid'])) {
         $qids = array();
