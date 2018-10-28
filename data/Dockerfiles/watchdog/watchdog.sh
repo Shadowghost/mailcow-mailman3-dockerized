@@ -30,6 +30,8 @@ progress() {
   PERCENT=$(( 200 * ${CURRENT} / ${TOTAL} % 2 + 100 * ${CURRENT} / ${TOTAL} ))
   redis-cli -h redis LPUSH WATCHDOG_LOG "{\"time\":\"$(date +%s)\",\"service\":\"${SERVICE}\",\"lvl\":\"${PERCENT}\",\"hpnow\":\"${CURRENT}\",\"hptotal\":\"${TOTAL}\",\"hpdiff\":\"${DIFF}\"}" > /dev/null
   log_msg "${SERVICE} health level: ${PERCENT}% (${CURRENT}/${TOTAL}), health trend: ${DIFF}" no_redis
+  # Return 10 to indicate a dead service
+  [ ${CURRENT} -le 0 ] && return 10
 }
 
 log_msg() {
@@ -42,24 +44,29 @@ log_msg() {
 
 function mail_error() {
   [[ -z ${1} ]] && return 1
-  [[ -z ${2} ]] && return 2
-  [[ -z ${3} ]] && BODY="Service was restarted on $(date), please check your mailcow installation." || BODY="$(date) - ${3}"
-  RCPT_DOMAIN=$(echo ${1} | awk -F @ {'print $NF'})
-  RCPT_MX=$(dig +short ${RCPT_DOMAIN} mx | sort -n | awk '{print $2; exit}')
-  if [[ -z ${RCPT_MX} ]]; then
-    log_msg "Cannot determine MX for ${1}, skipping email notification..."
-    return 1
-  fi
-  [ -f "/tmp/${2}" ] && ATTACH="--attach /tmp/${2}@text/plain" || ATTACH=
-  ./smtp-cli --missing-modules-ok \
-    --subject="Watchdog: ${2} hit the error rate limit" \
-    --body-plain="${BODY}" \
-    --to=${1} \
-    --from="watchdog@${MAILCOW_HOSTNAME}" \
-    --server="${RCPT_MX}" \
-    --hello-host=${MAILCOW_HOSTNAME} \
-    ${ATTACH}
-  log_msg "Sent notification email to ${1}"
+  [[ -z ${2} ]] && BODY="Service was restarted on $(date), please check your mailcow installation." || BODY="$(date) - ${2}"
+  WATCHDOG_NOTIFY_EMAIL=$(echo "${WATCHDOG_NOTIFY_EMAIL}" | sed 's/"//;s|"$||')
+  IFS=',' read -r -a MAIL_RCPTS <<< "${WATCHDOG_NOTIFY_EMAIL}"
+  for rcpt in "${MAIL_RCPTS[@]}"; do
+    RCPT_DOMAIN=
+    RCPT_MX=
+    RCPT_DOMAIN=$(echo ${rcpt} | awk -F @ {'print $NF'})
+    RCPT_MX=$(dig +short ${RCPT_DOMAIN} mx | sort -n | awk '{print $2; exit}')
+    if [[ -z ${RCPT_MX} ]]; then
+      log_msg "Cannot determine MX for ${rcpt}, skipping email notification..."
+      return 1
+    fi
+    [ -f "/tmp/${1}" ] && ATTACH="--attach /tmp/${1}@text/plain" || ATTACH=
+    ./smtp-cli --missing-modules-ok \
+      --subject="Watchdog: ${1} hit the error rate limit" \
+      --body-plain="${BODY}" \
+      --to=${rcpt} \
+      --from="watchdog@${MAILCOW_HOSTNAME}" \
+      --server="${RCPT_MX}" \
+      --hello-host=${MAILCOW_HOSTNAME} \
+      ${ATTACH}
+    log_msg "Sent notification email to ${rcpt}"
+  done
 }
 
 get_container_ip() {
@@ -115,8 +122,13 @@ nginx_checks() {
     [ ${err_c_cur} -eq ${err_count} ] && [ ! $((${err_count} - 1)) -lt 0 ] && err_count=$((${err_count} - 1)) diff_c=1
     [ ${err_c_cur} -ne ${err_count} ] && diff_c=$(( ${err_c_cur} - ${err_count} ))
     progress "Nginx" ${THRESHOLD} $(( ${THRESHOLD} - ${err_count} )) ${diff_c}
-    diff_c=0
-    sleep $(( ( RANDOM % 30 )  + 10 ))
+    if [[ $? == 10 ]]; then
+      diff_c=0
+      sleep 1
+    else
+      diff_c=0
+      sleep $(( ( RANDOM % 30 )  + 10 ))
+    fi
   done
   return 1
 }
@@ -142,8 +154,13 @@ unbound_checks() {
     [ ${err_c_cur} -eq ${err_count} ] && [ ! $((${err_count} - 1)) -lt 0 ] && err_count=$((${err_count} - 1)) diff_c=1
     [ ${err_c_cur} -ne ${err_count} ] && diff_c=$(( ${err_c_cur} - ${err_count} ))
     progress "Unbound" ${THRESHOLD} $(( ${THRESHOLD} - ${err_count} )) ${diff_c}
-    diff_c=0
-    sleep $(( ( RANDOM % 30 )  + 10 ))
+    if [[ $? == 10 ]]; then
+      diff_c=0
+      sleep 1
+    else
+      diff_c=0
+      sleep $(( ( RANDOM % 30 )  + 10 ))
+    fi
   done
   return 1
 }
@@ -163,8 +180,13 @@ mysql_checks() {
     [ ${err_c_cur} -eq ${err_count} ] && [ ! $((${err_count} - 1)) -lt 0 ] && err_count=$((${err_count} - 1)) diff_c=1
     [ ${err_c_cur} -ne ${err_count} ] && diff_c=$(( ${err_c_cur} - ${err_count} ))
     progress "MySQL/MariaDB" ${THRESHOLD} $(( ${THRESHOLD} - ${err_count} )) ${diff_c}
-    diff_c=0
-    sleep $(( ( RANDOM % 30 )  + 10 ))
+    if [[ $? == 10 ]]; then
+      diff_c=0
+      sleep 1
+    else
+      diff_c=0
+      sleep $(( ( RANDOM % 30 )  + 10 ))
+    fi
   done
   return 1
 }
@@ -183,8 +205,13 @@ sogo_checks() {
     [ ${err_c_cur} -eq ${err_count} ] && [ ! $((${err_count} - 1)) -lt 0 ] && err_count=$((${err_count} - 1)) diff_c=1
     [ ${err_c_cur} -ne ${err_count} ] && diff_c=$(( ${err_c_cur} - ${err_count} ))
     progress "SOGo" ${THRESHOLD} $(( ${THRESHOLD} - ${err_count} )) ${diff_c}
-    diff_c=0
-    sleep $(( ( RANDOM % 30 )  + 10 ))
+    if [[ $? == 10 ]]; then
+      diff_c=0
+      sleep 1
+    else
+      diff_c=0
+      sleep $(( ( RANDOM % 30 )  + 10 ))
+    fi
   done
   return 1
 }
@@ -204,8 +231,13 @@ postfix_checks() {
     [ ${err_c_cur} -eq ${err_count} ] && [ ! $((${err_count} - 1)) -lt 0 ] && err_count=$((${err_count} - 1)) diff_c=1
     [ ${err_c_cur} -ne ${err_count} ] && diff_c=$(( ${err_c_cur} - ${err_count} ))
     progress "Postfix" ${THRESHOLD} $(( ${THRESHOLD} - ${err_count} )) ${diff_c}
-    diff_c=0
-    sleep $(( ( RANDOM % 30 )  + 10 ))
+    if [[ $? == 10 ]]; then
+      diff_c=0
+      sleep 1
+    else
+      diff_c=0
+      sleep $(( ( RANDOM % 30 )  + 10 ))
+    fi
   done
   return 1
 }
@@ -224,9 +256,13 @@ clamd_checks() {
     [ ${err_c_cur} -eq ${err_count} ] && [ ! $((${err_count} - 1)) -lt 0 ] && err_count=$((${err_count} - 1)) diff_c=1
     [ ${err_c_cur} -ne ${err_count} ] && diff_c=$(( ${err_c_cur} - ${err_count} ))
     progress "Clamd" ${THRESHOLD} $(( ${THRESHOLD} - ${err_count} )) ${diff_c}
-    diff_c=0
-    # Don't check Clamd too often
-    sleep 1800
+    if [[ $? == 10 ]]; then
+      diff_c=0
+      sleep 1
+    else
+      diff_c=0
+      sleep $(( ( RANDOM % 30 )  + 10 ))
+    fi
   done
   return 1
 }
@@ -249,8 +285,13 @@ dovecot_checks() {
     [ ${err_c_cur} -eq ${err_count} ] && [ ! $((${err_count} - 1)) -lt 0 ] && err_count=$((${err_count} - 1)) diff_c=1
     [ ${err_c_cur} -ne ${err_count} ] && diff_c=$(( ${err_c_cur} - ${err_count} ))
     progress "Dovecot" ${THRESHOLD} $(( ${THRESHOLD} - ${err_count} )) ${diff_c}
-    diff_c=0
-    sleep $(( ( RANDOM % 30 )  + 10 ))
+    if [[ $? == 10 ]]; then
+      diff_c=0
+      sleep 1
+    else
+      diff_c=0
+      sleep $(( ( RANDOM % 30 )  + 10 ))
+    fi
   done
   return 1
 }
@@ -270,8 +311,13 @@ phpfpm_checks() {
     [ ${err_c_cur} -eq ${err_count} ] && [ ! $((${err_count} - 1)) -lt 0 ] && err_count=$((${err_count} - 1)) diff_c=1
     [ ${err_c_cur} -ne ${err_count} ] && diff_c=$(( ${err_c_cur} - ${err_count} ))
     progress "PHP-FPM" ${THRESHOLD} $(( ${THRESHOLD} - ${err_count} )) ${diff_c}
-    diff_c=0
-    sleep $(( ( RANDOM % 30 )  + 10 ))
+    if [[ $? == 10 ]]; then
+      diff_c=0
+      sleep 1
+    else
+      diff_c=0
+      sleep $(( ( RANDOM % 30 )  + 10 ))
+    fi
   done
   return 1
 }
@@ -312,7 +358,6 @@ Empty
 while true; do
   if ! nginx_checks; then
     log_msg "Nginx hit error limit"
-    [[ ! -z ${WATCHDOG_NOTIFY_EMAIL} ]] && mail_error "${WATCHDOG_NOTIFY_EMAIL}" "nginx-mailcow"
     echo nginx-mailcow > /tmp/com_pipe
   fi
 done
@@ -323,7 +368,6 @@ BACKGROUND_TASKS+=($!)
 while true; do
   if ! mysql_checks; then
     log_msg "MySQL hit error limit"
-    [[ ! -z ${WATCHDOG_NOTIFY_EMAIL} ]] && mail_error "${WATCHDOG_NOTIFY_EMAIL}" "mysql-mailcow"
     echo mysql-mailcow > /tmp/com_pipe
   fi
 done
@@ -334,7 +378,6 @@ BACKGROUND_TASKS+=($!)
 while true; do
   if ! phpfpm_checks; then
     log_msg "PHP-FPM hit error limit"
-    [[ ! -z ${WATCHDOG_NOTIFY_EMAIL} ]] && mail_error "${WATCHDOG_NOTIFY_EMAIL}" "php-fpm-mailcow"
     echo php-fpm-mailcow > /tmp/com_pipe
   fi
 done
@@ -345,7 +388,6 @@ BACKGROUND_TASKS+=($!)
 while true; do
   if ! sogo_checks; then
     log_msg "SOGo hit error limit"
-    [[ ! -z ${WATCHDOG_NOTIFY_EMAIL} ]] && mail_error "${WATCHDOG_NOTIFY_EMAIL}" "sogo-mailcow"
     echo sogo-mailcow > /tmp/com_pipe
   fi
 done
@@ -357,7 +399,6 @@ if [ ${CHECK_UNBOUND} -eq 1 ]; then
 while true; do
   if ! unbound_checks; then
     log_msg "Unbound hit error limit"
-    [[ ! -z ${WATCHDOG_NOTIFY_EMAIL} ]] && mail_error "${WATCHDOG_NOTIFY_EMAIL}" "unbound-mailcow"
     echo unbound-mailcow > /tmp/com_pipe
   fi
 done
@@ -370,7 +411,6 @@ if [[ "${SKIP_CLAMD}" =~ ^([nN][oO]|[nN])+$ ]]; then
 while true; do
   if ! clamd_checks; then
     log_msg "Clamd hit error limit"
-    [[ ! -z ${WATCHDOG_NOTIFY_EMAIL} ]] && mail_error "${WATCHDOG_NOTIFY_EMAIL}" "clamd-mailcow"
     echo clamd-mailcow > /tmp/com_pipe
   fi
 done
@@ -382,7 +422,6 @@ fi
 while true; do
   if ! postfix_checks; then
     log_msg "Postfix hit error limit"
-    [[ ! -z ${WATCHDOG_NOTIFY_EMAIL} ]] && mail_error "${WATCHDOG_NOTIFY_EMAIL}" "postfix-mailcow"
     echo postfix-mailcow > /tmp/com_pipe
   fi
 done
@@ -393,7 +432,6 @@ BACKGROUND_TASKS+=($!)
 while true; do
   if ! dovecot_checks; then
     log_msg "Dovecot hit error limit"
-    [[ ! -z ${WATCHDOG_NOTIFY_EMAIL} ]] && mail_error "${WATCHDOG_NOTIFY_EMAIL}" "dovecot-mailcow"
     echo dovecot-mailcow > /tmp/com_pipe
   fi
 done
@@ -404,7 +442,6 @@ BACKGROUND_TASKS+=($!)
 while true; do
   if ! rspamd_checks; then
     log_msg "Rspamd hit error limit"
-    [[ ! -z ${WATCHDOG_NOTIFY_EMAIL} ]] && mail_error "${WATCHDOG_NOTIFY_EMAIL}" "rspamd-mailcow"
     echo rspamd-mailcow > /tmp/com_pipe
   fi
 done
@@ -443,17 +480,30 @@ done
 # Restart container when threshold limit reached
 while true; do
   CONTAINER_ID=
+  HAS_INITDB=
   read com_pipe_answer </tmp/com_pipe
   if [[ ${com_pipe_answer} =~ .+-mailcow ]]; then
     kill -STOP ${BACKGROUND_TASKS[*]}
     sleep 3
     CONTAINER_ID=$(curl --silent --insecure https://dockerapi/containers/json | jq -r ".[] | {name: .Config.Labels[\"com.docker.compose.service\"], id: .Id}" | jq -rc "select( .name | tostring | contains(\"${com_pipe_answer}\")) | .id")
     if [[ ! -z ${CONTAINER_ID} ]]; then
-      log_msg "Sending restart command to ${CONTAINER_ID}..."
-      curl --silent --insecure -XPOST https://dockerapi/containers/${CONTAINER_ID}/restart
+      if [[ "${com_pipe_answer}" == "php-fpm-mailcow" ]]; then
+        HAS_INITDB=$(curl --silent --insecure -XPOST https://dockerapi/containers/${CONTAINER_ID}/top | jq '.msg.Processes[] | contains(["php -c /usr/local/etc/php -f /web/inc/init_db.inc.php"])' | grep true)
+      fi
+      S_RUNNING=$(($(date +%s) - $(curl --silent --insecure https://dockerapi/containers/${CONTAINER_ID}/json | jq .State.StartedAt | xargs -n1 date +%s -d)))
+      if [ ${S_RUNNING} -lt 120 ]; then
+        log_msg "Container is running for less than 120 seconds, skipping action..."
+      elif [[ ! -z ${HAS_INITDB} ]]; then
+        log_msg "Database is being initialized by php-fpm-mailcow, not restarting but delaying checks for a minute..."
+        sleep 60
+      else
+        log_msg "Sending restart command to ${CONTAINER_ID}..."
+        curl --silent --insecure -XPOST https://dockerapi/containers/${CONTAINER_ID}/restart
+        [[ ! -z ${WATCHDOG_NOTIFY_EMAIL} ]] && mail_error "${com_pipe_answer}"
+        log_msg "Wait for restarted container to settle and continue watching..."
+        sleep 30
+      fi
     fi
-    log_msg "Wait for restarted container to settle and continue watching..."
-    sleep 30s
     kill -CONT ${BACKGROUND_TASKS[*]}
     kill -USR1 ${BACKGROUND_TASKS[*]}
   fi

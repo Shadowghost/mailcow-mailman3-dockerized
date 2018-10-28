@@ -141,7 +141,7 @@ services:
             - redis
 
     clamd-mailcow:
-      image: mailcow/clamd:1.14
+      image: mailcow/clamd:1.15
       build: ./data/Dockerfiles/clamd
       depends_on:
         - mailman-web
@@ -152,7 +152,6 @@ services:
         - SKIP_CLAMD=${SKIP_CLAMD:-n}
       volumes:
         - ./data/conf/clamav/:/etc/clamav/
-        - ./data/conf/clamav/whitelist.ign2:/var/lib/clamav/whitelist.ign2
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
       sysctls:
@@ -453,7 +452,7 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.26
+      image: mailcow/watchdog:1.29
       # Debug
       #command: /watchdog.sh
       build: ./data/Dockerfiles/watchdog
@@ -488,7 +487,7 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.21
+      image: mailcow/dockerapi:1.22
       restart: always
       build: ./data/Dockerfiles/dockerapi
       depends_on:
