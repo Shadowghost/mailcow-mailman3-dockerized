@@ -269,6 +269,7 @@ services:
         - "${POPS_PORT:-995}:995"
         - "${SIEVE_PORT:-4190}:4190"
       restart: always
+      tty: true
       ulimits:
         nproc: 65535
         nofile:
