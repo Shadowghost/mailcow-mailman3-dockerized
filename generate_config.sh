@@ -123,6 +123,18 @@ COMPOSE_PROJECT_NAME=mailcowdockerized
 MAILDIR_GC_TIME=1440
 
 # Additional SAN for the certificate
+#
+# You can use wildcard records to create specific names for every domain you add to mailcow.
+# Example: Add domains "example.com" and "example.net" to mailcow, change ADDITIONAL_SAN to a value like:
+#ADDITIONAL_SAN=imap.*,smtp.*
+# This will expand the certificate to "imap.example.com", "smtp.example.com", "imap.example.net", "imap.example.net"
+# plus every domain you add in the future.
+#
+# You can also just add static names...
+#ADDITIONAL_SAN=srv1.example.net
+# ...or combine wildcard and static names:
+#ADDITIONAL_SAN=imap.*,srv1.example.com
+#
 ADDITIONAL_SAN=
 
 # Skip running ACME (acme-mailcow, Let's Encrypt certs) - y/n
@@ -155,12 +167,6 @@ IPV6_NETWORK=fd4d:6169:6c63:6f77::/64
 
 # Use this IPv6 for outgoing connections (SNAT)
 #SNAT6_TO_SOURCE=
-
-# Disable IPv6
-# mailcow-network will still be created as IPv6 enabled, all containers will be created
-# without IPv6 support.
-# Use 1 for disabled, 0 for enabled
-SYSCTL_IPV6_DISABLED=1
 
 # Create or override API key for web uI
 # You _must_ define API_ALLOW_FROM, which is a comma separated list of IPs
