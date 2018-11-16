@@ -226,6 +226,7 @@ services:
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
       volumes:
         - ./data/conf/sogo/:/etc/sogo/
+        - ./data/web/inc/init_db.inc.php:/init_db.inc.php
         - ./data/conf/sogo/custom-sogo.js:/usr/lib/GNUstep/SOGo/WebServerResources/js/custom-sogo.js
         - mysql-socket-vol-1:/var/run/mysqld/
       restart: always
@@ -284,7 +285,7 @@ services:
             - dovecot
 
     postfix-mailcow:
-      image: mailcow/postfix:1.26
+      image: mailcow/postfix:1.27
       build: ./data/Dockerfiles/postfix
       depends_on:
         - mailman-web
