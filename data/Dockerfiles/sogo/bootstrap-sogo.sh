@@ -13,6 +13,17 @@ do
   sleep 3
 done
 
+# Wait for updated schema
+DBV_NOW=$(mysql --socket=/var/run/mysqld/mysqld.sock -u ${DBUSER} -p${DBPASS} ${DBNAME} -e "SELECT version FROM versions;" -BN)
+DBV_NEW=$(grep -oE '\$db_version = .*;' init_db.inc.php | sed 's/$db_version = //g;s/;//g' | cut -d \" -f2)
+while [[ ${DBV_NOW} != ${DBV_NEW} ]]; do
+  echo "Waiting for schema update..."
+  DBV_NOW=$(mysql --socket=/var/run/mysqld/mysqld.sock -u ${DBUSER} -p${DBPASS} ${DBNAME} -e "SELECT version FROM versions;" -BN)
+  DBV_NEW=$(grep -oE '\$db_version = .*;' init_db.inc.php | sed 's/$db_version = //g;s/;//g' | cut -d \" -f2)
+  sleep 5
+done
+echo "DB schema is ${DBV_NOW}"
+
 # Recreate view
 
 mysql --socket=/var/run/mysqld/mysqld.sock -u ${DBUSER} -p${DBPASS} ${DBNAME} -e "DROP VIEW IF EXISTS sogo_view"
@@ -102,8 +113,8 @@ EOF
 
 # Generate multi-domain setup
 while read line
-        do
-        echo "        <key>${line}</key>
+  do
+  echo "        <key>${line}</key>
         <dict>
             <key>SOGoMailDomain</key>
             <string>${line}</string>
@@ -139,8 +150,11 @@ while read line
                     <string>YES</string>
                     <key>viewURL</key>
                     <string>mysql://${DBUSER}:${DBPASS}@%2Fvar%2Frun%2Fmysqld%2Fmysqld.sock/${DBNAME}/_sogo_static_view</string>
-                </dict>
-            </array>
+                </dict>" >> /var/lib/sogo/GNUstep/Defaults/sogod.plist
+  # Generate alternative LDAP authentication dict, when SQL authentication fails
+  # This will nevertheless read attributes from LDAP
+  line=${line} envsubst < /etc/sogo/plist_ldap >> /var/lib/sogo/GNUstep/Defaults/sogod.plist
+  echo "            </array>
         </dict>" >> /var/lib/sogo/GNUstep/Defaults/sogod.plist
 done < <(mysql --socket=/var/run/mysqld/mysqld.sock -u ${DBUSER} -p${DBPASS} ${DBNAME} -e "SELECT domain FROM domain;" -B -N)
 
