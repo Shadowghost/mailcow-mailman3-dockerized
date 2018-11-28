@@ -148,7 +148,7 @@ services:
             - clamd
 
     rspamd-mailcow:
-      image: mailcow/rspamd:1.30
+      image: mailcow/rspamd:1.31
       build: ./data/Dockerfiles/rspamd
       stop_grace_period: 30s
       depends_on:
@@ -213,7 +213,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.43
+      image: mailcow/sogo:1.44
       build: ./data/Dockerfiles/sogo
       depends_on:
         - mailman-web
@@ -239,7 +239,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.45
+      image: mailcow/dovecot:1.46
       build: ./data/Dockerfiles/dovecot
       depends_on:
         - mysql-mailcow
