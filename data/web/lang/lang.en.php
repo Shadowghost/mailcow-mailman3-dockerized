@@ -418,6 +418,8 @@ $lang['add']['custom_params'] = 'Custom parameters';
 $lang['add']['subscribeall'] = 'Subscribe all folders';
 $lang['add']['timeout1'] = 'Timeout for connection to remote host';
 $lang['add']['timeout2'] = 'Timeout for connection to local host';
+$lang['edit']['timeout1'] = 'Timeout for connection to remote host';
+$lang['edit']['timeout2'] = 'Timeout for connection to local host';
 
 $lang['edit']['delete2duplicates'] = 'Delete duplicates on destination';
 $lang['edit']['delete1'] = 'Delete from source when completed';
@@ -620,6 +622,9 @@ $lang['admin']['quarantine'] = "Quarantine";
 $lang['admin']['quarantine_retention_size'] = "Retentions per mailbox<br />0 indicates <b>inactive</b>!";
 $lang['admin']['quarantine_max_size'] = "Maximum size in MiB (larger elements are discarded)<br />0 does <b>not</b> indicate unlimited!";
 $lang['admin']['quarantine_exclude_domains'] = "Exclude domains and alias-domains:";
+$lang['admin']['quarantine_release_format'] = "Format of released items:";
+$lang['admin']['quarantine_release_format_raw'] = "Unmodified original";
+$lang['admin']['quarantine_release_format_att'] = "As attachment";
 
 $lang['admin']['ui_texts'] = "UI labels and texts";
 $lang['admin']['help_text'] = "Override help text below login mask (HTML allowed)";

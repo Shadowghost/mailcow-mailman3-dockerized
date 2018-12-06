@@ -28,10 +28,10 @@ pubsub = r.pubsub()
 RULES = {}
 RULES[1] = 'warning: .*\[([0-9a-f\.:]+)\]: SASL .+ authentication failed'
 RULES[2] = '-login: Disconnected \(auth failed, .+\): user=.*, method=.+, rip=([0-9a-f\.:]+),'
-RULES[3] = '-login: Aborted login \(no auth .+\): user=.+, rip=([0-9a-f\.:]+), lip.+'
-RULES[4] = '-login: Aborted login \(tried to use disallowed .+\): user=.+, rip=([0-9a-f\.:]+), lip.+'
-RULES[5] = 'SOGo.+ Login from \'([0-9a-f\.:]+)\' for user .+ might not have worked'
-RULES[6] = 'mailcow UI: Invalid password for .+ by ([0-9a-f\.:]+)'
+RULES[3] = '-login: Aborted login \(tried to use disallowed .+\): user=.+, rip=([0-9a-f\.:]+), lip.+'
+RULES[4] = 'SOGo.+ Login from \'([0-9a-f\.:]+)\' for user .+ might not have worked'
+RULES[5] = 'mailcow UI: Invalid password for .+ by ([0-9a-f\.:]+)'
+#RULES[6] = '-login: Aborted login \(no auth .+\): user=.+, rip=([0-9a-f\.:]+), lip.+'
 
 bans = {}
 log = {}
@@ -301,12 +301,12 @@ def snat4(snat_target):
           print log['message']
           chain.insert_rule(get_snat4_rule())
           table.commit()
-        #else:
-        #  for position, item in enumerate(chain.rules):
-        #    if item == get_snat4_rule():
-        #      if position != 0:
-        #        chain.delete_rule(get_snat4_rule())
-        #  table.commit()
+        else:
+          for position, item in enumerate(chain.rules):
+            if item == get_snat4_rule():
+              if position != 0:
+                chain.delete_rule(get_snat4_rule())
+          table.commit()
         table.autocommit = True
       except:
         print 'Error running SNAT4, retrying...' 
