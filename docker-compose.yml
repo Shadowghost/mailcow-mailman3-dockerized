@@ -171,7 +171,7 @@ services:
             - rspamd
 
     php-fpm-mailcow:
-      image: mailcow/phpfpm:1.25
+      image: mailcow/phpfpm:1.26
       build: ./data/Dockerfiles/phpfpm
       command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
       depends_on:
@@ -239,7 +239,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.47
+      image: mailcow/dovecot:1.48
       build: ./data/Dockerfiles/dovecot
       depends_on:
         - mysql-mailcow
@@ -459,13 +459,14 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.23
+      image: mailcow/dockerapi:1.24
       restart: always
       build: ./data/Dockerfiles/dockerapi
       depends_on:
         - mailman-web
       oom_score_adj: -10
       environment:
+        - DBROOT=${MCDBROOT}
         - TZ=${TZ}
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock:ro
