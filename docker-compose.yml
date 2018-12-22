@@ -213,7 +213,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.45
+      image: mailcow/sogo:1.48
       build: ./data/Dockerfiles/sogo
       depends_on:
         - mailman-web
@@ -285,7 +285,7 @@ services:
             - dovecot
 
     postfix-mailcow:
-      image: mailcow/postfix:1.27
+      image: mailcow/postfix:1.28
       build: ./data/Dockerfiles/postfix
       depends_on:
         - mailman-web
