@@ -112,7 +112,7 @@ services:
             - mysql
 
     redis-mailcow:
-      image: redis:4-alpine
+      image: redis:5-alpine
       depends_on:
         - mailman-web
       volumes:
@@ -171,7 +171,7 @@ services:
             - rspamd
 
     php-fpm-mailcow:
-      image: mailcow/phpfpm:1.27
+      image: mailcow/phpfpm:1.29
       build: ./data/Dockerfiles/phpfpm
       command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
       depends_on:
@@ -285,7 +285,7 @@ services:
             - dovecot
 
     postfix-mailcow:
-      image: mailcow/postfix:1.28
+      image: mailcow/postfix:1.29
       build: ./data/Dockerfiles/postfix
       depends_on:
         - mailman-web
@@ -426,7 +426,7 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.30
+      image: mailcow/watchdog:1.32
       # Debug
       #command: /watchdog.sh
       build: ./data/Dockerfiles/watchdog
@@ -481,6 +481,21 @@ services:
       image: robbertkl/ipv6nat
       depends_on:
         - mailman-web
+        - unbound-mailcow
+        - mysql-mailcow
+        - redis-mailcow
+        - clamd-mailcow
+        - rspamd-mailcow
+        - php-fpm-mailcow
+        - sogo-mailcow
+        - dovecot-mailcow
+        - postfix-mailcow
+        - memcached-mailcow
+        - nginx-mailcow
+        - acme-mailcow
+        - netfilter-mailcow
+        - watchdog-mailcow
+        - dockerapi-mailcow
       restart: always
       privileged: true
       network_mode: "host"
