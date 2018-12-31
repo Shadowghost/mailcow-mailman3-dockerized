@@ -156,7 +156,7 @@ USE_WATCHDOG=n
 # Max log lines per service to keep in Redis logs
 LOG_LINES=9999
 
-# Internal IPv4 /24 subnet, format n.n.n. (expands to n.n.n.0/24)
+# Internal IPv4 /24 subnet, format n.n.n (expands to n.n.n.0/24)
 IPV4_NETWORK=172.19.199
 
 # Internal IPv6 subnet in fc00::/7
