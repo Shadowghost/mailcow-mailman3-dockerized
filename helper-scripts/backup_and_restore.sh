@@ -62,39 +62,39 @@ function backup() {
     vmail|all)
       docker run --rm \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
-        -v $(docker volume ls -qf name=${CMPS_PRJ}_vmail-vol-1):/vmail \
+        -v $(docker volume ls -qf name=${CMPS_PRJ}_vmail-vol-1):/vmail:ro \
         debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_vmail.tar.gz /vmail
       ;;&
     crypt|all)
       docker run --rm \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
-        -v $(docker volume ls -qf name=${CMPS_PRJ}_crypt-vol-1):/crypt \
+        -v $(docker volume ls -qf name=${CMPS_PRJ}_crypt-vol-1):/crypt:ro \
         debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_crypt.tar.gz /crypt
       ;;&
     redis|all)
       docker exec $(docker ps -qf name=redis-mailcow) redis-cli save
       docker run --rm \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
-        -v $(docker volume ls -qf name=${CMPS_PRJ}_redis-vol-1):/redis \
+        -v $(docker volume ls -qf name=${CMPS_PRJ}_redis-vol-1):/redis:ro \
         debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_redis.tar.gz /redis
       ;;&
     rspamd|all)
       docker run --rm \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
-        -v $(docker volume ls -qf name=${CMPS_PRJ}_rspamd-vol-1):/rspamd \
+        -v $(docker volume ls -qf name=${CMPS_PRJ}_rspamd-vol-1):/rspamd:ro \
         debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_rspamd.tar.gz /rspamd
       ;;&
     postfix|all)
       docker run --rm \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
-        -v $(docker volume ls -qf name=${CMPS_PRJ}_postfix-vol-1):/postfix \
+        -v $(docker volume ls -qf name=${CMPS_PRJ}_postfix-vol-1):/postfix:ro \
         debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_postfix.tar.gz /postfix
       ;;&
     mysql|all)
       SQLIMAGE1='mariadb:10.2'
       docker run --rm \
         --network $(docker network ls -qf name=${CMPS_PRJ}_) \
-        -v $(docker volume ls -qf name=${CMPS_PRJ}_mysql-vol-1):/var/lib/mysql/ \
+        -v $(docker volume ls -qf name=${CMPS_PRJ}_mysql-vol-1):/var/lib/mysql/:ro \
         --entrypoint= \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
         ${SQLIMAGE1} /bin/sh -c "mysqldump -hmysql -uroot -p${MCDBROOT} --all-databases | gzip > /backup/backup_mysql.gz"
@@ -102,14 +102,14 @@ function backup() {
     mailman-core|all)
       docker run --rm \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
-        -v $(docker volume ls -qf name=${CMPS_PRJ}_mailman-core-vol-1):/mailman-core \
+        -v $(docker volume ls -qf name=${CMPS_PRJ}_mailman-core-vol-1):/mailman-core:ro \
         debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_mailman-core.tar.gz /mailman-core
       ;;&
     mailman-db|all)
       SQLIMAGE2='mariadb:10.3'
       docker run --rm \
         --network $(docker network ls -qf name=${CMPS_PRJ}_mailcow-network) \
-        -v $(docker volume ls -qf name=${CMPS_PRJ}_mailman-database-vol-1):/var/lib/mysql/ \
+        -v $(docker volume ls -qf name=${CMPS_PRJ}_mailman-database-vol-1):/var/lib/mysql/:ro \
         --entrypoint= \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
         ${SQLIMAGE2} /bin/sh -c "mysqldump -hdatabase -uroot -p${MMDBROOT} --all-databases | gzip > /backup/backup_mailman_mysql.gz"
