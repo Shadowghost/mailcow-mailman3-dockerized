@@ -6,17 +6,9 @@ if [[ "${SKIP_CLAMD}" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
   exit 0
 fi
 
-# Prepare log pipes
-mkdir -p /var/log/clamav
-touch /var/log/clamav/clamd.log /var/log/clamav/freshclam.log
-chown -R clamav:clamav /var/log/clamav/
-adduser clamav tty
-chmod g+rw /dev/console
-
 # Prepare whitelist
 if [[ -s /etc/clamav/whitelist.ign2 ]]; then
   cp /etc/clamav/whitelist.ign2 /var/lib/clamav/whitelist.ign2
-  chown clamav:clamav /var/lib/clamav/whitelist.ign2
 fi
 if [[ ! -f /var/lib/clamav/whitelist.ign2 ]]; then
   echo "Example-Signature.Ignore-1" > /var/lib/clamav/whitelist.ign2
