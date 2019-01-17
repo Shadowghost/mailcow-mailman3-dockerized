@@ -481,6 +481,8 @@ services:
     solr-mailcow:
       image: mailcow/solr:1.0
       build: ./data/Dockerfiles/solr
+      depends_on:
+        - mailman-web
       volumes:
         - solr-vol-1:/opt/solr/server/solr/dovecot/data
       restart: always
