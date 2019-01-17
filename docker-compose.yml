@@ -483,6 +483,8 @@ services:
       build: ./data/Dockerfiles/solr
       depends_on:
         - mailman-web
+      environment:
+        - TZ=${TZ}
       volumes:
         - solr-vol-1:/opt/solr/server/solr/dovecot/data
       restart: always
