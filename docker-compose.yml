@@ -129,7 +129,7 @@ services:
             - redis
 
     clamd-mailcow:
-      image: mailcow/clamd:1.18
+      image: mailcow/clamd:1.2^1
       build: ./data/Dockerfiles/clamd
       depends_on:
         - mailman-web
@@ -147,7 +147,7 @@ services:
             - clamd
 
     rspamd-mailcow:
-      image: mailcow/rspamd:1.33
+      image: mailcow/rspamd:1.34
       build: ./data/Dockerfiles/rspamd
       stop_grace_period: 30s
       depends_on:
@@ -212,7 +212,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.50
+      image: mailcow/sogo:1.51
       build: ./data/Dockerfiles/sogo
       depends_on:
         - mailman-web
@@ -460,8 +460,7 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.24
-      restart: always
+      image: mailcow/dockerapi:1.25
       build: ./data/Dockerfiles/dockerapi
       depends_on:
         - mailman-web
@@ -473,10 +472,28 @@ services:
         - /var/run/docker.sock:/var/run/docker.sock:ro
         - ./data/conf/rspamd/override.d/worker-controller-password.inc:/access.inc:rw
         - vmail-vol-1:/var/vmail:ro
+      restart: always
       networks:
         mailcow-network:
           aliases:
             - dockerapi
+            
+    solr-mailcow:
+      image: mailcow/solr:1.0
+      build: ./data/Dockerfiles/solr
+      volumes:
+        - solr-vol-1:/opt/solr/server/solr/dovecot/data
+      restart: always
+      dns:
+        - ${IPV4_NETWORK:-172.19.199}.254
+      dns_search: mailcow-network
+      environment:
+        - SOLR_HEAP=${SOLR_HEAP:-1024}
+        - SKIP_SOLR=${SKIP_SOLR:-y}
+      networks:
+        mailcow-network:
+          aliases:
+            - solr
 
     ipv6nat:
       image: robbertkl/ipv6nat
@@ -497,6 +514,7 @@ services:
         - netfilter-mailcow
         - watchdog-mailcow
         - dockerapi-mailcow
+        - solr-mailcow
       restart: always
       privileged: true
       network_mode: "host"
@@ -523,6 +541,7 @@ volumes:
   mysql-socket-vol-1:
   redis-vol-1:
   rspamd-vol-1:
+  solr-vol-1:
   postfix-vol-1:
   crypt-vol-1:
   mailman-core-vol-1:

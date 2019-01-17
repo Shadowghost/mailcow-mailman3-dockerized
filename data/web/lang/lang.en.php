@@ -357,6 +357,8 @@ $lang['edit']['max_mailboxes'] = 'Max. possible mailboxes';
 $lang['edit']['title'] = 'Edit object';
 $lang['edit']['target_address'] = 'Goto address/es <small>(comma-separated)</small>';
 $lang['edit']['active'] = 'Active';
+$lang['edit']['gal'] = 'Global Address List';
+$lang['edit']['gal_info'] = 'The GAL contains all objects of a domain and cannot be edited by any user. <b>Restart SOGo to apply changes.</b>';
 $lang['edit']['force_pw_update'] = 'Force password update at next login';
 $lang['edit']['force_pw_update_info'] = 'This user will only be able to login to mailcow UI.';
 $lang['edit']['sogo_access'] = 'Grant access to SOGo';
@@ -720,6 +722,8 @@ $lang['danger']['spam_learn_error'] = "Spam learn error: %s";
 $lang['success']['qlearn_spam'] = "Message ID %s was learned as spam and deleted";
 
 $lang['debug']['system_containers'] = 'System & Containers';
+$lang['debug']['solr_status'] = 'Solr status';
+$lang['debug']['solr_dead'] = 'Solr is starting, disabled or died.';
 $lang['debug']['logs'] = 'Logs';
 $lang['debug']['log_info'] = '<p>mailcow <b>in-memory logs</b> are collected in Redis lists and trimmed to LOG_LINES (%d) every minute to reduce hammering.
   <br>In-memory logs are not meant to be persistent. All applications that log in-memory, also log to the Docker daemon and therefore to the default logging driver.
@@ -730,6 +734,11 @@ $lang['debug']['log_info'] = '<p>mailcow <b>in-memory logs</b> are collected in 
 $lang['debug']['in_memory_logs'] = 'In-memory logs';
 $lang['debug']['external_logs'] = 'External logs';
 $lang['debug']['static_logs'] = 'Static logs';
+$lang['debug']['solr_uptime'] = 'Uptime';
+$lang['debug']['solr_started_at'] = 'Started at';
+$lang['debug']['solr_last_modified'] = 'Last modified';
+$lang['debug']['solr_size'] = 'Size';
+$lang['debug']['solr_docs'] = 'Docs';
 
 $lang['debug']['disk_usage'] = 'Disk usage';
 $lang['debug']['containers_info'] = "Container information";

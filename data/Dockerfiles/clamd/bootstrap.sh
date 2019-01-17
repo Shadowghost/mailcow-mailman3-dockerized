@@ -14,6 +14,10 @@ if [[ ! -f /var/lib/clamav/whitelist.ign2 ]]; then
   echo "Example-Signature.Ignore-1" > /var/lib/clamav/whitelist.ign2
 fi
 chown clamav:clamav /var/lib/clamav/whitelist.ign2
+mkdir -p /run/clamav /var/lib/clamav
+chown clamav:clamav /run/clamav /var/lib/clamav
+chmod 750 /run/clamav
+chmod 755 /var/lib/clamav
 
 dos2unix /var/lib/clamav/whitelist.ign2
 sed -i '/^\s*$/d' /var/lib/clamav/whitelist.ign2
@@ -38,7 +42,14 @@ while true; do
       --include 'blurl.ndb' \
       --include 'junk.ndb' \
       --include 'jurlbl.ndb' \
+      --include 'jurbla.ndb' \
+      --include 'phishtank.ndb' \
       --include 'phish.ndb' \
+      --include 'spamimg.hdb' \
+      --include 'scam.ndb' \
+      --include 'rogue.hdb' \
+      --include 'sanesecurity.ftm' \
+      --include 'sigwhitelist.ign2' \
       --exclude='*' /var/lib/clamav/
     if [ $? -eq 0 ]; then
       echo RELOAD | nc localhost 3310
