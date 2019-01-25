@@ -490,7 +490,6 @@ services:
       restart: always
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
-      dns_search: mailcow-network
       environment:
         - SOLR_HEAP=${SOLR_HEAP:-1024}
         - SKIP_SOLR=${SKIP_SOLR:-y}
