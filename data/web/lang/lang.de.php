@@ -378,6 +378,14 @@ $lang['edit']['dont_check_sender_acl'] = 'Absender für Domain %s u. Alias-Dom. 
 $lang['edit']['multiple_bookings'] = 'Mehrfaches Buchen';
 $lang['edit']['kind'] = 'Art';
 $lang['edit']['resource'] = 'Ressource';
+$lang['edit']['public_comment'] = 'Öffentlicher Kommentar';
+$lang['mailbox']['public_comment'] = 'Öffentlicher Kommentar';
+$lang['edit']['private_comment'] = 'Privater Kommentar';
+$lang['mailbox']['private_comment'] = 'Privater Kommentar';
+$lang['edit']['comment_info'] = 'Ein privater Kommentar ist für den Benutzer nicht einsehbar. Ein öffentlicher Kommentar wird als Tooltip im Interface des Benutzers angezeigt.';
+$lang['add']['public_comment'] = 'Öffentlicher Kommentar';
+$lang['add']['private_comment'] = 'Privater Kommentar';
+$lang['add']['comment_info'] = 'Ein privater Kommentar ist für den Benutzer nicht einsehbar. Ein öffentlicher Kommentar wird als Tooltip im Interface des Benutzers angezeigt.';
 
 $lang['acl']['spam_alias'] = 'Temporäre E-Mail Aliasse';
 $lang['acl']['tls_policy'] = 'Verschlüsselungsrichtlinie';
@@ -387,7 +395,9 @@ $lang['acl']['delimiter_action'] = 'Delimiter Aktionen (tags)';
 $lang['acl']['syncjobs'] = 'Sync Jobs';
 $lang['acl']['eas_reset'] = 'EAS-Cache zurücksetzen';
 $lang['acl']['sogo_profile_reset'] = 'SOGo Profil zurücksetzen';
-$lang['acl']['quarantine'] = 'Quarantäne';
+$lang['acl']['quarantine'] = 'Quarantäne-Aktionen';
+$lang['acl']['quarantine_notification'] = 'Quarantäne-Benachrichtigung';
+$lang['acl']['quarantine_attachments'] = 'Anhänge aus Quarantäne';
 $lang['acl']['alias_domains'] = 'Alias-Domains hinzufügen';
 $lang['acl']['login_as'] = 'Einloggen als Mailbox-Benutzer';
 $lang['acl']['bcc_maps'] = 'BCC Maps';
@@ -395,6 +405,18 @@ $lang['acl']['filters'] = 'Filter';
 $lang['acl']['ratelimit'] = 'Rate limit';
 $lang['acl']['recipient_maps'] = 'Empfängerumschreibungen';
 $lang['acl']['prohibited'] = 'Untersagt durch Richtlinie';
+
+$lang['mailbox']['quarantine_notification'] = 'Quarantäne-Benachrichtigung';
+$lang['mailbox']['never'] = 'Niemals';
+$lang['mailbox']['hourly'] = 'Stündlich';
+$lang['mailbox']['daily'] = 'Täglich';
+$lang['mailbox']['weekly'] = 'Wöchentlich';
+$lang['user']['quarantine_notification'] = 'Quarantäne-Benachrichtigung';
+$lang['user']['never'] = 'Niemals';
+$lang['user']['hourly'] = 'Stündlich';
+$lang['user']['daily'] = 'Täglich';
+$lang['user']['weekly'] = 'Wöchentlich';
+$lang['user']['quarantine_notification_info'] = 'Wurde über eine E-Mail in Quarantäne informiert, wird sie als "benachrichtigt" markiert und keine weitere Benachrichtigung zu dieser E-Mail versendet.';
 
 $lang['add']['generate'] = 'generieren';
 $lang['add']['syncjob'] = 'Syncjob hinzufügen';
@@ -616,9 +638,15 @@ $lang['admin']['queue_unban'] = "Unban einreihen";
 $lang['admin']['no_active_bans'] = "Keine aktiven Bans";
 
 $lang['admin']['quarantine'] = "Quarantäne";
-$lang['admin']['quarantine_retention_size'] = "Rückhaltungen pro Mailbox<br />0 bedeutet <b>inaktiv</b>!";
-$lang['admin']['quarantine_max_size'] = "Maximale Größe in MiB (größere Elemente werden verworfen)<br />0 bedeutet <b>nicht</b> unlimitert!";
-$lang['admin']['quarantine_exclude_domains'] = "Domains und Alias-Domains ausschließen:";
+$lang['admin']['quarantine_retention_size'] = "Rückhaltungen pro Mailbox:<br><small>0 bedeutet <b>inaktiv</b>.</small>";
+$lang['admin']['quarantine_max_size'] = "Maximale Größe in MiB (größere Elemente werden verworfen):<br><small>0 bedeutet <b>nicht</b> unlimitert.</small>";
+$lang['admin']['quarantine_exclude_domains'] = "Domains und Alias-Domains ausschließen";
+$lang['admin']['quarantine_notification_sender'] = "Benachrichtigungs-E-Mail Absender";
+$lang['admin']['quarantine_notification_subject'] = "Benachrichtigungs-E-Mail Betreff";
+$lang['admin']['quarantine_notification_html'] = "Benachrichtigungs-E-Mail Inhalt:<br><small>Leer lassen, um Standard-Template wiederherzustellen.</small>";
+$lang['admin']['quarantine_release_format'] = "Format freigegebener Mails";
+$lang['admin']['quarantine_release_format_raw'] = "Unverändertes Original";
+$lang['admin']['quarantine_release_format_att'] = "Als Anhang";
 
 $lang['success']['forwarding_host_removed'] = "Weiterleitungs-Host %s wurde entfernt";
 $lang['success']['forwarding_host_added'] = "Weiterleitungs-Host %s wurde hinzugefügt";
@@ -662,6 +690,7 @@ $lang['edit']['spam_policy'] = "Hinzufügen und Entfernen von Einträgen in Whit
 $lang['edit']['spam_alias'] = "Anpassen temporärer Alias-Adressen";
 
 $lang['danger']['img_tmp_missing'] = "Grafik konnte nicht validiert werden: Erstellung temporärer Datei fehlgeschlagen";
+$lang['danger']['comment_too_long'] = "Kommentarfeld darf maximal 160 Zeichen enthalten";
 $lang['danger']['img_invalid'] = "Grafik konnte nicht validiert werden";
 $lang['danger']['invalid_mime_type'] = "Grafik konnte nicht validiert werden: Ungültiger MIME-Type";
 $lang['success']['upload_success'] = "Datei wurde erfolgreich hochgeladen";
@@ -692,6 +721,11 @@ $lang['quarantine']['subj'] = "Betreff";
 $lang['quarantine']['text_plain_content'] = "Inhalt (text/plain)";
 $lang['quarantine']['text_from_html_content'] = "Inhalt (html, konvertiert)";
 $lang['quarantine']['atts'] = "Anhänge";
+$lang['quarantine']['low_danger'] = "Niedrige Gefahr";
+$lang['quarantine']['neutral_danger'] = "Neutral/ohne Bewertung";
+$lang['quarantine']['medium_danger'] = "Mittlere Gefahr";
+$lang['quarantine']['high_danger'] = "Hohe Gefahr";
+$lang['quarantine']['danger'] = "Gefahr";
 $lang['warning']['fuzzy_learn_error'] = "Fuzzy Lernfehler: %s";
 $lang['danger']['spam_learn_error'] = "Spam Lernfehler: %s";
 $lang['success']['qlearn_spam'] = "Nachricht ID %s wurde als Spam gelernt und gelöscht";
@@ -700,7 +734,7 @@ $lang['debug']['log_info'] = '<p>mailcow <b>in-memory Logs</b> werden in Redis L
   <br>In-memory Logs sind vergänglich und nicht zur ständigen Aufbewahrung bestimmt. Alle Anwendungen, die in-memory protokollieren, schreiben ebenso in den Docker Daemon.
   <br>Das in-memory Protokoll versteht sich als schnelle Übersicht zum Debugging eines Containers, für komplexere Protokolle sollte der Docker Daemon konsultiert werden.</p>
   <p><b>Externe Logs</b> werden via API externer Applikationen bezogen.</p>
-  <p><b>Statische Logs</b> sind weitestgehend Aktivitätsprotokolle, die nicht in den Docker Daemon geschrieben werden, jedoch permanent verfügbar sein müssen (ausgeschloßen API Logs).</p>';
+  <p><b>Statische Logs</b> sind weitesgehend Aktivitätsprotokolle, die nicht in den Docker Daemon geschrieben werden, jedoch permanent verfügbar sein müssen (ausgeschloßen API Logs).</p>';
 
 $lang['debug']['in_memory_logs'] = 'In-memory Logs';
 $lang['debug']['external_logs'] = 'Externe Logs';

@@ -170,7 +170,7 @@ services:
             - rspamd
 
     php-fpm-mailcow:
-      image: mailcow/phpfpm:1.29
+      image: mailcow/phpfpm:1.30
       build: ./data/Dockerfiles/phpfpm
       command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
       depends_on:
@@ -185,6 +185,7 @@ services:
         - ./data/conf/phpfpm/php-conf.d/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini
         - ./data/conf/phpfpm/php-conf.d/upload.ini:/usr/local/etc/php/conf.d/upload.ini
         - ./data/conf/phpfpm/php-conf.d/other.ini:/usr/local/etc/php/conf.d/zzz-other.ini
+        - ./data/assets/templates:/templates
       environment:
         - LOG_LINES=${LOG_LINES:-9999}
         - TZ=${TZ}
@@ -239,7 +240,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.54
+      image: mailcow/dovecot:1.56
       build: ./data/Dockerfiles/dovecot
       depends_on:
         - mysql-mailcow
@@ -253,6 +254,7 @@ services:
         - vmail-attachments-vol-1:/var/attachments
         - crypt-vol-1:/mail_crypt/
         - ./data/conf/rspamd/custom/:/etc/rspamd/custom
+        - ./data/assets/templates:/templates
         - rspamd-vol-1:/var/lib/rspamd
         - mysql-socket-vol-1:/var/run/mysqld/
       environment:
@@ -263,6 +265,7 @@ services:
         - TZ=${TZ}
         - MAILDIR_GC_TIME=${MAILDIR_GC_TIME:-1440}
         - ACL_ANYONE=${ACL_ANYONE:-disallow}
+        - SKIP_SOLR=${SKIP_SOLR:-y}
       ports:
         - "${DOVEADM_PORT:-127.0.0.1:19991}:12345"
         - "${IMAP_PORT:-143}:143"
@@ -427,7 +430,7 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.32
+      image: mailcow/watchdog:1.33
       # Debug
       #command: /watchdog.sh
       build: ./data/Dockerfiles/watchdog
