@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 function array_by_comma { local IFS=","; echo "$*"; }
 

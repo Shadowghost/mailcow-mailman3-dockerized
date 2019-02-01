@@ -40,7 +40,7 @@ def query_mysql(query, headers = True, update = False):
     result = []
     columns = tuple( [d[0].decode('utf8') for d in cur.description] )
     for row in cur:
-      if headers: 
+      if headers:
         result.append(dict(zip(columns, row)))
       else:
         result.append(row)
@@ -59,8 +59,8 @@ def notify_rcpt(rcpt, msg_count):
       template = Template(r.get('Q_HTML'))
     except:
       print "Error: Cannot parse quarantine template, falling back to default template."
-    with open('/templates/quarantine.tpl') as file_:
-      template = Template(file_.read())
+      with open('/templates/quarantine.tpl') as file_:
+        template = Template(file_.read())
   else:
     with open('/templates/quarantine.tpl') as file_:
       template = Template(file_.read())
@@ -68,15 +68,15 @@ def notify_rcpt(rcpt, msg_count):
   count = 0
   while count < 15:
     try:
-      server = smtplib.SMTP('postfix', 589, 'quarntine')
+      server = smtplib.SMTP('postfix', 590, 'quarantine')
       server.ehlo()
       msg = MIMEMultipart('alternative')
       msg['From'] = r.get('Q_SENDER') or "quarantine@localhost"
       msg['Subject'] = r.get('Q_SUBJ') or "Spam Quarantine Notification"
       msg['Date'] = formatdate(localtime = True)
       text = "You have %d new items" % (msg_count)
-      text_part = MIMEText(text, 'plain')
-      html_part = MIMEText(html, 'html')
+      text_part = MIMEText(text, 'plain', 'utf-8')
+      html_part = MIMEText(html, 'html', 'utf-8')
       msg.attach(text_part)
       msg.attach(html_part)
       msg['To'] = str(rcpt)
@@ -94,7 +94,7 @@ def notify_rcpt(rcpt, msg_count):
 records = query_mysql('SELECT count(id) AS counter, rcpt FROM quarantine WHERE notified = 0 GROUP BY rcpt')
 
 for record in records:
-  last_notification = int(r.hget('Q_LAST_NOTIFIED', record['rcpt'])) or 0
+  last_notification = int(r.hget('Q_LAST_NOTIFIED', record['rcpt']) or 0)
   attrs_json = query_mysql('SELECT attributes FROM mailbox WHERE username = "%s"' % (record['rcpt']))
   attrs = json.loads(str(attrs_json[0]['attributes']))
   if attrs['quarantine_notification'] == 'hourly':
