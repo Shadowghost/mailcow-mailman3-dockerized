@@ -72,7 +72,7 @@ services:
             - database
 
     unbound-mailcow:
-      image: mailcow/unbound:1.4
+      image: mailcow/unbound:1.6
       build: ./data/Dockerfiles/unbound
       command: /usr/sbin/unbound
       environment:
@@ -170,7 +170,7 @@ services:
             - rspamd
 
     php-fpm-mailcow:
-      image: mailcow/phpfpm:1.33
+      image: mailcow/phpfpm:1.34
       build: ./data/Dockerfiles/phpfpm
       command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
       depends_on:
@@ -240,7 +240,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.59
+      image: mailcow/dovecot:1.61
       build: ./data/Dockerfiles/dovecot
       depends_on:
         - mysql-mailcow
@@ -379,7 +379,7 @@ services:
     acme-mailcow:
       depends_on:
         - nginx-mailcow
-      image: mailcow/acme:1.45
+      image: mailcow/acme:1.47
       build: ./data/Dockerfiles/acme
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
@@ -405,7 +405,7 @@ services:
             - acme
 
     netfilter-mailcow:
-      image: mailcow/netfilter:1.21
+      image: mailcow/netfilter:1.22
       build: ./data/Dockerfiles/netfilter
       stop_grace_period: 30s
       depends_on:
@@ -430,7 +430,7 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.33
+      image: mailcow/watchdog:1.34
       # Debug
       #command: /watchdog.sh
       build: ./data/Dockerfiles/watchdog
@@ -463,7 +463,7 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.25
+      image: mailcow/dockerapi:1.26
       build: ./data/Dockerfiles/dockerapi
       depends_on:
         - mailman-web
@@ -474,7 +474,6 @@ services:
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock:ro
         - ./data/conf/rspamd/override.d/worker-controller-password.inc:/access.inc:rw
-        - vmail-vol-1:/var/vmail:ro
       restart: always
       networks:
         mailcow-network:
@@ -482,12 +481,14 @@ services:
             - dockerapi
             
     solr-mailcow:
-      image: mailcow/solr:1.0
+      image: mailcow/solr:1.1
       build: ./data/Dockerfiles/solr
       depends_on:
         - mailman-web
       environment:
         - TZ=${TZ}
+        - SOLR_HEAP=${SOLR_HEAP:-1024}
+        - SKIP_SOLR=${SKIP_SOLR:-y}
       volumes:
         - solr-vol-1:/opt/solr/server/solr/dovecot/data
       restart: always

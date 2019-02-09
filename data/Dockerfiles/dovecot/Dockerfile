@@ -64,9 +64,10 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
   libregexp-common-perl \
   liburi-perl \
   lzma-dev \
-  python-redis \
+  python-html2text \
   python-jinja2 \
   python-mysql.connector \
+  python-redis \
   make \
   mysql-client \
   procps \
@@ -119,6 +120,7 @@ COPY docker-entrypoint.sh /
 COPY supervisord.conf /etc/supervisor/supervisord.conf
 COPY stop-supervisor.sh /usr/local/sbin/stop-supervisor.sh
 COPY quarantine_notify.py /usr/local/bin/quarantine_notify.py
+COPY quota_notify.py /usr/local/bin/quota_notify.py
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf

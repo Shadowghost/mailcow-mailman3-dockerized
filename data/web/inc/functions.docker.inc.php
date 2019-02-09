@@ -16,23 +16,15 @@ function docker($action, $service_name = null, $attr1 = null, $attr2 = null, $ex
       if ($response === false) {
         $err = curl_error($curl);
         curl_close($curl);
-        // logger(array('return' => array(
-          // 'type' => 'danger',
-          // 'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
-          // 'msg' => $err,
-        // )));
         return $err;
       }
       else {
         curl_close($curl);
-        // logger(array('return' => array(
-          // 'type' => 'success',
-          // 'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
-        // )));
         $containers = json_decode($response, true);
         if (!empty($containers)) {
           foreach ($containers as $container) {
-            if ($container['Config']['Labels']['com.docker.compose.service'] == $service_name
+            if (isset($container['Config']['Labels']['com.docker.compose.service'])
+              && $container['Config']['Labels']['com.docker.compose.service'] == $service_name
               && $container['Config']['Labels']['com.docker.compose.project'] == strtolower(getenv('COMPOSE_PROJECT_NAME'))) {
               return trim($container['Id']);
             }
@@ -49,19 +41,10 @@ function docker($action, $service_name = null, $attr1 = null, $attr2 = null, $ex
       if ($response === false) {
         $err = curl_error($curl);
         curl_close($curl);
-        // logger(array('return' => array(
-          // 'type' => 'danger',
-          // 'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
-          // 'msg' => $err,
-        // )));
         return $err;
       }
       else {
         curl_close($curl);
-        // logger(array('return' => array(
-          // 'type' => 'success',
-          // 'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
-        // )));
         $containers = json_decode($response, true);
         if (!empty($containers)) {
           foreach ($containers as $container) {
@@ -88,11 +71,6 @@ function docker($action, $service_name = null, $attr1 = null, $attr2 = null, $ex
           curl_setopt($curl, CURLOPT_URL, 'https://dockerapi:443/containers/' . $container_id . '/json');
         }
         else {
-          // logger(array('return' => array(
-            // 'type' => 'danger',
-            // 'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
-            // 'msg' => 'invalid_container_id'
-          // )));
           return false;
         }
       }
@@ -103,24 +81,16 @@ function docker($action, $service_name = null, $attr1 = null, $attr2 = null, $ex
       if ($response === false) {
         $err = curl_error($curl);
         curl_close($curl);
-        // logger(array('return' => array(
-          // 'type' => 'danger',
-          // 'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
-          // 'msg' => $err,
-        // )));
         return $err;
       }
       else {
         curl_close($curl);
-        // logger(array('return' => array(
-          // 'type' => 'success',
-          // 'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
-        // )));
         $decoded_response = json_decode($response, true);
         if (!empty($decoded_response)) {
           if (empty($service_name)) {
             foreach ($decoded_response as $container) {
-              if ($container['Config']['Labels']['com.docker.compose.project'] == strtolower(getenv('COMPOSE_PROJECT_NAME'))) {
+              if (isset($container['Config']['Labels']['com.docker.compose.project'])
+                && $container['Config']['Labels']['com.docker.compose.project'] == strtolower(getenv('COMPOSE_PROJECT_NAME'))) {
                 unset($container['Config']['Env']);
                 $out[$container['Config']['Labels']['com.docker.compose.service']]['State'] = $container['State'];
                 $out[$container['Config']['Labels']['com.docker.compose.service']]['Config'] = $container['Config'];
@@ -128,7 +98,8 @@ function docker($action, $service_name = null, $attr1 = null, $attr2 = null, $ex
             }
           }
           else {
-            if ($decoded_response['Config']['Labels']['com.docker.compose.project'] == strtolower(getenv('COMPOSE_PROJECT_NAME'))) {
+            if (isset($decoded_response['Config']['Labels']['com.docker.compose.project']) 
+              && $decoded_response['Config']['Labels']['com.docker.compose.project'] == strtolower(getenv('COMPOSE_PROJECT_NAME'))) {
               unset($container['Config']['Env']);
               $out[$decoded_response['Config']['Labels']['com.docker.compose.service']]['State'] = $decoded_response['State'];
               $out[$decoded_response['Config']['Labels']['com.docker.compose.service']]['Config'] = $decoded_response['Config'];
@@ -161,19 +132,10 @@ function docker($action, $service_name = null, $attr1 = null, $attr2 = null, $ex
           if ($response === false) {
             $err = curl_error($curl);
             curl_close($curl);
-            // logger(array('return' => array(array(
-              // 'type' => 'danger',
-              // 'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
-              // 'msg' => $err,
-            // ))));
             return $err;
           }
           else {
             curl_close($curl);
-            // logger(array('return' => array(array(
-              // 'type' => 'success',
-              // 'log' => array(__FUNCTION__, $action, $service_name, $attr1, $attr2, $extra_headers),
-            // ))));
             if (empty($response)) {
               return true;
             }
