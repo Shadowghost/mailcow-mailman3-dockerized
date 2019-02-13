@@ -240,7 +240,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.61
+      image: mailcow/dovecot:1.62
       build: ./data/Dockerfiles/dovecot
       depends_on:
         - mysql-mailcow

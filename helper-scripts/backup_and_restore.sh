@@ -63,32 +63,32 @@ function backup() {
       docker run --rm \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
         -v $(docker volume ls -qf name=${CMPS_PRJ}_vmail-vol-1):/vmail:ro \
-        debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_vmail.tar.gz /vmail
+        debian:stretch-slim /bin/tar --warning='no-file-ignored' --use-compress-program="gzip --rsyncable -v --best" -Pcvpf /backup/backup_vmail.tar.gz /vmail
       ;;&
     crypt|all)
       docker run --rm \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
         -v $(docker volume ls -qf name=${CMPS_PRJ}_crypt-vol-1):/crypt:ro \
-        debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_crypt.tar.gz /crypt
+        debian:stretch-slim /bin/tar --warning='no-file-ignored' --use-compress-program="gzip --rsyncable -v --best" -Pcvpf /backup/backup_crypt.tar.gz /crypt
       ;;&
     redis|all)
       docker exec $(docker ps -qf name=redis-mailcow) redis-cli save
       docker run --rm \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
         -v $(docker volume ls -qf name=${CMPS_PRJ}_redis-vol-1):/redis:ro \
-        debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_redis.tar.gz /redis
+        debian:stretch-slim /bin/tar --warning='no-file-ignored' --use-compress-program="gzip --rsyncable -v --best" -Pcvpf /backup/backup_redis.tar.gz /redis
       ;;&
     rspamd|all)
       docker run --rm \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
         -v $(docker volume ls -qf name=${CMPS_PRJ}_rspamd-vol-1):/rspamd:ro \
-        debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_rspamd.tar.gz /rspamd
+        debian:stretch-slim /bin/tar --warning='no-file-ignored' --use-compress-program="gzip --rsyncable -v --best" -Pcvpf /backup/backup_rspamd.tar.gz /rspamd
       ;;&
     postfix|all)
       docker run --rm \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
         -v $(docker volume ls -qf name=${CMPS_PRJ}_postfix-vol-1):/postfix:ro \
-        debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_postfix.tar.gz /postfix
+        debian:stretch-slim /bin/tar --warning='no-file-ignored' --use-compress-program="gzip --rsyncable -v --best" -Pcvpf /backup/backup_postfix.tar.gz /postfix
       ;;&
     mysql|all)
       SQLIMAGE1='mariadb:10.2'
@@ -103,7 +103,7 @@ function backup() {
       docker run --rm \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
         -v $(docker volume ls -qf name=${CMPS_PRJ}_mailman-core-vol-1):/mailman-core:ro \
-        debian:stretch-slim /bin/tar --warning='no-file-ignored' -Pcvpzf /backup/backup_mailman-core.tar.gz /mailman-core
+        debian:stretch-slim /bin/tar --warning='no-file-ignored' --use-compress-program="gzip --rsyncable -v --best" -Pcvpf /backup/backup_mailman-core.tar.gz /mailman-core
       ;;&
     mailman-db|all)
       SQLIMAGE2='mariadb:10.3'
@@ -115,7 +115,7 @@ function backup() {
         ${SQLIMAGE2} /bin/sh -c "mysqldump -hdatabase -uroot -p${MMDBROOT} --all-databases | gzip > /backup/backup_mailman_mysql.gz"
       ;;&
     mailman-web|all)
-      /bin/tar --warning='no-file-ignored' -Pcvpzf ${BACKUP_LOCATION}/mailcowmailman3-${DATE}/backup_mailman-web.tar.gz ../data/mailman/web
+      /bin/tar --warning='no-file-ignored' --use-compress-program="gzip --rsyncable -v --best" -Pcvpf ${BACKUP_LOCATION}/mailcowmailman3-${DATE}/backup_mailman-web.tar.gz ../data/mailman/web
       ;;
     esac
     shift
