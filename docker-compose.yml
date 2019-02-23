@@ -129,7 +129,7 @@ services:
             - redis
 
     clamd-mailcow:
-      image: mailcow/clamd:1.21
+      image: mailcow/clamd:1.22
       build: ./data/Dockerfiles/clamd
       depends_on:
         - mailman-web
@@ -213,7 +213,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.51
+      image: mailcow/sogo:1.52
       build: ./data/Dockerfiles/sogo
       depends_on:
         - mailman-web
@@ -240,7 +240,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.62
+      image: mailcow/dovecot:1.63
       build: ./data/Dockerfiles/dovecot
       depends_on:
         - mysql-mailcow
@@ -430,7 +430,7 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.34
+      image: mailcow/watchdog:1.35
       # Debug
       #command: /watchdog.sh
       build: ./data/Dockerfiles/watchdog
@@ -502,7 +502,7 @@ services:
           aliases:
             - solr
 
-    ipv6nat:
+    ipv6nat-mailcow:
       image: robbertkl/ipv6nat
       depends_on:
         - mailman-web
