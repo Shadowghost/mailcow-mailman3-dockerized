@@ -213,7 +213,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.52
+      image: mailcow/sogo:1.53
       build: ./data/Dockerfiles/sogo
       depends_on:
         - mailman-web
