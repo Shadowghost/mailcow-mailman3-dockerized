@@ -289,7 +289,7 @@ services:
             - dovecot
 
     postfix-mailcow:
-      image: mailcow/postfix:1.29
+      image: mailcow/postfix:1.31
       build: ./data/Dockerfiles/postfix
       depends_on:
         - mailman-web
