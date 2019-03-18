@@ -16,6 +16,7 @@ if [[ -f .env ]]; then
   case $response in
     [yY][eE][sS]|[yY])
       mv .env .env_backup
+	  chmod 600 mailcow.conf
       ;;
     *)
       exit 1
@@ -163,6 +164,12 @@ TZ=${TZ}
 # Fixed project name
 COMPOSE_PROJECT_NAME=mailcowdockerized
 
+# Set this to "allow" to enable the anyone pseudo user. Disabled by default.
+# When enabled, ACL can be created, that apply to "All authenticated users"
+# This should probably only be activated on mail hosts, that are used exclusivly by one organisation.
+# Otherwise a user might share data with too many other users.
+ACL_ANYONE=disallow
+
 # Garbage collector cleanup
 # Deleted domains and mailboxes are moved to /var/vmail/_garbage/timestamp_sanitizedstring
 # How long should objects remain in the garbage until they are being deleted? (value in minutes)
@@ -227,17 +234,16 @@ IPV6_NETWORK=fd4d:6169:6c63:6f77::/64
 #API_KEY=
 #API_ALLOW_FROM=127.0.0.1,1.2.3.4
 
-# Set this to "allow" to enable the anyone pseudo user. Disabled by default.
-# When enabled, ACL can be created, that apply to "All authenticated users"
-# This should probably only be activated on mail hosts, that are used exclusivly by one organisation.
-# Otherwise a user might share data with too many other users.
-ACL_ANYONE=disallow
+# mail_home is ~/Maildir
+MAILDIR_SUB=Maildir
 
 EOF
 
 echo "Creating needed directories."
 mkdir -p ./data/assets/ssl
 mkdir -p ./data/mailman/web
+
+chmod 600 .env
 
 echo "Create mailman volume, copy mailman configuration and selfsigned SSL-certificates until new ones are installed."
 docker volume create "${PN}"_mailman-core-vol-1
@@ -247,4 +253,6 @@ docker run -d \
   nginx:mainline-alpine
 docker cp ./templates/mailman/mailman-extra.cfg devtest:/app/
 docker container stop devtest && docker container rm devtest
-cp -n ./data/assets/ssl-example/*.pem ./data/assets/ssl/
+
+# copy but don't overwrite existing certificate
+cp -n data/assets/ssl-example/*.pem data/assets/ssl/
