@@ -211,6 +211,10 @@ SOLR_HEAP=1024
 
 # Enable watchdog (watchdog-mailcow) to restart unhealthy containers (experimental)
 USE_WATCHDOG=n
+
+# Allow admins to log into SOGo as email user (without any password)
+ALLOW_ADMIN_EMAIL_LOGIN=n
+
 # Send notifications by mail (no DKIM signature, sent from watchdog@MAILCOW_HOSTNAME)
 # Can by multiple rcpts, NO quotation marks
 #WATCHDOG_NOTIFY_EMAIL=a@example.com,b@example.com,c@example.com
