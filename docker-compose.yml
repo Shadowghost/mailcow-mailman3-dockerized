@@ -147,7 +147,7 @@ services:
             - clamd
 
     rspamd-mailcow:
-      image: mailcow/rspamd:1.38
+      image: mailcow/rspamd:1.39
       build: ./data/Dockerfiles/rspamd
       stop_grace_period: 30s
       depends_on:
@@ -444,7 +444,7 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.40
+      image: mailcow/watchdog:1.41
       # Debug
       #command: /watchdog.sh
       build: ./data/Dockerfiles/watchdog
@@ -453,6 +453,7 @@ services:
       volumes:
         - rspamd-vol-1:/var/lib/rspamd
         - mysql-socket-vol-1:/var/run/mysqld/
+        - ./data/assets/ssl:/etc/ssl/mail/:ro
       restart: always
       environment:
         - LOG_LINES=${LOG_LINES:-9999}
