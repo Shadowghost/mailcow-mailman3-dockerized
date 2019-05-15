@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 [[ -f .env ]] && source .env
 [[ -f ../.env ]] && source ../.env
 
