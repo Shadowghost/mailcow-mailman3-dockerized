@@ -72,7 +72,7 @@ services:
             - database
 
     unbound-mailcow:
-      image: mailcow/unbound:1.6
+      image: mailcow/unbound:1.
       build: ./data/Dockerfiles/unbound
       command: /usr/sbin/unbound
       environment:
@@ -147,7 +147,7 @@ services:
             - clamd
 
     rspamd-mailcow:
-      image: mailcow/rspamd:1.40
+      image: mailcow/rspamd:1.41
       build: ./data/Dockerfiles/rspamd
       stop_grace_period: 30s
       depends_on:
@@ -249,7 +249,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.70
+      image: mailcow/dovecot:1.71
       build: ./data/Dockerfiles/dovecot
       depends_on:
         - mysql-mailcow
@@ -394,7 +394,7 @@ services:
     acme-mailcow:
       depends_on:
         - nginx-mailcow
-      image: mailcow/acme:1.53
+      image: mailcow/acme:1.54
       build: ./data/Dockerfiles/acme
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
@@ -423,7 +423,7 @@ services:
             - acme
 
     netfilter-mailcow:
-      image: mailcow/netfilter:1.23
+      image: mailcow/netfilter:1.24
       build: ./data/Dockerfiles/netfilter
       stop_grace_period: 30s
       depends_on:
@@ -448,7 +448,7 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.41
+      image: mailcow/watchdog:1.42
       # Debug
       #command: /watchdog.sh
       build: ./data/Dockerfiles/watchdog
@@ -482,7 +482,7 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.26
+      image: mailcow/dockerapi:1.2
       build: ./data/Dockerfiles/dockerapi
       depends_on:
         - mailman-web
