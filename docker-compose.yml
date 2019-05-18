@@ -72,7 +72,7 @@ services:
             - database
 
     unbound-mailcow:
-      image: mailcow/unbound:1.
+      image: mailcow/unbound:1.7
       build: ./data/Dockerfiles/unbound
       command: /usr/sbin/unbound
       environment:
@@ -482,7 +482,7 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.2
+      image: mailcow/dockerapi:1.27
       build: ./data/Dockerfiles/dockerapi
       depends_on:
         - mailman-web
