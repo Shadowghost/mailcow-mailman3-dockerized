@@ -394,7 +394,7 @@ services:
     acme-mailcow:
       depends_on:
         - nginx-mailcow
-      image: mailcow/acme:1.54
+      image: mailcow/acme:1.55
       build: ./data/Dockerfiles/acme
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
@@ -482,7 +482,7 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.27
+      image: mailcow/dockerapi:1.28
       build: ./data/Dockerfiles/dockerapi
       depends_on:
         - mailman-web
