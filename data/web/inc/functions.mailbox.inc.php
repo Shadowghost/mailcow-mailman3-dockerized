@@ -1775,6 +1775,14 @@ function mailbox($_action, $_type, $_data = null, $_extra = null) {
                   unset($gotos[$i]);
                   continue;
                 }
+                // Delete from sender_acl to prevent duplicates
+                $stmt = $pdo->prepare("DELETE FROM `sender_acl` WHERE
+                  `logged_in_as` = :goto AND
+                  `send_as` = :address");
+                $stmt->execute(array(
+                  ':goto' => $goto,
+                  ':address' => $address
+                ));
               }
               $gotos = array_filter($gotos);
               $goto = implode(",", $gotos);
@@ -2119,9 +2127,9 @@ function mailbox($_action, $_type, $_data = null, $_extra = null) {
                     unset($sender_acl_domain_admin[$key]);
                     continue;
                   }
-                  // Check if user has mailbox access (if object is email)
+                  // Check if user has alias access (if object is email)
                   if (filter_var($val, FILTER_VALIDATE_EMAIL)) {
-                    if (!hasMailboxObjectAccess($_SESSION['mailcow_cc_username'], $_SESSION['mailcow_cc_role'], $val)) {
+                    if (!hasAliasObjectAccess($_SESSION['mailcow_cc_username'], $_SESSION['mailcow_cc_role'], $val)) {
                       $_SESSION['return'][] = array(
                         'type' => 'danger',
                         'log' => array(__FUNCTION__, $_action, $_type, $_data_log, $_attr),
@@ -2140,10 +2148,15 @@ function mailbox($_action, $_type, $_data = null, $_extra = null) {
                 $stmt->execute(array(
                   ':username' => $username
                 ));
+                $fixed_sender_aliases = mailbox('get', 'sender_acl_handles', $username)['fixed_sender_aliases'];
                 foreach ($sender_acl_merged as $sender_acl) {
                   $domain = ltrim($sender_acl, '@');
                   if (is_valid_domain_name($domain)) {
                     $sender_acl = '@' . $domain;
+                  }
+                  // Don't add if allowed by alias
+                  if (in_array($sender_acl, $fixed_sender_aliases)) {
+                    continue;
                   }
                   $stmt = $pdo->prepare("INSERT INTO `sender_acl` (`send_as`, `logged_in_as`)
                     VALUES (:sender_acl, :username)");
@@ -2351,11 +2364,11 @@ function mailbox($_action, $_type, $_data = null, $_extra = null) {
           $stmt->execute(array(':logged_in_as' => $_data));
           $address_rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
           while ($address_row = array_shift($address_rows)) {
-            if (filter_var($address_row['send_as'], FILTER_VALIDATE_EMAIL) && !hasMailboxObjectAccess($_SESSION['mailcow_cc_username'], $_SESSION['mailcow_cc_role'], $address_row['send_as'])) {
+            if (filter_var($address_row['send_as'], FILTER_VALIDATE_EMAIL) && !hasAliasObjectAccess($_SESSION['mailcow_cc_username'], $_SESSION['mailcow_cc_role'], $address_row['send_as'])) {
               $data['sender_acl_addresses']['ro'][] = $address_row['send_as'];
               continue;
             }
-            if (filter_var($address_row['send_as'], FILTER_VALIDATE_EMAIL) && hasMailboxObjectAccess($_SESSION['mailcow_cc_username'], $_SESSION['mailcow_cc_role'], $address_row['send_as'])) {
+            if (filter_var($address_row['send_as'], FILTER_VALIDATE_EMAIL) && hasAliasObjectAccess($_SESSION['mailcow_cc_username'], $_SESSION['mailcow_cc_role'], $address_row['send_as'])) {
               $data['sender_acl_addresses']['rw'][] = $address_row['send_as'];
               continue;
             }
@@ -2398,7 +2411,11 @@ function mailbox($_action, $_type, $_data = null, $_extra = null) {
           ));
           $rows_mbox = $stmt->fetchAll(PDO::FETCH_ASSOC);
           while ($row = array_shift($rows_mbox)) {
-            if (filter_var($row['address'], FILTER_VALIDATE_EMAIL) && hasMailboxObjectAccess($_SESSION['mailcow_cc_username'], $_SESSION['mailcow_cc_role'], $row['address'])) {
+            // Aliases are not selectable
+            if (in_array($row['address'], $data['fixed_sender_aliases'])) {
+              continue;
+            }
+            if (filter_var($row['address'], FILTER_VALIDATE_EMAIL) && hasAliasObjectAccess($_SESSION['mailcow_cc_username'], $_SESSION['mailcow_cc_role'], $row['address'])) {
               $data['sender_acl_addresses']['selectable'][] = $row['address'];
             }
           }
@@ -3416,6 +3433,10 @@ function mailbox($_action, $_type, $_data = null, $_extra = null) {
             $stmt = $pdo->prepare("DELETE FROM `alias` WHERE `id` = :id");
             $stmt->execute(array(
               ':id' => $id
+            ));
+            $stmt = $pdo->prepare("DELETE FROM `sender_acl` WHERE `send_as` = :alias_address");
+            $stmt->execute(array(
+              ':alias_address' => $alias_data['address']
             ));
             $_SESSION['return'][] = array(
               'type' => 'success',
