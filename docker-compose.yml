@@ -249,7 +249,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.73
+      image: mailcow/dovecot:1.74
       build: ./data/Dockerfiles/dovecot
       depends_on:
         - mysql-mailcow
@@ -482,7 +482,7 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.28
+      image: mailcow/dockerapi:1.30
       build: ./data/Dockerfiles/dockerapi
       depends_on:
         - mailman-web

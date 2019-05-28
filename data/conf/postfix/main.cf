@@ -140,5 +140,6 @@ smtp_header_checks = pcre:/opt/postfix/conf/anonymize_headers.pcre
 mail_name = Postcow
 transport_maps = pcre:/opt/postfix/conf/local_transport, proxy:mysql:/opt/postfix/conf/sql/mysql_transport_maps.cf, regexp:/opt/mailman/core/var/data/postfix_lmtp
 smtp_sasl_auth_soft_bounce = no
+postscreen_discard_ehlo_keywords = silent-discard, dsn
 # Additional Mailman config
 local_recipient_maps = regexp:/opt/mailman/core/var/data/postfix_lmtp proxy:unix:passwd.byname $alias_maps
