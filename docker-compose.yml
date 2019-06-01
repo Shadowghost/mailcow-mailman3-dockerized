@@ -249,7 +249,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.75
+      image: mailcow/dovecot:1.77
       build: ./data/Dockerfiles/dovecot
       depends_on:
         - mysql-mailcow
