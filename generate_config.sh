@@ -220,6 +220,9 @@ ALLOW_ADMIN_EMAIL_LOGIN=n
 #WATCHDOG_NOTIFY_EMAIL=a@example.com,b@example.com,c@example.com
 #WATCHDOG_NOTIFY_EMAIL=
 
+# Notify about banned IP (includes whois lookup)
+WATCHDOG_NOTIFY_BAN=y
+
 # Max log lines per service to keep in Redis logs
 LOG_LINES=9999
 
