@@ -525,6 +525,8 @@ services:
       image: mailcow/olefy:1.0
       restart: always
       build: ./data/Dockerfiles/olefy
+      depends_on:
+        - mailman-web
       environment:
         - OLEFY_BINDADDRESS=0.0.0.0
         - OLEFY_BINDPORT=10055
@@ -559,6 +561,7 @@ services:
         - watchdog-mailcow
         - dockerapi-mailcow
         - solr-mailcow
+        - olefy-mailcow
       restart: always
       privileged: true
       network_mode: "host"
