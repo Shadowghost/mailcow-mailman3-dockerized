@@ -129,7 +129,7 @@ services:
             - redis
 
     clamd-mailcow:
-      image: mailcow/clamd:1.24
+      image: mailcow/clamd:1.25
       build: ./data/Dockerfiles/clamd
       depends_on:
         - mailman-web
@@ -394,7 +394,7 @@ services:
     acme-mailcow:
       depends_on:
         - nginx-mailcow
-      image: mailcow/acme:1.57
+      image: mailcow/acme:1.58
       build: ./data/Dockerfiles/acme
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
