@@ -219,7 +219,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.54
+      image: mailcow/sogo:1.55
       build: ./data/Dockerfiles/sogo
       depends_on:
         - mailman-web
@@ -394,7 +394,7 @@ services:
     acme-mailcow:
       depends_on:
         - nginx-mailcow
-      image: mailcow/acme:1.58
+      image: mailcow/acme:1.59
       build: ./data/Dockerfiles/acme
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
