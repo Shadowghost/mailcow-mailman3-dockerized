@@ -72,7 +72,7 @@ services:
             - database
 
     unbound-mailcow:
-      image: mailcow/unbound:1.7
+      image: mailcow/unbound:1.8
       build: ./data/Dockerfiles/unbound
       command: /usr/sbin/unbound
       environment:
@@ -219,7 +219,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.55
+      image: mailcow/sogo:1.56
       build: ./data/Dockerfiles/sogo
       depends_on:
         - mailman-web
