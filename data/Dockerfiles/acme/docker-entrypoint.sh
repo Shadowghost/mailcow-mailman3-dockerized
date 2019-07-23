@@ -138,7 +138,7 @@ verify_challenge_path(){
   if [[ ${SKIP_HTTP_VERIFICATION} == "y" ]]; then
     echo '(skipping check, returning 0)'
     return 0
-  elif [[ "$(curl -${2} -L http://${1}/.well-known/acme-challenge/${RANDOM_N} --silent)" == "${RANDOM_N}"  ]]; then
+  elif [[ "$(curl --insecure -${2} -L http://${1}/.well-known/acme-challenge/${RANDOM_N} --silent)" == "${RANDOM_N}"  ]]; then
     rm /var/www/acme/${RANDOM_N}
     return 0
   else
@@ -483,7 +483,7 @@ while true; do
         cp ${ACME_BASE}/acme/cert.pem ${ACME_BASE}/cert.pem
         cp ${ACME_BASE}/acme/key.pem ${ACME_BASE}/key.pem
         reload_configurations
-        rm /var/www/acme/*
+        rm /var/www/acme/* 2> /dev/null
         log_f "Certificate successfully deployed, removing backup, sleeping 1d"
         sleep 1d
       else

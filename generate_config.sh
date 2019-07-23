@@ -247,6 +247,9 @@ IPV6_NETWORK=fd4d:6169:6c63:6f77::/64
 # mail_home is ~/Maildir
 MAILDIR_SUB=Maildir
 
+# SOGo session timeout in minutes
+SOGO_EXPIRE_SESSION=480
+
 EOF
 
 echo "Creating needed directories."
