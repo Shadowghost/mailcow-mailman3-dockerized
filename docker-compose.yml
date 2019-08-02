@@ -483,7 +483,7 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.31
+      image: mailcow/dockerapi:1.32
       build: ./data/Dockerfiles/dockerapi
       depends_on:
         - mailman-web
