@@ -395,7 +395,7 @@ services:
     acme-mailcow:
       depends_on:
         - nginx-mailcow
-      image: mailcow/acme:1.60
+      image: mailcow/acme:1.61
       build: ./data/Dockerfiles/acme
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
@@ -449,7 +449,7 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.55
+      image: mailcow/watchdog:1.56
       # Debug
       #command: /watchdog.sh
       build: ./data/Dockerfiles/watchdog
