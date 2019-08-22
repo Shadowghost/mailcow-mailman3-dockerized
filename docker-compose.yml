@@ -129,7 +129,7 @@ services:
             - redis
 
     clamd-mailcow:
-      image: mailcow/clamd:1.27
+      image: mailcow/clamd:1.28
       build: ./data/Dockerfiles/clamd
       depends_on:
         - mailman-web
@@ -249,7 +249,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.85
+      image: mailcow/dovecot:1.86
       build: ./data/Dockerfiles/dovecot
       depends_on:
         - mysql-mailcow
