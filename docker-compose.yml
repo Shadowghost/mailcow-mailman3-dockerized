@@ -219,7 +219,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.60
+      image: mailcow/sogo:1.61
       build: ./data/Dockerfiles/sogo
       depends_on:
         - mailman-web
@@ -451,7 +451,7 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.57
+      image: mailcow/watchdog:1.58
       # Debug
       #command: /watchdog.sh
       build: ./data/Dockerfiles/watchdog
