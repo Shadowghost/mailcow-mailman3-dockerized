@@ -513,6 +513,8 @@ services:
         - SKIP_SOLR=${SKIP_SOLR:-y}
       volumes:
         - solr-vol-1:/opt/solr/server/solr/dovecot-fts/data
+      ports:
+        - "${SOLR_PORT:-127.0.0.1:18983}:8983"
       restart: always
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
