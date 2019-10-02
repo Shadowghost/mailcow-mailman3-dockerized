@@ -130,7 +130,7 @@ services:
             - redis
 
     clamd-mailcow:
-      image: mailcow/clamd:1.28
+      image: mailcow/clamd:1.29
       build: ./data/Dockerfiles/clamd
       depends_on:
         - mailman-web
@@ -174,7 +174,7 @@ services:
             - rspamd
 
     php-fpm-mailcow:
-      image: mailcow/phpfpm:1.46
+      image: mailcow/phpfpm:1.48
       build: ./data/Dockerfiles/phpfpm
       command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
       depends_on:
@@ -487,7 +487,7 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.33
+      image: mailcow/dockerapi:1.34
       build: ./data/Dockerfiles/dockerapi
       depends_on:
         - mailman-web
