@@ -239,7 +239,7 @@ $lang['user']['eas_reset_help'] = 'In vielen Fällen kann ein ActiveSync Profil 
 
 $lang['user']['sogo_profile_reset'] = 'SOGo Profil zurücksetzen';
 $lang['user']['sogo_profile_reset_now'] = 'Profil jetzt zurücksetzen';
-$lang['user']['sogo_profile_reset_help'] = 'Das Profil wird inklusive <strong>aller</strong> Daten <b>unwiederbringlich gelöscht</b>.';
+$lang['user']['sogo_profile_reset_help'] = 'Das Profil wird inklusive <strong>aller</strong> Kalender- und Kontaktdaten <b>unwiederbringlich gelöscht</b>.';
 
 $lang['user']['encryption'] = 'Verschlüsselung';
 $lang['user']['username'] = 'Benutzername';
@@ -420,6 +420,7 @@ $lang['acl']['recipient_maps'] = 'Empfängerumschreibungen';
 $lang['acl']['unlimited_quota'] = 'Unendliche Quota für Mailboxen';
 $lang['acl']['extend_sender_acl'] = 'Eingabe externer Absenderadressen erlauben';
 $lang['acl']['prohibited'] = 'Untersagt durch Richtlinie';
+$lang['acl']['sogo_access'] = 'Verwalten des SOGo Zugriffsrechts erlauben';
 
 $lang['edit']['extended_sender_acl'] = 'Externe Absenderadressen';
 $lang['edit']['extended_sender_acl_info'] = 'Der DKIM Domainkey der externen Absenderdomain sollte in diesen Server importiert werden, falls vorhanden.<br>
@@ -777,6 +778,7 @@ $lang['quarantine']['quarantine'] = "Quarantäne";
 $lang['quarantine']['qinfo'] = 'Das Quarantänesystem speichert abgelehnte Nachrichten in der Datenbank. Dem Sender wird <em>nicht</em> signalisiert, dass seine E-Mail zugestellt wurde.
   <br>"' . $lang['quarantine']['learn_spam_delete'] . '" lernt Nachrichten nach bayesscher Statistik als Spam und erstellt Fuzzy Hashes ausgehend von der jeweiligen Nachricht, um ähnliche Inhalte zukünftig zu unterbinden.
   <br>Der Prozess des Lernens kann abhängig vom System zeitintensiv sein.';
+$lang['quarantine']['download_eml'] = "Herunterladen (.eml)";
 $lang['quarantine']['release'] = "Freigeben";
 $lang['quarantine']['empty'] = 'Keine Einträge';
 $lang['quarantine']['toggle_all'] = 'Alle auswählen';
@@ -790,6 +792,7 @@ $lang['quarantine']['sender'] = "Sender";
 $lang['quarantine']['show_item'] = "Details";
 $lang['quarantine']['check_hash'] = "Checksumme auf VirusTotal suchen";
 $lang['quarantine']['qitem'] = "Quarantäneeintrag";
+$lang['quarantine']['rspamd_result'] = "Rspamd Ergebnis";
 $lang['quarantine']['subj'] = "Betreff";
 $lang['quarantine']['recipients'] = "Empfänger";
 $lang['quarantine']['text_plain_content'] = "Inhalt (text/plain)";

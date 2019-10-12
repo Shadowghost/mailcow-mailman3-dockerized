@@ -243,7 +243,7 @@ $lang['user']['eas_reset_help'] = 'In many cases a device cache reset will help 
 
 $lang['user']['sogo_profile_reset'] = 'Reset SOGo profile';
 $lang['user']['sogo_profile_reset_now'] = 'Reset profile now';
-$lang['user']['sogo_profile_reset_help'] = 'This will destroy a users SOGo profile and <b>delete all data irretrievable</b>.';
+$lang['user']['sogo_profile_reset_help'] = 'This will destroy a users SOGo profile and <b>delete all contact and calendar data irretrievable</b>.';
 
 $lang['user']['encryption'] = 'Encryption';
 $lang['user']['username'] = 'Username';
@@ -428,6 +428,7 @@ $lang['acl']['recipient_maps'] = 'Recipient maps';
 $lang['acl']['unlimited_quota'] = 'Unlimited quota for mailboxes';
 $lang['acl']['extend_sender_acl'] = 'Allow to extend sender ACL by external addresses';
 $lang['acl']['prohibited'] = 'Prohibited by ACL';
+$lang['acl']['sogo_access'] = 'Allow management of SOGo access';
 
 $lang['edit']['extended_sender_acl'] = 'External sender addresses';
 $lang['edit']['extended_sender_acl_info'] = 'A DKIM domain key should be imported, if available.<br>
@@ -794,6 +795,7 @@ $lang['quarantine']['learn_spam_delete'] = "Learn as spam and delete";
 $lang['quarantine']['qinfo'] = 'The quarantine system will save rejected mail to the database, while the sender will <em>not</em> be given the impression of a delivered mail.
   <br>"' . $lang['quarantine']['learn_spam_delete'] . '" will learn a message as spam via Bayesian theorem and also calculate fuzzy hashes to deny similar messages in the future.
   <br>Please be aware that learning multiple messages can be - depending on your system - time consuming.';
+$lang['quarantine']['download_eml'] = "Download (.eml)";
 $lang['quarantine']['release'] = "Release";
 $lang['quarantine']['empty'] = 'No results';
 $lang['quarantine']['toggle_all'] = 'Toggle all';
@@ -807,6 +809,7 @@ $lang['quarantine']['sender'] = "Sender";
 $lang['quarantine']['show_item'] = "Show item";
 $lang['quarantine']['check_hash'] = "Search file hash @ VT";
 $lang['quarantine']['qitem'] = "Quarantine item";
+$lang['quarantine']['rspamd_result'] = "Rspamd result";
 $lang['quarantine']['subj'] = "Subject";
 $lang['quarantine']['recipients'] = "Recipients";
 $lang['quarantine']['text_plain_content'] = "Content (text/plain)";
@@ -936,4 +939,3 @@ $lang['mailbox']['alias_domain_backupmx'] = 'Alias domain inactive for relay dom
 
 $lang['danger']['extra_acl_invalid'] = 'External sender address "%s" is invalid';
 $lang['danger']['extra_acl_invalid_domain'] = 'External sender "%s" uses an invalid domain';
-
