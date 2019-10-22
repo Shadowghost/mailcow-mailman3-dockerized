@@ -197,6 +197,11 @@ ADDITIONAL_SAN=
 # Skip running ACME (acme-mailcow, Let's Encrypt certs) - y/n
 SKIP_LETS_ENCRYPT=y
 
+# Create seperate certificates for all domains - y/n
+# this will allow adding more than 100 domains, but some email clients will not be able to connect with alternative hostnames
+# see https://wiki.dovecot.org/SSL/SNIClientSupport
+ENABLE_SSL_SNI=n
+
 # Skip IPv4 check in ACME container - y/n
 SKIP_IP_CHECK=n
 
@@ -271,4 +276,4 @@ docker cp ./templates/mailman/mailman-extra.cfg devtest:/app/
 docker container stop devtest && docker container rm devtest
 
 # copy but don't overwrite existing certificate
-cp -n data/assets/ssl-example/*.pem data/assets/ssl/
+cp -n -d data/assets/ssl-example/*.pem data/assets/ssl/

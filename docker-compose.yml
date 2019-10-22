@@ -252,7 +252,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.92
+      image: mailcow/dovecot:1.93
       build: ./data/Dockerfiles/dovecot
       depends_on:
         - mysql-mailcow
@@ -308,7 +308,7 @@ services:
             - dovecot
 
     postfix-mailcow:
-      image: mailcow/postfix:1.40
+      image: mailcow/postfix:1.41
       build: ./data/Dockerfiles/postfix
       depends_on:
         - mailman-web
@@ -367,6 +367,7 @@ services:
         envsubst < /etc/nginx/conf.d/templates/sogo.template > /etc/nginx/conf.d/sogo.active &&
         envsubst < /etc/nginx/conf.d/templates/sogo_eas.template > /etc/nginx/conf.d/sogo_eas.active &&
         . /etc/nginx/conf.d/templates/sogo.auth_request.template.sh > /etc/nginx/conf.d/sogo_proxy_auth.active &&
+        . /etc/nginx/conf.d/templates/sites.template.sh > /etc/nginx/conf.d/sites.active &&
         nginx -qt &&
         until ping phpfpm -c1 > /dev/null; do sleep 1; done &&
         until ping sogo -c1 > /dev/null; do sleep 1; done &&
@@ -401,7 +402,7 @@ services:
     acme-mailcow:
       depends_on:
         - nginx-mailcow
-      image: mailcow/acme:1.62
+      image: mailcow/acme:1.63
       build: ./data/Dockerfiles/acme
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
@@ -413,6 +414,7 @@ services:
         - DBUSER=${MCDBUSER}
         - DBPASS=${MCDBPASS}
         - SKIP_LETS_ENCRYPT=${SKIP_LETS_ENCRYPT:-n}
+        - ENABLE_SSL_SNI=${ENABLE_SSL_SNI:-n}
         - SKIP_IP_CHECK=${SKIP_IP_CHECK:-n}
         - SKIP_HTTP_VERIFICATION=${SKIP_HTTP_VERIFICATION:-n}
         - ONLY_MAILCOW_HOSTNAME=${ONLY_MAILCOW_HOSTNAME:-n}
