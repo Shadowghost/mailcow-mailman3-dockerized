@@ -176,7 +176,7 @@ services:
             - rspamd
 
     php-fpm-mailcow:
-      image: mailcow/phpfpm:1.51
+      image: mailcow/phpfpm:1.52
       build: ./data/Dockerfiles/phpfpm
       command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
       depends_on:
@@ -225,7 +225,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.61
+      image: mailcow/sogo:1.62
       build: ./data/Dockerfiles/sogo
       depends_on:
         - mailman-web
@@ -255,7 +255,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.95
+      image: mailcow/dovecot:1.96
       build: ./data/Dockerfiles/dovecot
       depends_on:
         - mysql-mailcow
