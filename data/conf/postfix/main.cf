@@ -183,7 +183,9 @@ smtp_tls_policy_maps = proxy:mysql:/opt/postfix/conf/sql/mysql_tls_policy_overri
 smtp_header_checks = pcre:/opt/postfix/conf/anonymize_headers.pcre
 mail_name = Postcow
 # local_transport map catches local destinations and prevents routing local dests when the next map would route "*"
-transport_maps = pcre:/opt/postfix/conf/local_transport,
+# Use custom_transport.pcre for custom transports
+transport_maps = pcre:/opt/postfix/conf/custom_transport.pcre,
+  pcre:/opt/postfix/conf/local_transport,
   proxy:mysql:/opt/postfix/conf/sql/mysql_transport_maps.cf,
   regexp:/opt/mailman/core/var/data/postfix_lmtp
 smtp_sasl_auth_soft_bounce = no

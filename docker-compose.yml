@@ -103,6 +103,7 @@ services:
         - MYSQL_DATABASE=${MCDBNAME}
         - MYSQL_USER=${MCDBUSER}
         - MYSQL_PASSWORD=${MCDBPASS}
+        - MYSQL_INITDB_SKIP_TZINFO=1
       restart: always
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
@@ -176,7 +177,7 @@ services:
             - rspamd
 
     php-fpm-mailcow:
-      image: mailcow/phpfpm:1.52
+      image: mailcow/phpfpm:1.54
       build: ./data/Dockerfiles/phpfpm
       command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
       depends_on:
@@ -255,7 +256,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.96
+      image: mailcow/dovecot:1.97
       build: ./data/Dockerfiles/dovecot
       depends_on:
         - mysql-mailcow
@@ -311,7 +312,7 @@ services:
             - dovecot
 
     postfix-mailcow:
-      image: mailcow/postfix:1.41
+      image: mailcow/postfix:1.42
       build: ./data/Dockerfiles/postfix
       depends_on:
         - mailman-web
@@ -435,7 +436,7 @@ services:
             - acme
 
     netfilter-mailcow:
-      image: mailcow/netfilter:1.30
+      image: mailcow/netfilter:1.31
       build: ./data/Dockerfiles/netfilter
       stop_grace_period: 30s
       depends_on:
@@ -495,7 +496,7 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.35
+      image: mailcow/dockerapi:1.36
       build: ./data/Dockerfiles/dockerapi
       depends_on:
         - mailman-web

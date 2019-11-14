@@ -9,8 +9,8 @@ if [[ ! ${1} =~ (backup|restore) ]]; then
   exit 1
 fi
 
-if [[ ${1} == "backup" && ! ${2} =~ (crypt|vmail|redis|rspamd|postfix|mysql|mailman-core|mailman-db|all) ]]; then
-  echo "Second parameter needs to be 'vmail', 'redis', 'rspamd', 'postfix', 'mysql', 'mailman-core', 'mailman-db', 'mailman-web' or 'all'"
+if [[ ${1} == "backup" && ! ${2} =~ (crypt|vmail|redis|rspamd|postfix|mysql|mailman-core|mailman-db|all|--delete-days) ]]; then
+  echo "Second parameter needs to be 'vmail', 'redis', 'rspamd', 'postfix', 'mysql', 'mailman-core', 'mailman-db', 'mailman-web, 'all' or '--delete-days'"
   exit 1
 fi
 
@@ -99,6 +99,14 @@ function backup() {
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
         ${SQLIMAGE1} /bin/sh -c "mysqldump -hmysql -uroot -p${MCDBROOT} --all-databases | gzip > /backup/backup_mysql.gz"
       ;;&
+    --delete-days)
+      shift
+      if [[ "${1}" =~ ^[0-9]+$ ]]; then
+        find ${BACKUP_LOCATION}/* -maxdepth 0 -mmin +$((${1}*60*24)) -exec rm -rvf {} \;
+      else
+        echo "Parameter of --delete-days is not a number."
+      fi 
+	  ;;&
     mailman-core|all)
       docker run --rm \
         -v ${BACKUP_LOCATION}/mailcowmailman3-${DATE}:/backup \
@@ -257,6 +265,10 @@ elif [[ ${1} == "restore" ]]; then
     echo "No datasets found"
     exit 1
   fi
+  
+  echo "[ 0 ] - all"
+  # find all files in folder with *.gz extension, print their base names, remove backup_, remove .tar (if present), remove .gz
+  FILE_SELECTION[0]=$(find "${FOLDER_SELECTION[${input_sel}]}" -type f -name '*.gz' -printf '%f\n' | sed 's/backup_*//' | sed 's/\.[^.]*$//' | sed 's/\.[^.]*$//')
   for file in $(ls -f "${FOLDER_SELECTION[${input_sel}]}"); do
     if [[ ${file} =~ vmail ]]; then
       echo "[ ${i} ] - Mail directory (/var/vmail)"
@@ -297,8 +309,8 @@ elif [[ ${1} == "restore" ]]; then
     fi
   done
   echo
-  input_sel=0
-  while [[ ${input_sel} -lt 1 ||  ${input_sel} -gt ${i} ]]; do
+  input_sel=-1
+  while [[ ${input_sel} -lt 0 ||  ${input_sel} -gt ${i} ]]; do
     read -p "Select a dataset to restore: " input_sel
   done
   echo "Restoring ${FILE_SELECTION[${input_sel}]} from ${RESTORE_POINT}..."

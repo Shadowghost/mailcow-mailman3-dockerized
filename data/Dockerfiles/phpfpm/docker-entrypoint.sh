@@ -25,7 +25,7 @@ if [[ -z $(redis-cli --raw -h redis-mailcow GET Q_MAX_AGE) ]]; then
   redis-cli --raw -h redis-mailcow SET Q_MAX_AGE 365
 fi
 
-# Check of mysql_upgrade
+# Check mysql_upgrade
 
 CONTAINER_ID=
 until [[ ! -z "${CONTAINER_ID}" ]] && [[ "${CONTAINER_ID}" =~ ^[[:alnum:]]*$ ]]; do
@@ -73,6 +73,14 @@ if [ ${SQL_CHANGED} -eq 1 ]; then
     echo "Sleeping 5 seconds..."
     sleep 5
   fi
+fi
+
+# Check mysql tz import
+TZ_CHECK=$(mysql --socket=/var/run/mysqld/mysqld.sock -u ${DBUSER} -p${DBPASS} ${DBNAME} -e "SELECT CONVERT_TZ('2019-11-02 23:33:00','Europe/Berlin','UTC') AS time;" -BN 2> /dev/null)
+if [[ -z ${TZ_CHECK} ]] || [[ "${TZ_CHECK}" == "NULL" ]]; then
+  SQL_FULL_TZINFO_IMPORT_RETURN=$(curl --silent --insecure -XPOST https://dockerapi/containers/${CONTAINER_ID}/exec -d '{"cmd":"system", "task":"mysql_tzinfo_to_sql"}' --silent -H 'Content-type: application/json')
+  echo "MySQL mysql_tzinfo_to_sql - debug output:"
+  echo ${SQL_FULL_TZINFO_IMPORT_RETURN}
 fi
 
 # Trigger db init
