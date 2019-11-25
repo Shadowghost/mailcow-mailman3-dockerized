@@ -73,7 +73,6 @@ services:
 
     unbound-mailcow:
       image: mailcow/unbound:1.9
-      build: ./data/Dockerfiles/unbound
       command: /usr/sbin/unbound
       environment:
         - TZ=${TZ}
@@ -133,7 +132,6 @@ services:
 
     clamd-mailcow:
       image: mailcow/clamd:1.33
-      build: ./data/Dockerfiles/clamd
       depends_on:
         - mailman-web
       restart: always
@@ -151,7 +149,6 @@ services:
 
     rspamd-mailcow:
       image: mailcow/rspamd:1.56
-      build: ./data/Dockerfiles/rspamd
       stop_grace_period: 30s
       depends_on:
         - nginx-mailcow
@@ -178,7 +175,6 @@ services:
 
     php-fpm-mailcow:
       image: mailcow/phpfpm:1.54
-      build: ./data/Dockerfiles/phpfpm
       command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
       depends_on:
         - redis-mailcow
@@ -227,7 +223,6 @@ services:
 
     sogo-mailcow:
       image: mailcow/sogo:1.63
-      build: ./data/Dockerfiles/sogo
       depends_on:
         - mailman-web
       environment:
@@ -257,7 +252,6 @@ services:
 
     dovecot-mailcow:
       image: mailcow/dovecot:1.97
-      build: ./data/Dockerfiles/dovecot
       depends_on:
         - mysql-mailcow
       cap_add:
@@ -313,7 +307,6 @@ services:
 
     postfix-mailcow:
       image: mailcow/postfix:1.43
-      build: ./data/Dockerfiles/postfix
       depends_on:
         - mailman-web
       volumes:
@@ -407,7 +400,6 @@ services:
       depends_on:
         - nginx-mailcow
       image: mailcow/acme:1.63
-      build: ./data/Dockerfiles/acme
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
       environment:
@@ -437,7 +429,6 @@ services:
 
     netfilter-mailcow:
       image: mailcow/netfilter:1.31
-      build: ./data/Dockerfiles/netfilter
       stop_grace_period: 30s
       depends_on:
         - mailman-web
@@ -464,7 +455,6 @@ services:
       image: mailcow/watchdog:1.62
       # Debug
       #command: /watchdog.sh
-      build: ./data/Dockerfiles/watchdog
       depends_on:
         - mailman-web
       volumes:
@@ -497,7 +487,6 @@ services:
 
     dockerapi-mailcow:
       image: mailcow/dockerapi:1.36
-      build: ./data/Dockerfiles/dockerapi
       depends_on:
         - mailman-web
       oom_score_adj: -10
@@ -514,7 +503,6 @@ services:
             
     solr-mailcow:
       image: mailcow/solr:1.7
-      build: ./data/Dockerfiles/solr
       depends_on:
         - mailman-web
       environment:
@@ -535,7 +523,6 @@ services:
 
     olefy-mailcow:
       image: mailcow/olefy:1.2
-      build: ./data/Dockerfiles/olefy
       depends_on:
         - mailman-web
       environment:
