@@ -51,7 +51,7 @@ postscreen_dnsbl_sites = wl.mailspike.net=127.0.0.[18;19;20]*-2
   bl.spamcop.net*2
   hostkarma.junkemailfilter.com=127.0.0.2*3
   hostkarma.junkemailfilter.com=127.0.0.4*2
-  hostkarma.junkemailfilter.com=127.0.0.2*1
+  hostkarma.junkemailfilter.com=127.0.1.2*1
   backscatter.spameatingmonkey.net*2
   bl.ipv6.spameatingmonkey.net*2
   bl.spameatingmonkey.net*2
@@ -77,7 +77,7 @@ postscreen_greet_wait = 3s
 postscreen_non_smtp_command_enable = no
 postscreen_pipelining_enable = no
 proxy_read_maps = proxy:mysql:/opt/postfix/conf/sql/mysql_sasl_passwd_maps_transport_maps.cf,
- proxy:mysql:/opt/postfix/conf/sql/mysql_tls_enforce_in_policy.cf,
+  proxy:mysql:/opt/postfix/conf/sql/mysql_tls_enforce_in_policy.cf,
   $sender_dependent_default_transport_maps,
   $smtp_tls_policy_maps,
   $local_recipient_maps,
@@ -139,9 +139,7 @@ smtpd_tls_loglevel = 1
 # Mandatory protocols and ciphers are used when a connections is enforced to use TLS
 # Does _not_ apply to enforced incoming TLS settings per mailbox
 smtp_tls_mandatory_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
-
 lmtp_tls_mandatory_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
-
 smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
 smtpd_tls_mandatory_ciphers = high
 
@@ -178,7 +176,7 @@ smtp_sasl_auth_enable = yes
 smtp_sasl_password_maps = proxy:mysql:/opt/postfix/conf/sql/mysql_sasl_passwd_maps_sender_dependent.cf
 smtp_sasl_security_options =
 smtp_sasl_mechanism_filter = plain, login
-smtp_tls_policy_maps = proxy:mysql:/opt/postfix/conf/sql/mysql_tls_policy_override_maps.cf
+smtp_tls_policy_maps=proxy:mysql:/opt/postfix/conf/sql/mysql_tls_policy_override_maps.cf
 smtp_header_checks = pcre:/opt/postfix/conf/anonymize_headers.pcre
 mail_name = Postcow
 # local_transport map catches local destinations and prevents routing local dests when the next map would route "*"
@@ -190,7 +188,11 @@ transport_maps = pcre:/opt/postfix/conf/custom_transport.pcre,
 smtp_sasl_auth_soft_bounce = no
 postscreen_discard_ehlo_keywords = silent-discard, dsn
 compatibility_level = 2
-smtputf8_enable = no
+smtputf8_enable = yes
+# Define protocols for SMTPS and submission service
+submission_smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3
+smtps_smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3
+
 # Additional Mailman config
 local_recipient_maps = regexp:/opt/mailman/core/var/data/postfix_lmtp proxy:unix:passwd.byname $alias_maps
 

@@ -132,7 +132,7 @@ services:
             - redis
 
     clamd-mailcow:
-      image: mailcow/clamd:1.32
+      image: mailcow/clamd:1.33
       build: ./data/Dockerfiles/clamd
       depends_on:
         - mailman-web
@@ -150,7 +150,7 @@ services:
             - clamd
 
     rspamd-mailcow:
-      image: mailcow/rspamd:1.55
+      image: mailcow/rspamd:1.56
       build: ./data/Dockerfiles/rspamd
       stop_grace_period: 30s
       depends_on:
@@ -226,7 +226,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.62
+      image: mailcow/sogo:1.63
       build: ./data/Dockerfiles/sogo
       depends_on:
         - mailman-web
@@ -312,7 +312,7 @@ services:
             - dovecot
 
     postfix-mailcow:
-      image: mailcow/postfix:1.42
+      image: mailcow/postfix:1.43
       build: ./data/Dockerfiles/postfix
       depends_on:
         - mailman-web
@@ -461,7 +461,7 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.61
+      image: mailcow/watchdog:1.62
       # Debug
       #command: /watchdog.sh
       build: ./data/Dockerfiles/watchdog
