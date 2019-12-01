@@ -72,7 +72,7 @@ services:
             - database
 
     unbound-mailcow:
-      image: mailcow/unbound:1.9
+      image: mailcow/unbound:1.10
       command: /usr/sbin/unbound
       environment:
         - TZ=${TZ}
@@ -89,6 +89,8 @@ services:
 
     mysql-mailcow:
       image: mariadb:10.3
+      depends_on:
+        - unbound-mailcow
       stop_grace_period: 45s
       depends_on:
         - mailman-web
@@ -306,8 +308,9 @@ services:
             - dovecot
 
     postfix-mailcow:
-      image: mailcow/postfix:1.43
+      image: mailcow/postfix:1.44
       depends_on:
+        - mysql-mailcow
         - mailman-web
       volumes:
         - ./data/conf/postfix:/opt/postfix/conf
