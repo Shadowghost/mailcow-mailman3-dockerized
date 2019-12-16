@@ -133,7 +133,7 @@ services:
             - redis
 
     clamd-mailcow:
-      image: mailcow/clamd:1.33
+      image: mailcow/clamd:1.34
       depends_on:
         - mailman-web
       restart: always
@@ -176,7 +176,7 @@ services:
             - rspamd
 
     php-fpm-mailcow:
-      image: mailcow/phpfpm:1.54
+      image: mailcow/phpfpm:1.55
       command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
       depends_on:
         - redis-mailcow
@@ -224,7 +224,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.63
+      image: mailcow/sogo:1.65
       depends_on:
         - mailman-web
       environment:
@@ -253,7 +253,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.97
+      image: mailcow/dovecot:1.104
       depends_on:
         - mysql-mailcow
       cap_add:
@@ -455,7 +455,7 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.62
+      image: mailcow/watchdog:1.65
       # Debug
       #command: /watchdog.sh
       depends_on:
@@ -465,6 +465,7 @@ services:
         - mysql-socket-vol-1:/var/run/mysqld/
         - ./data/assets/ssl:/etc/ssl/mail/:ro
       environment:
+        - IPV6_NETWORK=${IPV6_NETWORK:-fd4d:6169:6c63:6f77::/64}
         - LOG_LINES=${LOG_LINES:-9999}
         - TZ=${TZ}
         - DBNAME=${MCDBNAME}
