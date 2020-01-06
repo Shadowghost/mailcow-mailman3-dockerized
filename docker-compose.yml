@@ -77,7 +77,7 @@ services:
       environment:
         - TZ=${TZ}
       volumes:
-        - ./data/hooks/dovecot:/hooks
+        - ./data/hooks/unbound:/hooks
         - ./data/conf/unbound/unbound.conf:/etc/unbound/unbound.conf:ro
       restart: always
       tty: true
@@ -150,14 +150,14 @@ services:
             - clamd
 
     rspamd-mailcow:
-      image: mailcow/rspamd:1.56
+      image: mailcow/rspamd:1.57
       stop_grace_period: 30s
       depends_on:
         - nginx-mailcow
       environment:
         - TZ=${TZ}
       volumes:
-        - ./data/hooks/dovecot:/hooks
+        - ./data/hooks/rspamd:/hooks
         - ./data/conf/rspamd/custom/:/etc/rspamd/custom
         - ./data/conf/rspamd/override.d/:/etc/rspamd/override.d
         - ./data/conf/rspamd/local.d/:/etc/rspamd/local.d
@@ -181,7 +181,7 @@ services:
       depends_on:
         - redis-mailcow
       volumes:
-        - ./data/hooks/dovecot:/hooks
+        - ./data/hooks/phpfpm:/hooks
         - ./data/web:/web:rw
         - ./data/conf/rspamd/dynmaps:/dynmaps:ro
         - ./data/conf/rspamd/custom/:/rspamd_custom_maps
@@ -253,7 +253,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.104
+      image: mailcow/dovecot:1.105
       depends_on:
         - mysql-mailcow
       cap_add:
@@ -455,7 +455,7 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.65
+      image: mailcow/watchdog:1.67
       # Debug
       #command: /watchdog.sh
       depends_on:
