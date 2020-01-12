@@ -150,12 +150,14 @@ services:
             - clamd
 
     rspamd-mailcow:
-      image: mailcow/rspamd:1.57
+      image: mailcow/rspamd:1.59
       stop_grace_period: 30s
       depends_on:
         - nginx-mailcow
       environment:
         - TZ=${TZ}
+        - IPV4_NETWORK=${IPV4_NETWORK:-172.22.1}
+        - IPV6_NETWORK=${IPV6_NETWORK:-fd4d:6169:6c63:6f77::/64}
       volumes:
         - ./data/hooks/rspamd:/hooks
         - ./data/conf/rspamd/custom/:/etc/rspamd/custom
@@ -494,7 +496,7 @@ services:
       image: mailcow/dockerapi:1.36
       depends_on:
         - mailman-web
-      oom_score_adj: -10
+      oom_kill_disable: true
       environment:
         - DBROOT=${MCDBROOT}
         - TZ=${TZ}
@@ -566,7 +568,6 @@ services:
         - watchdog-mailcow
         - dockerapi-mailcow
         - solr-mailcow
-        - olefy-mailcow
       environment:
         - TZ=${TZ}
       restart: always
