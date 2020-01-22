@@ -227,7 +227,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.65
+      image: mailcow/sogo:1.70
       depends_on:
         - mailman-web
       environment:
@@ -405,7 +405,7 @@ services:
     acme-mailcow:
       depends_on:
         - nginx-mailcow
-      image: mailcow/acme:1.63
+      image: mailcow/acme:1.64
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
       environment:
@@ -477,6 +477,7 @@ services:
         - USE_WATCHDOG=${USE_WATCHDOG:-n}
         - WATCHDOG_NOTIFY_EMAIL=${WATCHDOG_NOTIFY_EMAIL}
         - WATCHDOG_NOTIFY_BAN=${WATCHDOG_NOTIFY_BAN:-y}
+        - WATCHDOG_EXTERNAL_CHECKS=${WATCHDOG_EXTERNAL_CHECKS:-n}
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
         - IPV4_NETWORK=${IPV4_NETWORK:-172.19.199}
         - IP_BY_DOCKER_API=${IP_BY_DOCKER_API:-0}
