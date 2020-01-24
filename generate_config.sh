@@ -276,18 +276,10 @@ EOF
 
 echo "Creating needed directories."
 mkdir -p ./data/assets/ssl
-mkdir -p ./data/mailman/web
 
 chmod 600 .env
 
-echo "Create mailman volume, copy mailman configuration and selfsigned SSL-certificates until new ones are installed."
+echo "Create mailman volume and selfsigned SSL-certificates until new ones are installed."
 docker volume create "${PN}"_mailman-core-vol-1
-docker run -d \
-  --name devtest \
-  --mount source="${PN}"_mailman-core-vol-1,target=/app \
-  nginx:mainline-alpine
-docker cp ./templates/mailman/mailman-extra.cfg devtest:/app/
-docker container stop devtest && docker container rm devtest
-
 # copy but don't overwrite existing certificate
 cp -n -d data/assets/ssl-example/*.pem data/assets/ssl/
