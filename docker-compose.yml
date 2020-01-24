@@ -15,7 +15,7 @@ services:
         - HYPERKITTY_API_KEY=${HKAPIKEY}
       volumes:
         - mailman-core-vol-1:/opt/mailman/
-        - ./data/mailman/core/mailman-extra.cfg:/opt/mailman/core/mailman-extra.cfg
+        - ./data/mailman/core:/opt/mailman/
         - crypt-vol-1:/mail_crypt/
       restart: always
       dns:
