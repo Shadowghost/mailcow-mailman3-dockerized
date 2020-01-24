@@ -9,13 +9,14 @@ services:
         - database
       environment:
         - TZ=${TZ}
+        - UID=401
         - DATABASE_URL=mysql+pymysql://mailman:${MMDBPASS}@database/mailmandb?charset=utf8mb4&use_unicode=1
         - DATABASE_TYPE=mysql
         - DATABASE_CLASS=mailman.database.mysql.MySQLDatabase
         - HYPERKITTY_API_KEY=${HKAPIKEY}
       volumes:
         - mailman-core-vol-1:/opt/mailman/
-        - ./data/mailman/core:/opt/mailman/
+        - ./data/mailman/core/mailman-extra.cfg:/opt/mailman/mailman-extra.cfg
         - crypt-vol-1:/mail_crypt/
       restart: always
       dns:
