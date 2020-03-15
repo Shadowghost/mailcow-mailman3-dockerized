@@ -1,0 +1,7 @@
+# Additional Mailman config
+local_recipient_maps = regexp:/opt/mailman/core/var/data/postfix_lmtp proxy:unix:passwd.byname $alias_maps
+virtual_mailbox_maps = proxy:mysql:/opt/postfix/conf/sql/mysql_virtual_mailbox_maps.cf, regexp:/opt/mailman/core/var/data/postfix_lmtp
+transport_maps = pcre:/opt/postfix/conf/custom_transport.pcre,
+  pcre:/opt/postfix/conf/local_transport,
+  proxy:mysql:/opt/postfix/conf/sql/mysql_transport_maps.cf,
+  regexp:/opt/mailman/core/var/data/postfix_lmtp

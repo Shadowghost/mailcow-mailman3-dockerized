@@ -164,7 +164,7 @@ recipient_bcc_maps = proxy:mysql:/opt/postfix/conf/sql/mysql_recipient_bcc_maps.
 sender_bcc_maps = proxy:mysql:/opt/postfix/conf/sql/mysql_sender_bcc_maps.cf
 recipient_canonical_maps = proxy:mysql:/opt/postfix/conf/sql/mysql_recipient_canonical_maps.cf
 recipient_canonical_classes = envelope_recipient
-virtual_mailbox_maps = proxy:mysql:/opt/postfix/conf/sql/mysql_virtual_mailbox_maps.cf, regexp:/opt/mailman/core/var/data/postfix_lmtp
+virtual_mailbox_maps = proxy:mysql:/opt/postfix/conf/sql/mysql_virtual_mailbox_maps.cf
 virtual_minimum_uid = 104
 virtual_transport = lmtp:inet:dovecot:24
 virtual_uid_maps = static:5000
@@ -186,8 +186,7 @@ mail_name = Postcow
 # Use custom_transport.pcre for custom transports
 transport_maps = pcre:/opt/postfix/conf/custom_transport.pcre,
   pcre:/opt/postfix/conf/local_transport,
-  proxy:mysql:/opt/postfix/conf/sql/mysql_transport_maps.cf,
-  regexp:/opt/mailman/core/var/data/postfix_lmtp
+  proxy:mysql:/opt/postfix/conf/sql/mysql_transport_maps.cf
 smtp_sasl_auth_soft_bounce = no
 postscreen_discard_ehlo_keywords = silent-discard, dsn
 compatibility_level = 2
@@ -195,10 +194,7 @@ smtputf8_enable = yes
 # Define protocols for SMTPS and submission service
 submission_smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
 smtps_smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
-smtpd_client_recipient_rate_limit = 50
-
-# Additional Mailman config
-local_recipient_maps = regexp:/opt/mailman/core/var/data/postfix_lmtp proxy:unix:passwd.byname $alias_maps
 
 # DO NOT EDIT ANYTHING BELOW #
 # User overrides #
+

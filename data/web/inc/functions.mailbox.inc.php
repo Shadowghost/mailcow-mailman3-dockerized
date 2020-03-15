@@ -324,6 +324,9 @@ function mailbox($_action, $_type, $_data = null, $_extra = null) {
           }
           $domain				= idn_to_ascii(strtolower(trim($_data['domain'])), 0, INTL_IDNA_VARIANT_UTS46);
           $description  = $_data['description'];
+          if (empty($description)) {
+            $description = $domain;
+          }
           $aliases			= $_data['aliases'];
           $mailboxes    = $_data['mailboxes'];
           $defquota			= $_data['defquota'];
@@ -3167,6 +3170,10 @@ function mailbox($_action, $_type, $_data = null, $_extra = null) {
           }
           $mailboxdata = array();
           $rl = ratelimit('get', 'mailbox', $_data);
+          $last_mail_login = $redis->Get('last-login/' . $_data);
+          if ($last_mail_login === false) {
+            $last_mail_login = '';
+          }
           $stmt = $pdo->prepare("SELECT
               `domain`.`backupmx`,
               `mailbox`.`username`,
@@ -3209,6 +3216,7 @@ function mailbox($_action, $_type, $_data = null, $_extra = null) {
           }
           $mailboxdata['is_relayed'] = $row['backupmx'];
           $mailboxdata['name'] = $row['name'];
+          $mailboxdata['last_mail_login'] = $last_mail_login;
           $mailboxdata['active'] = $row['active'];
           $mailboxdata['active_int'] = $row['active_int'];
           $mailboxdata['domain'] = $row['domain'];
