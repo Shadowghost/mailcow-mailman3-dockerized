@@ -174,7 +174,11 @@ nav .glyphicon {
   line-height: 14px;
 }
 .footer {
-  margin-top: 100px;
+  margin-top: 27px;
   margin-bottom: 20px;
   color: #959595;
+}
+.slave-info {
+  padding: 15px 0px 15px 15px;
+  font-weight: bold;
 }

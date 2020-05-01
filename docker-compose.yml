@@ -124,6 +124,8 @@ services:
         - mailman-web
       volumes:
         - redis-vol-1:/data/
+      ports:
+        - "${REDIS_PORT:-127.0.0.1:7654}:6379"
       restart: always
       environment:
         - TZ=${TZ}
@@ -153,7 +155,7 @@ services:
             - clamd
 
     rspamd-mailcow:
-      image: mailcow/rspamd:1.64
+      image: mailcow/rspamd:1.68
       stop_grace_period: 30s
       depends_on:
         - nginx-mailcow
@@ -183,7 +185,7 @@ services:
             - rspamd
 
     php-fpm-mailcow:
-      image: mailcow/phpfpm:1.57
+      image: mailcow/phpfpm:1.60
       command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
       depends_on:
         - redis-mailcow
@@ -201,6 +203,8 @@ services:
         - ./data/conf/phpfpm/php-conf.d/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini
         - ./data/conf/phpfpm/php-conf.d/upload.ini:/usr/local/etc/php/conf.d/upload.ini
         - ./data/conf/phpfpm/php-conf.d/other.ini:/usr/local/etc/php/conf.d/zzz-other.ini
+        - ./data/conf/dovecot/global_sieve_before:/global_sieve/before
+        - ./data/conf/dovecot/global_sieve_after:/global_sieve/after
         - ./data/assets/templates:/tpls
       environment:
         - LOG_LINES=${LOG_LINES:-9999}
@@ -220,10 +224,12 @@ services:
         - SMTPS_PORT=${SMTPS_PORT:-465}
         - SMTP_PORT=${SMTP_PORT:-25}
         - API_KEY=${API_KEY:-invalid}
+        - API_KEY_READ_ONLY=${API_KEY_READ_ONLY:-invalid}
         - API_ALLOW_FROM=${API_ALLOW_FROM:-invalid}
         - COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-mailcow-dockerized}
         - SKIP_SOLR=${SKIP_SOLR:-y}
         - SKIP_CLAMD=${SKIP_CLAMD:-n}
+        - SKIP_SOGO=${SKIP_SOGO:-n}
         - ALLOW_ADMIN_EMAIL_LOGIN=${ALLOW_ADMIN_EMAIL_LOGIN:-n}
         - MASTER=${MASTER:-y}
       restart: always
@@ -235,7 +241,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.73
+      image: mailcow/sogo:1.74
       depends_on:
         - mailman-web
       environment:
@@ -249,6 +255,7 @@ services:
         - ALLOW_ADMIN_EMAIL_LOGIN=${ALLOW_ADMIN_EMAIL_LOGIN:-n}
         - IPV4_NETWORK=${IPV4_NETWORK:-172.22.1}
         - SOGO_EXPIRE_SESSION=${SOGO_EXPIRE_SESSION:-480}
+        - SKIP_SOGO=${SKIP_SOGO:-n}
         - MASTER=${MASTER:-y}
         - REDIS_SLAVEOF_IP=${REDIS_SLAVEOF_IP:-}
         - REDIS_SLAVEOF_PORT=${REDIS_SLAVEOF_PORT:-}
@@ -269,7 +276,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.114
+      image: mailcow/dovecot:1.121
       depends_on:
         - mysql-mailcow
       cap_add:
@@ -327,7 +334,7 @@ services:
             - dovecot
 
     postfix-mailcow:
-      image: mailcow/postfix:1.46
+      image: mailcow/postfix:1.49
       depends_on:
         - mysql-mailcow
         - mailman-web
@@ -455,7 +462,7 @@ services:
             - acme
 
     netfilter-mailcow:
-      image: mailcow/netfilter:1.32
+      image: mailcow/netfilter:1.34
       stop_grace_period: 30s
       depends_on:
         - mailman-web
@@ -481,7 +488,7 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.72
+      image: mailcow/watchdog:1.75
       # Debug
       #command: /watchdog.sh
       depends_on:
@@ -497,16 +504,19 @@ services:
         - DBNAME=${MCDBNAME}
         - DBUSER=${MCDBUSER}
         - DBPASS=${MCDBPASS}
+        - DBROOT=${MCDBROOT}
         - USE_WATCHDOG=${USE_WATCHDOG:-n}
         - WATCHDOG_NOTIFY_EMAIL=${WATCHDOG_NOTIFY_EMAIL}
         - WATCHDOG_NOTIFY_BAN=${WATCHDOG_NOTIFY_BAN:-y}
         - WATCHDOG_EXTERNAL_CHECKS=${WATCHDOG_EXTERNAL_CHECKS:-n}
+        - WATCHDOG_MYSQL_REPLICATION_CHECKS=${WATCHDOG_MYSQL_REPLICATION_CHECKS:-n}
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
         - IPV4_NETWORK=${IPV4_NETWORK:-172.19.199}
         - IP_BY_DOCKER_API=${IP_BY_DOCKER_API:-0}
         - CHECK_UNBOUND=${CHECK_UNBOUND:-1}
         - SKIP_CLAMD=${SKIP_CLAMD:-n}
         - SKIP_LETS_ENCRYPT=${SKIP_LETS_ENCRYPT:-n}
+        - SKIP_SOGO=${SKIP_SOGO:-n}
         - HTTPS_PORT=${HTTPS_PORT:-443}
         - REDIS_SLAVEOF_IP=${REDIS_SLAVEOF_IP:-}
         - REDIS_SLAVEOF_PORT=${REDIS_SLAVEOF_PORT:-}
@@ -515,10 +525,12 @@ services:
         - UNBOUND_THRESHOLD=5
         - REDIS_THRESHOLD=5
         - MYSQL_THRESHOLD=5
+        - MYSQL_REPLICATION_THRESHOLD=1
         - SOGO_THRESHOLD=3
         - POSTFIX_THRESHOLD=8
         - CLAMD_THRESHOLD=15
         - DOVECOT_THRESHOLD=12
+        - DOVECOT_REPL_THRESHOLD=2
         - PHPFPM_THRESHOLD=5
         - RATELIMIT_THRESHOLD=1
         - FAIL2BAN_THRESHOLD=1

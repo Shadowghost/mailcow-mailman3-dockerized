@@ -34,10 +34,11 @@ if ($https_port === FALSE) {
 $autodiscover_config = array(
   // General autodiscover service type: "activesync" or "imap"
   // emClient uses autodiscover, but does not support ActiveSync. mailcow excludes emClient from ActiveSync.
+  // With SOGo disabled, the type will always fallback to imap. CalDAV and CardDAV will be excluded, too.
   'autodiscoverType' => 'activesync',
   // If autodiscoverType => activesync, also use ActiveSync (EAS) for Outlook desktop clients (>= Outlook 2013 on Windows)
   // Outlook for Mac does not support ActiveSync
-  'useEASforOutlook' => 'yes',
+  'useEASforOutlook' => 'no',
   // Please don't use STARTTLS-enabled service ports in the "port" variable.
   // The autodiscover service will always point to SMTPS and IMAPS (TLS-wrapped services).
   // The autoconfig service will additionally announce the STARTTLS-enabled ports, specified in the "tlsport" variable.
@@ -129,9 +130,14 @@ $DOCKER_TIMEOUT = 60;
 // Anonymize IPs logged via UI
 $ANONYMIZE_IPS = true;
 
+// Split DKIM key notation (bind format)
+$SPLIT_DKIM_255 = false;
+
 // OAuth2 settings
 $REFRESH_TOKEN_LIFETIME = 2678400;
 $ACCESS_TOKEN_LIFETIME = 86400;
+// Logout from mailcow after first OAuth2 session profile request
+$OAUTH2_FORGET_SESSION_AFTER_LOGIN = false;
 
 // MAILBOX_DEFAULT_ATTRIBUTES define default attributes for new mailboxes
 // These settings will not change existing mailboxes
@@ -154,6 +160,10 @@ $MAILBOX_DEFAULT_ATTRIBUTES['quarantine_notification'] = 'hourly';
 // Default mailbox format, should not be changed unless you know exactly, what you do, keep the trailing ":"
 // Check dovecot.conf for further changes (e.g. shared namespace)
 $MAILBOX_DEFAULT_ATTRIBUTES['mailbox_format'] = 'maildir:';
+
+// Show last IMAP and POP3 logins
+$SHOW_LAST_LOGIN = true;
+
 
 // Set visible Rspamd maps in mailcow UI, do not change unless you know what you are doing
 $RSPAMD_MAPS = array(

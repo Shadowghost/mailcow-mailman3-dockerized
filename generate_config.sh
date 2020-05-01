@@ -150,6 +150,7 @@ DJSECRET=$(LC_ALL=C </dev/urandom tr -dc A-Za-z0-9 | head -c 28)
 # You should use HTTPS, but in case of SSL offloaded reverse proxies:
 # Might be important: This will also change the binding within the container.
 # If you use a proxy within Docker, point it to the ports you set below.
+# IMPORTANT: Do not use port 8081, 9081 or 65510!
 HTTP_PORT=8080
 HTTP_BIND=127.0.0.1
 
@@ -174,6 +175,7 @@ SIEVE_PORT=4190
 DOVEADM_PORT=127.0.0.1:19991
 SQL_PORT=127.0.0.1:13306
 SOLR_PORT=127.0.0.1:18983
+REDIS_PORT=127.0.0.1:7654
 
 # Your timezone
 TZ=${TZ}
@@ -225,6 +227,9 @@ SKIP_HTTP_VERIFICATION=n
 # Skip ClamAV (clamd-mailcow) anti-virus (Rspamd will auto-detect a missing ClamAV container) - y/n
 SKIP_CLAMD=${SKIP_CLAMD}
 
+# Skip SOGo: Will disable SOGo integration and therefore webmail, DAV protocols and ActiveSync support (experimental, unsupported, not fully implemented) - y/n
+SKIP_SOGO=n
+
 # Skip Solr on low-memory systems or if you do not want to store a readable index of your mails in solr-vol-1.
 SKIP_SOLR=${SKIP_SOLR}
 # Solr heap size in MB, there is no recommendation, please see Solr docs.
@@ -271,10 +276,14 @@ IPV6_NETWORK=fd4d:6169:6c63:6f77::/64
 # Use this IPv6 for outgoing connections (SNAT)
 #SNAT6_TO_SOURCE=
 
-# Create or override API key for web ui
+# Create or override an API key for the web UI
 # You _must_ define API_ALLOW_FROM, which is a comma separated list of IPs
-# API_KEY allowed chars: a-z, A-Z, 0-9, -
+# An API key defined as API_KEY has read-write access
+# An API key defined as API_KEY_READ_ONLY has read-only access
+# Allowed chars for API_KEY and API_KEY_READ_ONLY: a-z, A-Z, 0-9, -
+# You can define API_KEY and/or API_KEY_READ_ONLY
 #API_KEY=
+#API_KEY_READ_ONLY=
 #API_ALLOW_FROM=172.22.1.1,127.0.0.1
 
 # mail_home is ~/Maildir
