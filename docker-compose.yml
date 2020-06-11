@@ -56,7 +56,6 @@ services:
 
     database:
       image: mariadb:10.3
-      command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
       environment:
         - TZ=${TZ}
         - MYSQL_ROOT_PASSWORD=${MMDBROOT}
@@ -65,6 +64,7 @@ services:
         - MYSQL_PASSWORD=${MMDBPASS}
       volumes:
         - mailman-database-vol-1:/var/lib/mysql
+        - ./data/mailman/mysqlcustom.cnf:/etc/mysql/conf.d/custom.cnf
       restart: always
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
