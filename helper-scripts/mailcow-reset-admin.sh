@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-[[ -f .env ]] && source .env
-[[ -f ../.env ]] && source ../.env
+[[ -f mailcow.conf ]] && source mailcow.conf
+[[ -f ../mailcow.conf ]] && source ../mailcow.conf
 
-if [[ -z ${MCDBUSER} ]] || [[ -z ${MCDBPASS} ]] || [[ -z ${MCDBNAME} ]]; then
-	echo "Cannot find .env, make sure this script is run from within the correct folder."
+if [[ -z ${DBUSER} ]] || [[ -z ${DBPASS} ]] || [[ -z ${DBNAME} ]]; then
+	echo "Cannot find mailcow.conf, make sure this script is run from within the mailcow folder."
 	exit 1
 fi
 
@@ -19,10 +19,10 @@ read -r -p "Are you sure you want to reset the mailcow administrator account? [y
 response=${response,,}    # tolower
 if [[ "$response" =~ ^(yes|y)$ ]]; then
 	echo -e "\nWorking, please wait..."
-	docker exec -it $(docker ps -qf name=mysql-mailcow) mysql -u${MCDBUSER} -p${MCDBPASS} ${MCDBNAME} -e "DELETE FROM admin WHERE username='admin';"
-	docker exec -it $(docker ps -qf name=mysql-mailcow) mysql -u${MCDBUSER} -p${MCDBPASS} ${MCDBNAME} -e "DELETE FROM domain_admins WHERE username='admin';"
-	docker exec -it $(docker ps -qf name=mysql-mailcow) mysql -u${MCDBUSER} -p${MCDBPASS} ${MCDBNAME} -e "INSERT INTO admin (username, password, superadmin, active) VALUES ('admin', '{SSHA256}K8eVJ6YsZbQCfuJvSUbaQRLr0HPLz5rC9IAp0PAFl0tmNDBkMDc0NDAyOTAxN2Rk', 1, 1);"
-	docker exec -it $(docker ps -qf name=mysql-mailcow) mysql -u${MCDBUSER} -p${MCDBPASS} ${MCDBNAME} -e "DELETE FROM tfa WHERE username='admin';"
+	docker exec -it $(docker ps -qf name=mysql-mailcow) mysql -u${DBUSER} -p${DBPASS} ${DBNAME} -e "DELETE FROM admin WHERE username='admin';"
+  docker exec -it $(docker ps -qf name=mysql-mailcow) mysql -u${DBUSER} -p${DBPASS} ${DBNAME} -e "DELETE FROM domain_admins WHERE username='admin';"
+	docker exec -it $(docker ps -qf name=mysql-mailcow) mysql -u${DBUSER} -p${DBPASS} ${DBNAME} -e "INSERT INTO admin (username, password, superadmin, active) VALUES ('admin', '{SSHA256}K8eVJ6YsZbQCfuJvSUbaQRLr0HPLz5rC9IAp0PAFl0tmNDBkMDc0NDAyOTAxN2Rk', 1, 1);"
+	docker exec -it $(docker ps -qf name=mysql-mailcow) mysql -u${DBUSER} -p${DBPASS} ${DBNAME} -e "DELETE FROM tfa WHERE username='admin';"
 	echo "
 Reset credentials:
 ---

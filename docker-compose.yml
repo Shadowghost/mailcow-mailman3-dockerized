@@ -75,7 +75,7 @@ services:
             - database
 
     unbound-mailcow:
-      image: mailcow/unbound:1.10
+      image: mailcow/unbound:1.12
       command: /usr/sbin/unbound
       environment:
         - TZ=${TZ}
@@ -138,7 +138,7 @@ services:
             - redis
 
     clamd-mailcow:
-      image: mailcow/clamd:1.35
+      image: mailcow/clamd:1.36
       depends_on:
         - mailman-web
       restart: always
@@ -185,7 +185,7 @@ services:
             - rspamd
 
     php-fpm-mailcow:
-      image: mailcow/phpfpm:1.60
+      image: mailcow/phpfpm:1.63
       command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
       depends_on:
         - redis-mailcow
@@ -220,6 +220,8 @@ services:
         - POP_PORT=${POP_PORT:-110}
         - POPS_PORT=${POPS_PORT:-995}
         - SIEVE_PORT=${SIEVE_PORT:-4190}
+        - IPV4_NETWORK=${IPV4_NETWORK:-172.22.1}
+        - IPV6_NETWORK=${IPV6_NETWORK:-fd4d:6169:6c63:6f77::/64}
         - SUBMISSION_PORT=${SUBMISSION_PORT:-587}
         - SMTPS_PORT=${SMTPS_PORT:-465}
         - SMTP_PORT=${SMTP_PORT:-25}
@@ -276,7 +278,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.121
+      image: mailcow/dovecot:1.126
       depends_on:
         - mysql-mailcow
       cap_add:
@@ -334,7 +336,7 @@ services:
             - dovecot
 
     postfix-mailcow:
-      image: mailcow/postfix:1.49
+      image: mailcow/postfix:1.50
       depends_on:
         - mysql-mailcow
         - mailman-web
@@ -462,7 +464,7 @@ services:
             - acme
 
     netfilter-mailcow:
-      image: mailcow/netfilter:1.34
+      image: mailcow/netfilter:1.36
       stop_grace_period: 30s
       depends_on:
         - mailman-web
@@ -488,7 +490,7 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.75
+      image: mailcow/watchdog:1.79
       # Debug
       #command: /watchdog.sh
       depends_on:
@@ -496,6 +498,7 @@ services:
       volumes:
         - rspamd-vol-1:/var/lib/rspamd
         - mysql-socket-vol-1:/var/run/mysqld/
+        - postfix-vol-1:/var/spool/postfix
         - ./data/assets/ssl:/etc/ssl/mail/:ro
       environment:
         - IPV6_NETWORK=${IPV6_NETWORK:-fd4d:6169:6c63:6f77::/64}
@@ -538,6 +541,8 @@ services:
         - IPV6NAT_THRESHOLD=1
         - RSPAMD_THRESHOLD=5
         - OLEFY_THRESHOLD=5
+        - MAILQ_THRESHOLD=3
+        - MAILQ_CRIT=30
       restart: always
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
@@ -547,7 +552,7 @@ services:
             - watchdog
 
     dockerapi-mailcow:
-      image: mailcow/dockerapi:1.36
+      image: mailcow/dockerapi:1.37
       depends_on:
         - mailman-web
       oom_kill_disable: true
@@ -583,7 +588,7 @@ services:
             - solr
 
     olefy-mailcow:
-      image: mailcow/olefy:1.2
+      image: mailcow/olefy:1.3
       depends_on:
         - mailman-web
       environment:

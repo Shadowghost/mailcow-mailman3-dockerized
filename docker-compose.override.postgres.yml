@@ -1,0 +1,72 @@
+version: '2.1'
+services:
+
+    mailman-core:
+      image: maxking/mailman-core:latest
+      domainname: ${DOMAINNAME}
+      hostname: ${HOSTNAME}
+      depends_on:
+        - database
+      environment:
+        - TZ=${TZ}
+        - UID=401
+        - DATABASE_URL=postgres://mailman:${MMDBPASS}@database/mailmandb
+        - DATABASE_TYPE=postgres
+        - DATABASE_CLASS=mailman.database.postgresql.PostgreSQLDatabase
+        - HYPERKITTY_API_KEY=${HKAPIKEY}
+      volumes:
+        - mailman-core-vol-1:/opt/mailman/
+        - ./data/mailman/core/mailman-extra.cfg:/opt/mailman/mailman-extra.cfg
+        - crypt-vol-1:/mail_crypt/
+      restart: always
+      dns:
+        - ${IPV4_NETWORK:-172.19.199}.254
+      networks:
+        mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.2
+          aliases:
+            - mailman-core
+
+    mailman-web:
+      image: maxking/mailman-web:latest
+      domainname: ${DOMAINNAME}
+      hostname: ${HOSTNAME}
+      depends_on:
+        - database
+        - mailman-core
+      environment:
+        - TZ=${TZ}
+        - DATABASE_URL=postgres://mailman:${MMDBPASS}@database/mailmandb
+        - DATABASE_TYPE=postgres
+        - HYPERKITTY_API_KEY=${HKAPIKEY}
+        - SECRET_KEY=${DJSECRET}
+        - SERVE_FROM_DOMAIN=lists.${DOMAINNAME}
+        - UWSGI_STATIC_MAP=/static=/opt/mailman-web-data/static
+      volumes:
+        - ./data/mailman/web:/opt/mailman-web-data
+      restart: always
+      dns:
+        - ${IPV4_NETWORK:-172.19.199}.254
+      networks:
+        mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.3
+          aliases:
+            - mailman-web
+
+    database:
+      image: postgres:12-alpine
+      environment:
+        - TZ=${TZ}
+        - POSTGRES_DB=mailmandb
+        - POSTGRES_USER=mailman
+        - POSTGRES_PASSWORD=${MMDBPASS}
+      volumes:
+        - mailman-database-vol-1:/var/lib/postgresql/data
+      restart: always
+      dns:
+        - ${IPV4_NETWORK:-172.19.199}.254
+      networks:
+        mailcow-network:
+          ipv4_address: ${IPV4_NETWORK:-172.19.199}.4
+          aliases:
+            - database
