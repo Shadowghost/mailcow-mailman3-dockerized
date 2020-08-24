@@ -150,6 +150,7 @@ DJSECRET=$(LC_ALL=C </dev/urandom tr -dc A-Za-z0-9 | head -c 28)
 # You should use HTTPS, but in case of SSL offloaded reverse proxies:
 # Might be important: This will also change the binding within the container.
 # If you use a proxy within Docker, point it to the ports you set below.
+# Do _not_ use IP:PORT in HTTP(S)_BIND or HTTP(S)_PORT
 # IMPORTANT: Do not use port 8081, 9081 or 65510!
 HTTP_PORT=8080
 HTTP_BIND=127.0.0.1
@@ -162,7 +163,6 @@ HTTPS_BIND=127.0.0.1
 # ------------------------------
 # You should leave that alone
 # Format: 11.22.33.44:25 or 0.0.0.0:465 etc.
-# Do _not_ use IP:PORT in HTTP(S)_BIND or HTTP(S)_PORT
 
 SMTP_PORT=25
 SMTPS_PORT=465
@@ -265,9 +265,11 @@ WATCHDOG_EXTERNAL_CHECKS=n
 LOG_LINES=9999
 
 # Internal IPv4 /24 subnet, format n.n.n (expands to n.n.n.0/24)
+# Use private IPv4 addresses only, see https://en.wikipedia.org/wiki/Private_network#Private_IPv4_addresses
 IPV4_NETWORK=172.19.199
 
 # Internal IPv6 subnet in fc00::/7
+# Use private IPv6 addresses only, see https://en.wikipedia.org/wiki/Private_network#Private_IPv6_addresses
 IPV6_NETWORK=fd4d:6169:6c63:6f77::/64
 
 # Use this IPv4 for outgoing connections (SNAT)
@@ -282,7 +284,6 @@ IPV6_NETWORK=fd4d:6169:6c63:6f77::/64
 # An API key defined as API_KEY_READ_ONLY has read-only access
 # Allowed chars for API_KEY and API_KEY_READ_ONLY: a-z, A-Z, 0-9, -
 # You can define API_KEY and/or API_KEY_READ_ONLY
-# Using CIDR is not yet implemented within mailcow.conf, use the UI to allow networks.
 #API_KEY=
 #API_KEY_READ_ONLY=
 #API_ALLOW_FROM=172.22.1.1,127.0.0.1

@@ -55,7 +55,7 @@ services:
             - mailman-web
 
     database:
-      image: mariadb:10.3
+      image: mariadb:10.4
       environment:
         - TZ=${TZ}
         - MYSQL_ROOT_PASSWORD=${MMDBROOT}
@@ -158,7 +158,7 @@ services:
       image: mailcow/rspamd:1.68
       stop_grace_period: 30s
       depends_on:
-        - nginx-mailcow
+        - dovecot-mailcow
       environment:
         - TZ=${TZ}
         - IPV4_NETWORK=${IPV4_NETWORK:-172.22.1}
@@ -185,7 +185,7 @@ services:
             - rspamd
 
     php-fpm-mailcow:
-      image: mailcow/phpfpm:1.63
+      image: mailcow/phpfpm:1.68
       command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
       depends_on:
         - redis-mailcow
@@ -243,7 +243,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.74
+      image: mailcow/sogo:1.83
       depends_on:
         - mailman-web
       environment:
@@ -261,6 +261,7 @@ services:
         - MASTER=${MASTER:-y}
         - REDIS_SLAVEOF_IP=${REDIS_SLAVEOF_IP:-}
         - REDIS_SLAVEOF_PORT=${REDIS_SLAVEOF_PORT:-}
+        - COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-mailcow-dockerized}
       volumes:
         - ./data/conf/sogo/:/etc/sogo/
         - ./data/web/inc/init_db.inc.php:/init_db.inc.php
@@ -278,7 +279,7 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.126
+      image: mailcow/dovecot:1.129
       depends_on:
         - mysql-mailcow
       cap_add:
@@ -336,7 +337,7 @@ services:
             - dovecot
 
     postfix-mailcow:
-      image: mailcow/postfix:1.50
+      image: mailcow/postfix:1.51
       depends_on:
         - mysql-mailcow
         - mailman-web
@@ -394,9 +395,9 @@ services:
         envsubst < /etc/nginx/conf.d/templates/listen_ssl.template > /etc/nginx/conf.d/listen_ssl.active &&
         envsubst < /etc/nginx/conf.d/templates/server_name.template > /etc/nginx/conf.d/server_name.active &&
         envsubst < /etc/nginx/conf.d/templates/sogo.template > /etc/nginx/conf.d/sogo.active &&
-        envsubst < /etc/nginx/conf.d/templates/sogo_eas.template > /etc/nginx/conf.d/sogo_eas.active &&
         . /etc/nginx/conf.d/templates/sogo.auth_request.template.sh > /etc/nginx/conf.d/sogo_proxy_auth.active &&
         . /etc/nginx/conf.d/templates/sites.template.sh > /etc/nginx/conf.d/sites.active &&
+        . /etc/nginx/conf.d/templates/sogo_eas.template.sh > /etc/nginx/conf.d/sogo_eas.active &&
         nginx -qt &&
         until ping phpfpm -c1 > /dev/null; do sleep 1; done &&
         until ping sogo -c1 > /dev/null; do sleep 1; done &&
@@ -409,6 +410,7 @@ services:
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
         - IPV4_NETWORK=${IPV4_NETWORK:-172.19.199}
         - TZ=${TZ}
+        - SKIP_SOGO=${SKIP_SOGO:-n}
         - ALLOW_ADMIN_EMAIL_LOGIN=${ALLOW_ADMIN_EMAIL_LOGIN:-n}
       volumes:
         - ./data/web:/web:ro
@@ -431,7 +433,7 @@ services:
     acme-mailcow:
       depends_on:
         - nginx-mailcow
-      image: mailcow/acme:1.70
+      image: mailcow/acme:1.73
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
       environment:
@@ -442,6 +444,8 @@ services:
         - DBUSER=${MCDBUSER}
         - DBPASS=${MCDBPASS}
         - SKIP_LETS_ENCRYPT=${SKIP_LETS_ENCRYPT:-n}
+        - COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-mailcow-dockerized}
+        - DIRECTORY_URL=${DIRECTORY_URL:-}
         - ENABLE_SSL_SNI=${ENABLE_SSL_SNI:-n}
         - SKIP_IP_CHECK=${SKIP_IP_CHECK:-n}
         - SKIP_HTTP_VERIFICATION=${SKIP_HTTP_VERIFICATION:-n}
@@ -464,7 +468,7 @@ services:
             - acme
 
     netfilter-mailcow:
-      image: mailcow/netfilter:1.36
+      image: mailcow/netfilter:1.37
       stop_grace_period: 30s
       depends_on:
         - mailman-web
@@ -490,7 +494,7 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.79
+      image: mailcow/watchdog:1.81
       # Debug
       #command: /watchdog.sh
       depends_on:
@@ -514,6 +518,7 @@ services:
         - WATCHDOG_EXTERNAL_CHECKS=${WATCHDOG_EXTERNAL_CHECKS:-n}
         - WATCHDOG_MYSQL_REPLICATION_CHECKS=${WATCHDOG_MYSQL_REPLICATION_CHECKS:-n}
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
+         COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-mailcow-dockerized}
         - IPV4_NETWORK=${IPV4_NETWORK:-172.19.199}
         - IP_BY_DOCKER_API=${IP_BY_DOCKER_API:-0}
         - CHECK_UNBOUND=${CHECK_UNBOUND:-1}
@@ -533,7 +538,7 @@ services:
         - POSTFIX_THRESHOLD=8
         - CLAMD_THRESHOLD=15
         - DOVECOT_THRESHOLD=12
-        - DOVECOT_REPL_THRESHOLD=2
+        - DOVECOT_REPL_THRESHOLD=20
         - PHPFPM_THRESHOLD=5
         - RATELIMIT_THRESHOLD=1
         - FAIL2BAN_THRESHOLD=1
@@ -541,7 +546,7 @@ services:
         - IPV6NAT_THRESHOLD=1
         - RSPAMD_THRESHOLD=5
         - OLEFY_THRESHOLD=5
-        - MAILQ_THRESHOLD=3
+        - MAILQ_THRESHOLD=20
         - MAILQ_CRIT=30
       restart: always
       dns:
