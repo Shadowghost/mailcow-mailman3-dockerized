@@ -181,6 +181,7 @@ REDIS_PORT=127.0.0.1:7654
 TZ=${TZ}
 
 # Fixed project name
+# Please use lowercase letters only
 COMPOSE_PROJECT_NAME=mailcowdockerized
 
 # Set this to "allow" to enable the anyone pseudo user. Disabled by default.
@@ -236,8 +237,8 @@ SKIP_SOLR=${SKIP_SOLR}
 # Solr is a prone to run OOM and should be monitored. Unmonitored Solr setups are not recommended.
 SOLR_HEAP=1024
 
-# Enable watchdog (watchdog-mailcow) to restart unhealthy containers (experimental)
-USE_WATCHDOG=n
+# Enable watchdog (watchdog-mailcow) to restart unhealthy containers
+USE_WATCHDOG=y
 
 # Allow admins to log into SOGo as email user (without any password)
 ALLOW_ADMIN_EMAIL_LOGIN=n
