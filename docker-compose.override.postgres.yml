@@ -15,9 +15,9 @@ services:
         - DATABASE_CLASS=mailman.database.postgresql.PostgreSQLDatabase
         - HYPERKITTY_API_KEY=${HKAPIKEY}
       volumes:
-        - mailman-core-vol-1:/opt/mailman/
-        - ./data/mailman/core/mailman-extra.cfg:/opt/mailman/mailman-extra.cfg
-        - crypt-vol-1:/mail_crypt/
+        - mailman-core-vol-1:/opt/mailman/:Z
+        - ./data/mailman/core/mailman-extra.cfg:/opt/mailman/mailman-extra.cfg:z
+        - crypt-vol-1:/mail_crypt/:z
       restart: always
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
@@ -43,7 +43,7 @@ services:
         - SERVE_FROM_DOMAIN=lists.${DOMAINNAME}
         - UWSGI_STATIC_MAP=/static=/opt/mailman-web-data/static
       volumes:
-        - ./data/mailman/web:/opt/mailman-web-data
+        - ./data/mailman/web:/opt/mailman-web-data:z
       restart: always
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
@@ -61,7 +61,7 @@ services:
         - POSTGRES_USER=mailman
         - POSTGRES_PASSWORD=${MMDBPASS}
       volumes:
-        - mailman-database-vol-1:/var/lib/postgresql/data
+        - mailman-database-vol-1:/var/lib/postgresql/data:Z
       restart: always
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254

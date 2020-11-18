@@ -15,9 +15,9 @@ services:
         - DATABASE_CLASS=mailman.database.mysql.MySQLDatabase
         - HYPERKITTY_API_KEY=${HKAPIKEY}
       volumes:
-        - mailman-core-vol-1:/opt/mailman/
-        - ./data/mailman/core/mailman-extra.cfg:/opt/mailman/mailman-extra.cfg
-        - crypt-vol-1:/mail_crypt/
+        - mailman-core-vol-1:/opt/mailman/:Z
+        - ./data/mailman/core/mailman-extra.cfg:/opt/mailman/mailman-extra.cfg:z
+        - crypt-vol-1:/mail_crypt/:z
       restart: always
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
@@ -44,7 +44,7 @@ services:
         - SERVE_FROM_DOMAIN=lists.${DOMAINNAME}
         - UWSGI_STATIC_MAP=/static=/opt/mailman-web-data/static
       volumes:
-        - ./data/mailman/web:/opt/mailman-web-data
+        - ./data/mailman/web:/opt/mailman-web-data:z
       restart: always
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
@@ -63,8 +63,8 @@ services:
         - MYSQL_USER=mailman
         - MYSQL_PASSWORD=${MMDBPASS}
       volumes:
-        - mailman-database-vol-1:/var/lib/mysql
-        - ./data/mailman/mysqlcustom.cnf:/etc/mysql/conf.d/custom.cnf
+        - mailman-database-vol-1:/var/lib/mysql:Z
+        - ./data/mailman/mysqlcustom.cnf:/etc/mysql/conf.d/custom.cnf:Z
       restart: always
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
@@ -80,8 +80,8 @@ services:
       environment:
         - TZ=${TZ}
       volumes:
-        - ./data/hooks/unbound:/hooks
-        - ./data/conf/unbound/unbound.conf:/etc/unbound/unbound.conf:ro
+        - ./data/hooks/unbound:/hooks:Z
+        - ./data/conf/unbound/unbound.conf:/etc/unbound/unbound.conf:ro,Z
       restart: always
       tty: true
       networks:
@@ -98,9 +98,9 @@ services:
       depends_on:
         - mailman-web
       volumes:
-        - mysql-vol-1:/var/lib/mysql/
-        - mysql-socket-vol-1:/var/run/mysqld/
-        - ./data/conf/mysql/:/etc/mysql/conf.d/:ro
+        - mysql-vol-1:/var/lib/mysql/:Z
+        - mysql-socket-vol-1:/var/run/mysqld/:z
+        - ./data/conf/mysql/:/etc/mysql/conf.d/:ro,Z
       environment:
         - TZ=${TZ}
         - MYSQL_ROOT_PASSWORD=${MCDBROOT}
@@ -123,7 +123,7 @@ services:
       depends_on:
         - mailman-web
       volumes:
-        - redis-vol-1:/data/
+        - redis-vol-1:/data/:Z
       ports:
         - "${REDIS_PORT:-127.0.0.1:7654}:6379"
       restart: always
@@ -138,7 +138,7 @@ services:
             - redis
 
     clamd-mailcow:
-      image: mailcow/clamd:1.36
+      image: mailcow/clamd:1.37
       depends_on:
         - mailman-web
       restart: always
@@ -146,7 +146,7 @@ services:
         - TZ=${TZ}
         - SKIP_CLAMD=${SKIP_CLAMD:-n}
       volumes:
-        - ./data/conf/clamav/:/etc/clamav/
+        - ./data/conf/clamav/:/etc/clamav/:Z
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
       networks:
@@ -155,7 +155,7 @@ services:
             - clamd
 
     rspamd-mailcow:
-      image: mailcow/rspamd:1.68
+      image: mailcow/rspamd:1.74
       stop_grace_period: 30s
       depends_on:
         - dovecot-mailcow
@@ -166,15 +166,15 @@ services:
         - REDIS_SLAVEOF_IP=${REDIS_SLAVEOF_IP:-}
         - REDIS_SLAVEOF_PORT=${REDIS_SLAVEOF_PORT:-}
       volumes:
-        - ./data/hooks/rspamd:/hooks
-        - ./data/conf/rspamd/custom/:/etc/rspamd/custom
-        - ./data/conf/rspamd/override.d/:/etc/rspamd/override.d
-        - ./data/conf/rspamd/local.d/:/etc/rspamd/local.d
-        - ./data/conf/rspamd/plugins.d/:/etc/rspamd/plugins.d
-        - ./data/conf/rspamd/lua/:/etc/rspamd/lua/:ro
-        - ./data/conf/rspamd/rspamd.conf.local:/etc/rspamd/rspamd.conf.local
-        - ./data/conf/rspamd/rspamd.conf.override:/etc/rspamd/rspamd.conf.override
-        - rspamd-vol-1:/var/lib/rspamd
+        - ./data/hooks/rspamd:/hooks:Z
+        - ./data/conf/rspamd/custom/:/etc/rspamd/custom:z
+        - ./data/conf/rspamd/override.d/:/etc/rspamd/override.d:Z
+        - ./data/conf/rspamd/local.d/:/etc/rspamd/local.d:Z
+        - ./data/conf/rspamd/plugins.d/:/etc/rspamd/plugins.d:Z
+        - ./data/conf/rspamd/lua/:/etc/rspamd/lua/:ro,Z
+        - ./data/conf/rspamd/rspamd.conf.local:/etc/rspamd/rspamd.conf.local:Z
+        - ./data/conf/rspamd/rspamd.conf.override:/etc/rspamd/rspamd.conf.override:Z
+        - rspamd-vol-1:/var/lib/rspamd:z
       restart: always
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
@@ -190,22 +190,22 @@ services:
       depends_on:
         - redis-mailcow
       volumes:
-        - ./data/hooks/phpfpm:/hooks
-        - ./data/web:/web:rw
-        - ./data/conf/rspamd/dynmaps:/dynmaps:ro
-        - ./data/conf/rspamd/custom/:/rspamd_custom_maps
-        - rspamd-vol-1:/var/lib/rspamd
-        - mysql-socket-vol-1:/var/run/mysqld/
-        - ./data/conf/sogo/:/etc/sogo/
-        - ./data/conf/rspamd/meta_exporter:/meta_exporter:ro
-        - ./data/conf/phpfpm/sogo-sso/:/etc/sogo-sso/
-        - ./data/conf/phpfpm/php-fpm.d/pools.conf:/usr/local/etc/php-fpm.d/z-pools.conf
-        - ./data/conf/phpfpm/php-conf.d/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini
-        - ./data/conf/phpfpm/php-conf.d/upload.ini:/usr/local/etc/php/conf.d/upload.ini
-        - ./data/conf/phpfpm/php-conf.d/other.ini:/usr/local/etc/php/conf.d/zzz-other.ini
-        - ./data/conf/dovecot/global_sieve_before:/global_sieve/before
-        - ./data/conf/dovecot/global_sieve_after:/global_sieve/after
-        - ./data/assets/templates:/tpls
+        - ./data/hooks/phpfpm:/hooks:Z
+        - ./data/web:/web:rw,z
+        - ./data/conf/rspamd/dynmaps:/dynmaps:ro,z
+        - ./data/conf/rspamd/custom/:/rspamd_custom_maps:z
+        - rspamd-vol-1:/var/lib/rspamd:Z
+        - mysql-socket-vol-1:/var/run/mysqld/:z
+        - ./data/conf/sogo/:/etc/sogo/:z
+        - ./data/conf/rspamd/meta_exporter:/meta_exporter:ro,z
+        - ./data/conf/phpfpm/sogo-sso/:/etc/sogo-sso/:z
+        - ./data/conf/phpfpm/php-fpm.d/pools.conf:/usr/local/etc/php-fpm.d/z-pools.conf:Z
+        - ./data/conf/phpfpm/php-conf.d/opcache-recommended.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini:Z
+        - ./data/conf/phpfpm/php-conf.d/upload.ini:/usr/local/etc/php/conf.d/upload.ini:Z
+        - ./data/conf/phpfpm/php-conf.d/other.ini:/usr/local/etc/php/conf.d/zzz-other.ini:Z
+        - ./data/conf/dovecot/global_sieve_before:/global_sieve/before:z
+        - ./data/conf/dovecot/global_sieve_after:/global_sieve/after:z
+        - ./data/assets/templates:/tpls:z
       environment:
         - LOG_LINES=${LOG_LINES:-9999}
         - TZ=${TZ}
@@ -215,6 +215,7 @@ services:
         - DBUSER=${MCDBUSER}
         - DBPASS=${MCDBPASS}
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
+        - MAILCOW_PASS_SCHEME=${MAILCOW_PASS_SCHEME:-BLF-CRYPT}
         - IMAP_PORT=${IMAP_PORT:-143}
         - IMAPS_PORT=${IMAPS_PORT:-993}
         - POP_PORT=${POP_PORT:-110}
@@ -243,7 +244,7 @@ services:
             - phpfpm
 
     sogo-mailcow:
-      image: mailcow/sogo:1.83
+      image: mailcow/sogo:1.92
       depends_on:
         - mailman-web
       environment:
@@ -253,6 +254,7 @@ services:
         - TZ=${TZ}
         - LOG_LINES=${LOG_LINES:-9999}
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
+        - MAILCOW_PASS_SCHEME=${MAILCOW_PASS_SCHEME:-BLF-CRYPT}
         - ACL_ANYONE=${ACL_ANYONE:-disallow}
         - ALLOW_ADMIN_EMAIL_LOGIN=${ALLOW_ADMIN_EMAIL_LOGIN:-n}
         - IPV4_NETWORK=${IPV4_NETWORK:-172.22.1}
@@ -263,12 +265,12 @@ services:
         - REDIS_SLAVEOF_PORT=${REDIS_SLAVEOF_PORT:-}
         - COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-mailcow-dockerized}
       volumes:
-        - ./data/conf/sogo/:/etc/sogo/
-        - ./data/web/inc/init_db.inc.php:/init_db.inc.php
-        - ./data/conf/sogo/custom-sogo.js:/usr/lib/GNUstep/SOGo/WebServerResources/js/custom-sogo.js
-        - mysql-socket-vol-1:/var/run/mysqld/
-        - sogo-web-vol-1:/sogo_web
-        - sogo-userdata-backup-vol-1:/sogo_backup
+        - ./data/conf/sogo/:/etc/sogo/:z
+        - ./data/web/inc/init_db.inc.php:/init_db.inc.php:Z
+        - ./data/conf/sogo/custom-sogo.js:/usr/lib/GNUstep/SOGo/WebServerResources/js/custom-sogo.js:z
+        - mysql-socket-vol-1:/var/run/mysqld/:z
+        - sogo-web-vol-1:/sogo_web:z
+        - sogo-userdata-backup-vol-1:/sogo_backup:Z
       restart: always
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
@@ -279,31 +281,34 @@ services:
             - sogo
 
     dovecot-mailcow:
-      image: mailcow/dovecot:1.130
+      image: mailcow/dovecot:1.136
       depends_on:
         - mysql-mailcow
       cap_add:
         - NET_BIND_SERVICE
       volumes:
-        - ./data/hooks/dovecot:/hooks
-        - ./data/conf/dovecot:/etc/dovecot
-        - ./data/assets/ssl:/etc/ssl/mail/:ro
-        - ./data/conf/sogo/:/etc/sogo/
-        - ./data/conf/phpfpm/sogo-sso/:/etc/phpfpm/
-        - vmail-vol-1:/var/vmail
-        - vmail-attachments-vol-1:/var/attachments
-        - crypt-vol-1:/mail_crypt/
-        - ./data/conf/rspamd/custom/:/etc/rspamd/custom
-        - ./data/assets/templates:/templates
-        - rspamd-vol-1:/var/lib/rspamd
-        - mysql-socket-vol-1:/var/run/mysqld/
+        - ./data/hooks/dovecot:/hooks:Z
+        - ./data/conf/dovecot:/etc/dovecot:z
+        - ./data/assets/ssl:/etc/ssl/mail/:ro,z
+        - ./data/conf/sogo/:/etc/sogo/:z
+        - ./data/conf/phpfpm/sogo-sso/:/etc/phpfpm/:z
+        - vmail-vol-1:/var/vmail:Z
+        - vmail-index-vol-1:/var/vmail_index:Z
+        - crypt-vol-1:/mail_crypt/:z
+        - ./data/conf/rspamd/custom/:/etc/rspamd/custom:z
+        - ./data/assets/templates:/templates:z
+        - rspamd-vol-1:/var/lib/rspamd:z
+        - mysql-socket-vol-1:/var/run/mysqld/:z
       environment:
+        - DOVECOT_MASTER_USER=${DOVECOT_MASTER_USER:-}
+        - DOVECOT_MASTER_PASS=${DOVECOT_MASTER_PASS:-}
         - LOG_LINES=${LOG_LINES:-9999}
         - DBNAME=${MCDBNAME}
         - DBUSER=${MCDBUSER}
         - DBPASS=${MCDBPASS}
         - TZ=${TZ}
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
+        - MAILCOW_PASS_SCHEME=${MAILCOW_PASS_SCHEME:-BLF-CRYPT}
         - IPV4_NETWORK=${IPV4_NETWORK:-172.22.1}
         - ALLOW_ADMIN_EMAIL_LOGIN=${ALLOW_ADMIN_EMAIL_LOGIN:-n}
         - MAILDIR_GC_TIME=${MAILDIR_GC_TIME:-1440}
@@ -337,19 +342,19 @@ services:
             - dovecot
 
     postfix-mailcow:
-      image: mailcow/postfix:1.51
+      image: mailcow/postfix:1.57
       depends_on:
         - mysql-mailcow
         - mailman-web
       volumes:
-        - ./data/hooks/postfix:/hooks
-        - ./data/conf/postfix:/opt/postfix/conf
-        - ./data/assets/ssl:/etc/ssl/mail/:ro
-        - postfix-vol-1:/var/spool/postfix
-        - crypt-vol-1:/var/lib/zeyple
-        - rspamd-vol-1:/var/lib/rspamd
-        - mysql-socket-vol-1:/var/run/mysqld/
-        - mailman-core-vol-1:/opt/mailman/core/
+        - ./data/hooks/postfix:/hooks:Z
+        - ./data/conf/postfix:/opt/postfix/conf:z
+        - ./data/assets/ssl:/etc/ssl/mail/:ro,z
+        - postfix-vol-1:/var/spool/postfix:z
+        - crypt-vol-1:/var/lib/zeyple:z
+        - rspamd-vol-1:/var/lib/rspamd:z
+        - mysql-socket-vol-1:/var/run/mysqld/:z
+        - mailman-core-vol-1:/opt/mailman/core/:z
       environment:
         - LOG_LINES=${LOG_LINES:-9999}
         - TZ=${TZ}
@@ -413,12 +418,12 @@ services:
         - SKIP_SOGO=${SKIP_SOGO:-n}
         - ALLOW_ADMIN_EMAIL_LOGIN=${ALLOW_ADMIN_EMAIL_LOGIN:-n}
       volumes:
-        - ./data/web:/web:ro
-        - ./data/conf/rspamd/dynmaps:/dynmaps:ro
-        - ./data/assets/ssl/:/etc/ssl/mail/:ro
-        - ./data/conf/nginx/:/etc/nginx/conf.d/:rw
-        - ./data/conf/rspamd/meta_exporter:/meta_exporter:ro
-        - sogo-web-vol-1:/usr/lib/GNUstep/SOGo/
+        - ./data/web:/web:ro,z
+        - ./data/conf/rspamd/dynmaps:/dynmaps:ro,z
+        - ./data/assets/ssl/:/etc/ssl/mail/:ro,z
+        - ./data/conf/nginx/:/etc/nginx/conf.d/:rw,Z
+        - ./data/conf/rspamd/meta_exporter:/meta_exporter:ro,z
+        - sogo-web-vol-1:/usr/lib/GNUstep/SOGo/:z
       ports:
         - "${HTTPS_BIND:-0.0.0.0}:${HTTPS_PORT:-443}:${HTTPS_PORT:-443}"
         - "${HTTP_BIND:-0.0.0.0}:${HTTP_PORT:-80}:${HTTP_PORT:-80}"
@@ -433,7 +438,7 @@ services:
     acme-mailcow:
       depends_on:
         - nginx-mailcow
-      image: mailcow/acme:1.74
+      image: mailcow/acme:1.76
       dns:
         - ${IPV4_NETWORK:-172.19.199}.254
       environment:
@@ -457,10 +462,10 @@ services:
         - SNAT_TO_SOURCE=${SNAT_TO_SOURCE:-n}
         - SNAT6_TO_SOURCE=${SNAT6_TO_SOURCE:-n}
       volumes:
-        - ./data/web/.well-known/acme-challenge:/var/www/acme:rw
-        - ./data/assets/ssl:/var/lib/acme/:rw
-        - ./data/assets/ssl-example:/var/lib/ssl-example/:ro
-        - mysql-socket-vol-1:/var/run/mysqld/
+        - ./data/web/.well-known/acme-challenge:/var/www/acme:rw,z
+        - ./data/assets/ssl:/var/lib/acme/:rw,z
+        - ./data/assets/ssl-example:/var/lib/ssl-example/:ro,Z
+        - mysql-socket-vol-1:/var/run/mysqld/:z
       restart: always
       networks:
         mailcow-network:
@@ -494,16 +499,16 @@ services:
         - /lib/modules:/lib/modules:ro
 
     watchdog-mailcow:
-      image: mailcow/watchdog:1.82
+      image: mailcow/watchdog:1.85
       # Debug
       #command: /watchdog.sh
       depends_on:
         - mailman-web
       volumes:
-        - rspamd-vol-1:/var/lib/rspamd
-        - mysql-socket-vol-1:/var/run/mysqld/
-        - postfix-vol-1:/var/spool/postfix
-        - ./data/assets/ssl:/etc/ssl/mail/:ro
+        - rspamd-vol-1:/var/lib/rspamd:z
+        - mysql-socket-vol-1:/var/run/mysqld/:z
+        - postfix-vol-1:/var/spool/postfix:z
+        - ./data/assets/ssl:/etc/ssl/mail/:ro,z
       environment:
         - IPV6_NETWORK=${IPV6_NETWORK:-fd4d:6169:6c63:6f77::/64}
         - LOG_LINES=${LOG_LINES:-9999}
@@ -518,7 +523,7 @@ services:
         - WATCHDOG_EXTERNAL_CHECKS=${WATCHDOG_EXTERNAL_CHECKS:-n}
         - WATCHDOG_MYSQL_REPLICATION_CHECKS=${WATCHDOG_MYSQL_REPLICATION_CHECKS:-n}
         - MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
-         COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-mailcow-dockerized}
+        - COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-mailcow-dockerized}
         - IPV4_NETWORK=${IPV4_NETWORK:-172.19.199}
         - IP_BY_DOCKER_API=${IP_BY_DOCKER_API:-0}
         - CHECK_UNBOUND=${CHECK_UNBOUND:-1}
@@ -558,6 +563,8 @@ services:
 
     dockerapi-mailcow:
       image: mailcow/dockerapi:1.37
+      security_opt:
+        - label=disable
       depends_on:
         - mailman-web
       oom_kill_disable: true
@@ -581,7 +588,7 @@ services:
         - SOLR_HEAP=${SOLR_HEAP:-1024}
         - SKIP_SOLR=${SKIP_SOLR:-y}
       volumes:
-        - solr-vol-1:/opt/solr/server/solr/dovecot-fts/data
+        - solr-vol-1:/opt/solr/server/solr/dovecot-fts/data:Z
       ports:
         - "${SOLR_PORT:-127.0.0.1:18983}:8983"
       restart: always
@@ -593,7 +600,7 @@ services:
             - solr
 
     olefy-mailcow:
-      image: mailcow/olefy:1.3
+      image: mailcow/olefy:1.5
       depends_on:
         - mailman-web
       environment:
@@ -614,6 +621,8 @@ services:
 
     ipv6nat-mailcow:
       image: robbertkl/ipv6nat
+      security_opt:
+        - label=disable
       depends_on:
         - mailman-web
         - unbound-mailcow
@@ -654,10 +663,8 @@ networks:
         - subnet: ${IPV6_NETWORK:-fd4d:6169:6c63:6f77::/64}
 
 volumes:
-  # Storage for email files
   vmail-vol-1:
-  # Storage for attachments (deduplicated)
-  vmail-attachments-vol-1:
+  vmail-index-vol-1:
   mysql-vol-1:
   mysql-socket-vol-1:
   redis-vol-1:

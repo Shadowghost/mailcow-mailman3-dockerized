@@ -126,6 +126,11 @@ MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
 DOMAINNAME=${DOMAINNAME}
 HOSTNAME=${HOSTNAME}
 
+# Password hash algorithm
+# Only certain password hash algorithm are supported. For a fully list of supported schemes,
+# see https://mailcow.github.io/mailcow-dockerized-docs/model-passwd/
+MAILCOW_PASS_SCHEME=BLF-CRYPT
+
 # ------------------------------------
 # Mailcow SQL database configuration
 # ------------------------------------
@@ -194,7 +199,7 @@ ACL_ANYONE=disallow
 # Deleted domains and mailboxes are moved to /var/vmail/_garbage/timestamp_sanitizedstring
 # How long should objects remain in the garbage until they are being deleted? (value in minutes)
 # Check interval is hourly
-MAILDIR_GC_TIME=1440
+MAILDIR_GC_TIME=7200
 
 # Additional SAN for the certificate
 #
@@ -237,13 +242,13 @@ SKIP_SOLR=${SKIP_SOLR}
 # Solr is a prone to run OOM and should be monitored. Unmonitored Solr setups are not recommended.
 SOLR_HEAP=1024
 
-# Enable watchdog (watchdog-mailcow) to restart unhealthy containers
-USE_WATCHDOG=y
-
 # Allow admins to log into SOGo as email user (without any password)
 ALLOW_ADMIN_EMAIL_LOGIN=n
 
-# Send notifications by mail (no DKIM signature, sent from watchdog@MAILCOW_HOSTNAME)
+# Enable watchdog (watchdog-mailcow) to restart unhealthy containers
+USE_WATCHDOG=y
+
+# Send watchdog notifications by mail (sent from watchdog@MAILCOW_HOSTNAME)
 # CAUTION:
 # 1. You should use external recipients
 # 2. Mails are sent unsigned (no DKIM)
@@ -253,7 +258,7 @@ ALLOW_ADMIN_EMAIL_LOGIN=n
 #WATCHDOG_NOTIFY_EMAIL=
 
 # Notify about banned IP (includes whois lookup)
-WATCHDOG_NOTIFY_BAN=y
+WATCHDOG_NOTIFY_BAN=n
 
 # Checks if mailcow is an open relay. Requires a SAL. More checks will follow.
 # https://www.servercow.de/mailcow?lang=en
@@ -295,6 +300,14 @@ MAILDIR_SUB=Maildir
 # SOGo session timeout in minutes
 SOGO_EXPIRE_SESSION=480
 
+# DOVECOT_MASTER_USER and DOVECOT_MASTER_PASS must both be provided. No special chars.
+# Empty by default to auto-generate master user and password on start.
+# User expands to DOVECOT_MASTER_USER@mailcow.local
+# LEAVE EMPTY IF UNSURE
+DOVECOT_MASTER_USER=
+# LEAVE EMPTY IF UNSURE
+DOVECOT_MASTER_PASS=
+
 EOF
 
 echo "Creating needed directories."
@@ -305,4 +318,8 @@ chmod 600 .env
 echo "Create mailman volume and selfsigned SSL-certificates until new ones are installed."
 docker volume create "${PN}"_mailman-core-vol-1
 # copy but don't overwrite existing certificate
+echo "Generating snake-oil certificate..."
+# Making Willich more popular
+openssl req -x509 -newkey rsa:4096 -keyout data/assets/ssl-example/key.pem -out data/assets/ssl-example/cert.pem -days 365 -subj "/C=DE/ST=NRW/L=Willich/O=mailcow/OU=mailcow/CN=${MAILCOW_HOSTNAME}" -sha256 -nodes
+echo "Copying snake-oil certificate..."
 cp -n -d data/assets/ssl-example/*.pem data/assets/ssl/
