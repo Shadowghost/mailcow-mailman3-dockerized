@@ -136,12 +136,12 @@ if (isset($_GET['query'])) {
         ));
         exit();
       }
-      
+
       switch ($category) {
         // fido2-registration via POST
         case "fido2-registration":
           header('Content-Type: application/json');
-          if (isset($_SESSION["mailcow_cc_role"]) && ($_SESSION["mailcow_cc_role"] == "admin" || $_SESSION["mailcow_cc_role"] == "domainadmin")) {
+          if (isset($_SESSION["mailcow_cc_role"])) {
             $post = trim(file_get_contents('php://input'));
             if ($post) {
               $post = json_decode($post);
@@ -302,11 +302,25 @@ if (isset($_GET['query'])) {
           if ($obj_props['superadmin'] === 1) {
             $_SESSION["mailcow_cc_role"] = "admin";
           }
-          else {
+          elseif ($obj_props['superadmin'] === 0) {
             $_SESSION["mailcow_cc_role"] = "domainadmin";
+          }
+          else {
+            $stmt = $pdo->prepare("SELECT `username` FROM `mailbox` WHERE `username` = :username");
+            $stmt->execute(array(':username' => $process_fido2['username']));
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row['username'] == $process_fido2['username']) {
+              $_SESSION["mailcow_cc_role"] = "user";
+            }
+          }
+          if (empty($_SESSION["mailcow_cc_role"])) {
+            session_unset();
+            session_destroy();
+            exit;
           }
           $_SESSION["mailcow_cc_username"] = $process_fido2['username'];
           $_SESSION["fido2_cid"] = $process_fido2['cid'];
+          unset($_SESSION["challenge"]);
           $_SESSION['return'][] =  array(
             'type' => 'success',
             'log' => array("fido2_login"),
@@ -317,8 +331,14 @@ if (isset($_GET['query'])) {
       }
     break;
     case "get":
-      function process_get_return($data) {
-        echo (!isset($data) || empty($data)) ? '{}' : json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+      function process_get_return($data, $object = true) {
+        if ($object === true) {
+          $ret_str = '{}';
+        }
+        else {
+          $ret_str = '[]';
+        }
+        echo (!isset($data) || empty($data)) ? $ret_str : json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
       }
       // only allow GET requests to GET API endpoints
       if ($_SERVER['REQUEST_METHOD'] != 'GET') {
@@ -332,17 +352,15 @@ if (isset($_GET['query'])) {
       switch ($category) {
         case "u2f-registration":
           header('Content-Type: application/javascript');
-          if (isset($_SESSION["mailcow_cc_role"]) &&
-            ($_SESSION["mailcow_cc_role"] == "admin" || $_SESSION["mailcow_cc_role"] == "domainadmin") &&
-            $_SESSION["mailcow_cc_username"] == $object) {
-              list($req, $sigs) = $u2f->getRegisterData(get_u2f_registrations($object));
-              $_SESSION['regReq'] = json_encode($req);
-              $_SESSION['regSigs'] = json_encode($sigs);
-              echo 'var req = ' . json_encode($req) . ';';
-              echo 'var registeredKeys = ' . json_encode($sigs) . ';';
-              echo 'var appId = req.appId;';
-              echo 'var registerRequests = [{version: req.version, challenge: req.challenge}];';
-              return;
+          if (isset($_SESSION["mailcow_cc_role"]) && $_SESSION["mailcow_cc_username"] == $object) {
+            list($req, $sigs) = $u2f->getRegisterData(get_u2f_registrations($object));
+            $_SESSION['regReq'] = json_encode($req);
+            $_SESSION['regSigs'] = json_encode($sigs);
+            echo 'var req = ' . json_encode($req) . ';';
+            echo 'var registeredKeys = ' . json_encode($sigs) . ';';
+            echo 'var appId = req.appId;';
+            echo 'var registerRequests = [{version: req.version, challenge: req.challenge}];';
+            return;
           }
           else {
             return;
@@ -351,9 +369,7 @@ if (isset($_GET['query'])) {
         // fido2-registration via GET
         case "fido2-registration":
           header('Content-Type: application/json');
-          if (isset($_SESSION["mailcow_cc_role"]) &&
-            ($_SESSION["mailcow_cc_role"] == "admin" || $_SESSION["mailcow_cc_role"] == "domainadmin") &&
-            $_SESSION["mailcow_cc_username"] == $object) {
+          if (isset($_SESSION["mailcow_cc_role"])) {
               // Exclude existing CredentialIds, if any
               $excludeCredentialIds = fido2(array("action" => "get_user_cids"));
               $createArgs = $WebAuthn->getCreateArgs($_SESSION["mailcow_cc_username"], $_SESSION["mailcow_cc_username"], $_SESSION["mailcow_cc_username"], 30, true, $GLOBALS['FIDO2_UV_FLAG_REGISTER'], $excludeCredentialIds);
@@ -401,27 +417,16 @@ if (isset($_GET['query'])) {
           return;
         break;
       }
-      if (!isset($_SESSION['pending_mailcow_cc_username'])) {
+      if (isset($_SESSION['mailcow_cc_role'])) {
         switch ($category) {
           case "rspamd":
             switch ($object) {
               case "actions":
-                $curl = curl_init();
-                curl_setopt($curl, CURLOPT_UNIX_SOCKET_PATH, '/var/lib/rspamd/rspamd.sock');
-                curl_setopt($curl, CURLOPT_URL,"http://rspamd/stat");
-                curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-                $data = curl_exec($curl);
+                $data = rspamd_actions();
                 if ($data) {
-                  $return = array();
-                  $stats_array = json_decode($data, true)['actions'];
-                  $stats_array['soft reject'] = $stats_array['soft reject'] + $stats_array['greylist'];
-                  unset($stats_array['greylist']);
-                  foreach ($stats_array as $action => $count) {
-                    $return[] = array($action, $count);
-                  }
-                  echo json_encode($return, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                  echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 }
-                elseif (!isset($data) || empty($data)) {
+                else {
                   echo '{}';
                 }
               break;
@@ -451,6 +456,20 @@ if (isset($_GET['query'])) {
               default:
                 $data = mailbox('get', 'domain_details', $object);
                 process_get_return($data);
+              break;
+            }
+          break;
+
+          case "passwordpolicy":
+            switch ($object) {
+              case "html":
+                $password_complexity_rules = password_complexity('html');
+                if ($password_complexity_rules !== false) {
+                  process_get_return($password_complexity_rules);
+                }
+                else {
+                  echo '{}';
+                }
               break;
             }
           break;
@@ -629,6 +648,27 @@ if (isset($_GET['query'])) {
             }
           break;
 
+          case "last-login":
+            if ($object) {
+              // extra == days
+              if (isset($extra) && intval($extra) >= 1) {
+                $data = last_login('get', $object, intval($extra));
+              }
+              else {
+                $data = last_login('get', $object);
+              }
+              process_get_return($data);
+            }
+          break;
+
+          // Todo: move to delete
+          case "reset-last-login":
+            if ($object) {
+              $data = last_login('reset', $object);
+              process_get_return($data);
+            }
+          break;
+
           case "transport":
             switch ($object) {
               case "all":
@@ -789,6 +829,17 @@ if (isset($_GET['query'])) {
                 }
                 echo (isset($logs) && !empty($logs)) ? json_encode($logs, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) : '{}';
               break;
+              case "sasl":
+                // 0 is first record, so empty is fine
+                if (isset($extra)) {
+                  $extra = preg_replace('/[^\d\-]/i', '', $extra);
+                  $logs = get_logs('sasl', $extra);
+                }
+                else {
+                  $logs = get_logs('sasl');
+                }
+                echo (isset($logs) && !empty($logs)) ? json_encode($logs, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) : '{}';
+              break;
               case "watchdog":
                 // 0 is first record, so empty is fine
                 if (isset($extra)) {
@@ -850,18 +901,19 @@ if (isset($_GET['query'])) {
           case "mailbox":
             switch ($object) {
               case "all":
+              case "reduced":
                 if (empty($extra)) {
                   $domains = mailbox('get', 'domains');
                 }
                 else {
-                  $domains = array($extra);
+                  $domains = explode(',', $extra);
                 }
                 if (!empty($domains)) {
                   foreach ($domains as $domain) {
                     $mailboxes = mailbox('get', 'mailboxes', $domain);
                     if (!empty($mailboxes)) {
                       foreach ($mailboxes as $mailbox) {
-                        if ($details = mailbox('get', 'mailbox_details', $mailbox)) {
+                        if ($details = mailbox('get', 'mailbox_details', $mailbox, $object)) {
                           $data[] = $details;
                         }
                         else {
@@ -1163,10 +1215,10 @@ if (isset($_GET['query'])) {
             // "all" will not print details
             switch ($object) {
               case "all":
-                process_get_return(quarantine('get'));
+                process_get_return(quarantine('get'), false);
               break;
               default:
-                process_get_return(quarantine('details', $object));
+                process_get_return(quarantine('details', $object), false);
               break;
             }
           break;
@@ -1198,7 +1250,7 @@ if (isset($_GET['query'])) {
                   $domains = array_merge(mailbox('get', 'domains'), mailbox('get', 'alias_domains'));
                 }
                 else {
-                  $domains = array($extra);
+                  $domains = explode(',', $extra);
                 }
                 if (!empty($domains)) {
                   foreach ($domains as $domain) {
@@ -1295,53 +1347,55 @@ if (isset($_GET['query'])) {
             }
           break;
           case "status":
-            switch ($object) {
-              case "containers":
-                $containers = (docker('info'));
-                foreach ($containers as $container => $container_info) {
-                  $container . ' (' . $container_info['Config']['Image'] . ')';
-                  $containerstarttime = ($container_info['State']['StartedAt']);
-                  $containerstate = ($container_info['State']['Status']);
-                  $containerimage = ($container_info['Config']['Image']);
-                  $temp[$container] = array(
+            if ($_SESSION['mailcow_cc_role'] == "admin") {
+              switch ($object) {
+                case "containers":
+                  $containers = (docker('info'));
+                  foreach ($containers as $container => $container_info) {
+                    $container . ' (' . $container_info['Config']['Image'] . ')';
+                    $containerstarttime = ($container_info['State']['StartedAt']);
+                    $containerstate = ($container_info['State']['Status']);
+                    $containerimage = ($container_info['Config']['Image']);
+                    $temp[$container] = array(
+                      'type' => 'info',
+                      'container' => $container,
+                      'state' => $containerstate,
+                      'started_at' => $containerstarttime,
+                      'image' => $containerimage
+                    );
+                  }
+                  echo json_encode($temp, JSON_UNESCAPED_SLASHES);
+                break;
+                case "vmail":
+                  $exec_fields_vmail = array('cmd' => 'system', 'task' => 'df', 'dir' => '/var/vmail');
+                  $vmail_df = explode(',', json_decode(docker('post', 'dovecot-mailcow', 'exec', $exec_fields_vmail), true));
+                  $temp = array(
                     'type' => 'info',
-                    'container' => $container,
-                    'state' => $containerstate,
-                    'started_at' => $containerstarttime,
-                    'image' => $containerimage
+                    'disk' => $vmail_df[0],
+                    'used' => $vmail_df[2],
+                    'total'=> $vmail_df[1],
+                    'used_percent' => $vmail_df[4]
                   );
-                }
-                echo json_encode($temp, JSON_UNESCAPED_SLASHES);
+                  echo json_encode($temp, JSON_UNESCAPED_SLASHES);
               break;
-              case "vmail":
-                $exec_fields_vmail = array('cmd' => 'system', 'task' => 'df', 'dir' => '/var/vmail');
-                $vmail_df = explode(',', json_decode(docker('post', 'dovecot-mailcow', 'exec', $exec_fields_vmail), true));
-                $temp = array(
+              case "solr":
+                $solr_status = solr_status();
+                $solr_size = ($solr_status['status']['dovecot-fts']['index']['size']);
+                $solr_documents = ($solr_status['status']['dovecot-fts']['index']['numDocs']);
+                if (strtolower(getenv('SKIP_SOLR')) != 'n') {
+                  $solr_enabled = false;
+                }
+                else {
+                  $solr_enabled = true;
+                }
+                echo json_encode(array(
                   'type' => 'info',
-                  'disk' => $vmail_df[0],
-                  'used' => $vmail_df[2],
-                  'total'=> $vmail_df[1],
-                  'used_percent' => $vmail_df[4]
-                );
-                echo json_encode($temp, JSON_UNESCAPED_SLASHES);
-            break;
-            case "solr":
-              $solr_status = solr_status();
-              $solr_size = ($solr_status['status']['dovecot-fts']['index']['size']);
-              $solr_documents = ($solr_status['status']['dovecot-fts']['index']['numDocs']);
-              if (strtolower(getenv('SKIP_SOLR')) != 'n') {
-                $solr_enabled = false;
+                  'solr_enabled' => $solr_enabled,
+                  'solr_size' => $solr_size,
+                  'solr_documents' => $solr_documents
+                ));
+              break;
               }
-              else {
-                $solr_enabled = true;
-              }
-              echo json_encode(array(
-                'type' => 'info',
-                'solr_enabled' => $solr_enabled,
-                'solr_size' => $solr_size,
-                'solr_documents' => $solr_documents
-              ));
-            break;
             }
           break;
         break;
@@ -1444,7 +1498,6 @@ if (isset($_GET['query'])) {
           process_delete_return(dkim('delete', array('domains' => $items)));
         break;
         case "domain":
-          file_put_contents('/tmp/dssaa', $items);
           process_delete_return(mailbox('delete', 'domain', array('domain' => $items)));
         break;
         case "alias-domain":
@@ -1559,13 +1612,16 @@ if (isset($_GET['query'])) {
           process_edit_return(mailbox('edit', 'alias', array_merge(array('id' => $items), $attr)));
         break;
         case "rspamd-map":
-          process_edit_return(rspamd('edit', array_merge(array('map' => $items), $attr)));
+          process_edit_return(rspamd_maps('edit', array_merge(array('map' => $items), $attr)));
         break;
         case "fido2-fn":
           process_edit_return(fido2(array('action' => 'edit_fn', 'fido2_attrs' => $attr)));
         break;
         case "app_links":
           process_edit_return(customize('edit', 'app_links', $attr));
+        break;
+        case "passwordpolicy":
+          process_edit_return(password_complexity('edit', $attr));
         break;
         case "relayhost":
           process_edit_return(relayhost('edit', array_merge(array('id' => $items), $attr)));
@@ -1585,6 +1641,9 @@ if (isset($_GET['query'])) {
         case "quarantine_notification":
           process_edit_return(mailbox('edit', 'quarantine_notification', array_merge(array('username' => $items), $attr)));
         break;
+        case "quarantine_category":
+          process_edit_return(mailbox('edit', 'quarantine_category', array_merge(array('username' => $items), $attr)));
+        break;
         case "qitem":
           process_edit_return(quarantine('edit', array_merge(array('id' => $items), $attr)));
         break;
@@ -1593,6 +1652,9 @@ if (isset($_GET['query'])) {
         break;
         case "quota_notification":
           process_edit_return(quota_notification('edit', $attr));
+        break;
+        case "quota_notification_bcc":
+          process_edit_return(quota_notification_bcc('edit', $attr));
         break;
         case "mailq":
           process_edit_return(mailq('edit', array_merge(array('qid' => $items), $attr)));

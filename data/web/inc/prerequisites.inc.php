@@ -60,12 +60,15 @@ $formats = $GLOBALS['FIDO2_FORMATS'];
 $WebAuthn = new \WebAuthn\WebAuthn('WebAuthn Library', $_SERVER['HTTP_HOST'], $formats);
 $WebAuthn->addRootCertificates($_SERVER['DOCUMENT_ROOT'] . '/inc/lib/WebAuthn/rootCertificates/solo.pem');
 $WebAuthn->addRootCertificates($_SERVER['DOCUMENT_ROOT'] . '/inc/lib/WebAuthn/rootCertificates/apple.pem');
+$WebAuthn->addRootCertificates($_SERVER['DOCUMENT_ROOT'] . '/inc/lib/WebAuthn/rootCertificates/nitro.pem');
 $WebAuthn->addRootCertificates($_SERVER['DOCUMENT_ROOT'] . '/inc/lib/WebAuthn/rootCertificates/yubico.pem');
 $WebAuthn->addRootCertificates($_SERVER['DOCUMENT_ROOT'] . '/inc/lib/WebAuthn/rootCertificates/hypersecu.pem');
 $WebAuthn->addRootCertificates($_SERVER['DOCUMENT_ROOT'] . '/inc/lib/WebAuthn/rootCertificates/globalSign.pem');
 $WebAuthn->addRootCertificates($_SERVER['DOCUMENT_ROOT'] . '/inc/lib/WebAuthn/rootCertificates/googleHardware.pem');
 $WebAuthn->addRootCertificates($_SERVER['DOCUMENT_ROOT'] . '/inc/lib/WebAuthn/rootCertificates/microsoftTpmCollection.pem');
 $WebAuthn->addRootCertificates($_SERVER['DOCUMENT_ROOT'] . '/inc/lib/WebAuthn/rootCertificates/huawei.pem');
+$WebAuthn->addRootCertificates($_SERVER['DOCUMENT_ROOT'] . '/inc/lib/WebAuthn/rootCertificates/trustkey.pem');
+$WebAuthn->addRootCertificates($_SERVER['DOCUMENT_ROOT'] . '/inc/lib/WebAuthn/rootCertificates/bsi.pem');
 
 // Redis
 $redis = new Redis();
@@ -169,29 +172,12 @@ function exception_handler($e) {
 set_exception_handler('exception_handler');
 
 // TODO: Move function
-function get_remote_ip($anonymize = null) {
-  global $ANONYMIZE_IPS;
-  if ($anonymize === null) {
-    $anonymize = $ANONYMIZE_IPS;
-  }
-  elseif ($anonymize !== true && $anonymize !== false)  {
-    $anonymize = true;
-  }
+function get_remote_ip() {
   $remote = $_SERVER['REMOTE_ADDR'];
   if (filter_var($remote, FILTER_VALIDATE_IP) === false) {
     return '0.0.0.0';
   }
-  if ($anonymize) {
-    if (strlen(inet_pton($remote)) == 4) {
-      return inet_ntop(inet_pton($remote) & inet_pton("255.255.255.0"));
-    }
-    elseif (strlen(inet_pton($remote)) == 16) {
-      return inet_ntop(inet_pton($remote) & inet_pton('ffff:ffff:ffff:ffff:0000:0000:0000:0000'));
-    }
-  }
-  else {
-    return $remote;
-  }
+  return $remote;
 }
 
 // Load core functions first
@@ -206,7 +192,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/sessions.inc.php';
 if (!isset($_SESSION['mailcow_locale']) && !isset($_COOKIE['mailcow_locale'])) {
   if ($DETECT_LANGUAGE && isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
     $header_lang = strtolower(substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2));
-    if (in_array($header_lang, $AVAILABLE_LANGUAGES)) {
+    if (array_key_exists($header_lang, $AVAILABLE_LANGUAGES)) {
       $_SESSION['mailcow_locale'] = $header_lang;
     }
   }
@@ -217,7 +203,7 @@ if (!isset($_SESSION['mailcow_locale']) && !isset($_COOKIE['mailcow_locale'])) {
 if (isset($_COOKIE['mailcow_locale'])) {
   (preg_match('/^[a-z]{2}$/', $_COOKIE['mailcow_locale'])) ? $_SESSION['mailcow_locale'] = $_COOKIE['mailcow_locale'] : setcookie("mailcow_locale", "", time() - 300);
 }
-if (isset($_GET['lang']) && in_array($_GET['lang'], $AVAILABLE_LANGUAGES)) {
+if (isset($_GET['lang']) && array_key_exists($_GET['lang'], $AVAILABLE_LANGUAGES)) {
   $_SESSION['mailcow_locale'] = $_GET['lang'];
   setcookie("mailcow_locale", $_GET['lang'], time()+30758400); // one year
 }
@@ -233,27 +219,27 @@ if(file_exists($langFile)) {
 }
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.acl.inc.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.app_passwd.inc.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.mailbox.inc.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.customize.inc.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.address_rewriting.inc.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.domain_admin.inc.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.admin.inc.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.quarantine.inc.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.quota_notification.inc.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.policy.inc.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.app_passwd.inc.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.customize.inc.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.dkim.inc.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.docker.inc.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.domain_admin.inc.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.fail2ban.inc.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.fwdhost.inc.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.mailbox.inc.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.mailq.inc.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.oauth2.inc.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.policy.inc.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.presets.inc.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.pushover.inc.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.quarantine.inc.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.quota_notification.inc.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.ratelimit.inc.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.transports.inc.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.rspamd.inc.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.tls_policy_maps.inc.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.fail2ban.inc.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.docker.inc.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.presets.inc.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/functions.transports.inc.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/init_db.inc.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/inc/triggers.inc.php';
 init_db_schema();

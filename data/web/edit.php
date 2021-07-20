@@ -82,7 +82,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
             </div>
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
-                <button class="btn btn-success" data-action="edit_selected" data-id="editalias" data-item="<?=htmlspecialchars($alias);?>" data-api-url='edit/alias' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
+                <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-success" data-action="edit_selected" data-id="editalias" data-item="<?=htmlspecialchars($alias);?>" data-api-url='edit/alias' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
               </div>
             </div>
           </form>
@@ -106,7 +106,8 @@ if (isset($_SESSION['mailcow_cc_role'])) {
         <div class="form-group">
           <label class="control-label col-sm-2" for="username_new"><?=$lang['edit']['username'];?></label>
           <div class="col-sm-10">
-            <input class="form-control" type="text" name="username_new" value="<?=htmlspecialchars($domain_admin);?>" />
+            <input class="form-control" type="text" name="username_new" value="<?=htmlspecialchars($domain_admin);?>" required onkeyup="this.value = this.value.toLowerCase();" />
+            &rdsh; <kbd>a-z - _ .</kbd>
           </div>
         </div>
         <div class="form-group">
@@ -156,7 +157,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
         </div>
         <div class="form-group">
           <div class="col-sm-offset-2 col-sm-10">
-            <button class="btn btn-success" data-action="edit_selected" data-api-reload-location="/admin" data-id="editdomainadmin" data-item="<?=$domain_admin;?>" data-api-url='edit/domain-admin' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
+            <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-success" data-action="edit_selected" data-api-reload-location="/admin" data-id="editdomainadmin" data-item="<?=$domain_admin;?>" data-api-url='edit/domain-admin' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
           </div>
         </div>
       </form>
@@ -167,7 +168,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
           </div>
           <div class="col-sm-10">
             <div class="form-group">
-              <select id="da_acl" name="da_acl" size="10" multiple>
+              <select id="da_acl" name="da_acl" size="10" data-container="body" multiple>
               <?php
               $da_acls = acl('get', 'domainadmin', $domain_admin);
               foreach ($da_acls as $acl => $val):
@@ -179,7 +180,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
               </select>
             </div>
             <div class="form-group">
-              <button class="btn btn-default" data-action="edit_selected" data-id="daacl" data-item="<?=htmlspecialchars($domain_admin);?>" data-api-url='edit/da-acl' data-api-attr='{}' href="#"><?=$lang['admin']['save'];?></button>
+              <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default" data-action="edit_selected" data-id="daacl" data-item="<?=htmlspecialchars($domain_admin);?>" data-api-url='edit/da-acl' data-api-attr='{}' href="#"><?=$lang['admin']['save'];?></button>
             </div>
           </div>
         </div>
@@ -197,14 +198,15 @@ if (isset($_SESSION['mailcow_cc_role'])) {
       $result = admin('details', $admin);
       if (!empty($result)) {
       ?>
-      <h4><?=$lang['edit']['domain_admin'];?></h4>
+      <h4><?=$lang['edit']['admin'];?></h4>
       <br>
       <form class="form-horizontal" data-id="editadmin" role="form" method="post" autocomplete="off">
         <input type="hidden" value="0" name="active">
         <div class="form-group">
           <label class="control-label col-sm-2" for="username_new"><?=$lang['edit']['username'];?></label>
           <div class="col-sm-10">
-            <input class="form-control" type="text" name="username_new" value="<?=htmlspecialchars($admin);?>" />
+            <input class="form-control" type="text" name="username_new" onkeyup="this.value = this.value.toLowerCase();" required value="<?=htmlspecialchars($admin);?>" />
+            &rdsh; <kbd>a-z - _ .</kbd>
           </div>
         </div>
         <div class="form-group">
@@ -235,7 +237,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
         </div>
         <div class="form-group">
           <div class="col-sm-offset-2 col-sm-10">
-            <button class="btn btn-success" data-action="edit_selected" data-api-reload-location="/admin" data-id="editadmin" data-item="<?=$admin;?>" data-api-url='edit/admin' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
+            <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-success" data-action="edit_selected" data-api-reload-location="/admin" data-id="editadmin" data-item="<?=$admin;?>" data-api-url='edit/admin' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
           </div>
         </div>
       </form>
@@ -252,188 +254,232 @@ if (isset($_SESSION['mailcow_cc_role'])) {
       !empty($_GET["domain"])) {
         $domain = $_GET["domain"];
         $result = mailbox('get', 'domain_details', $domain);
+        $quota_notification_bcc = quota_notification_bcc('get', $domain);
         $rl = ratelimit('get', 'domain', $domain);
         $rlyhosts = relayhost('get');
         if (!empty($result)) {
         ?>
-          <h4><?=$lang['edit']['domain'];?></h4>
-          <form data-id="editdomain" class="form-horizontal" role="form" method="post">
-            <input type="hidden" value="0" name="active">
-            <input type="hidden" value="0" name="backupmx">
-            <input type="hidden" value="0" name="gal">
-            <input type="hidden" value="0" name="relay_all_recipients">
-            <input type="hidden" value="0" name="relay_unknown_only">
-            <div class="form-group" data-acl="<?=$_SESSION['acl']['domain_desc'];?>">
-              <label class="control-label col-sm-2" for="description"><?=$lang['edit']['description'];?></label>
-              <div class="col-sm-10">
-                <input type="text" class="form-control" name="description" value="<?=htmlspecialchars($result['description']);?>">
-              </div>
-            </div>
-            <?php
-            if ($_SESSION['mailcow_cc_role'] == "admin") {
-            ?>
-            <div class="form-group">
-              <label class="control-label col-sm-2" for="aliases"><?=$lang['edit']['max_aliases'];?></label>
-              <div class="col-sm-10">
-                <input type="number" class="form-control" name="aliases" value="<?=intval($result['max_num_aliases_for_domain']);?>">
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="control-label col-sm-2" for="mailboxes"><?=$lang['edit']['max_mailboxes'];?></label>
-              <div class="col-sm-10">
-                <input type="number" class="form-control" name="mailboxes" value="<?=intval($result['max_num_mboxes_for_domain']);?>">
-              </div>
-            </div>
-            <div class="form-group">
-                <label class="control-label col-sm-2" for="defquota"><?=$lang['edit']['mailbox_quota_def'];?></label>
+          <ul class="nav nav-tabs responsive-tabs" role="tablist">
+            <li class="active"><a data-toggle="tab" href="#dedit"><?=$lang['edit']['domain'];?></a></li>
+            <li><a data-toggle="tab" href="#dratelimit"><?=$lang['edit']['ratelimit'];?></a></li>
+            <li><a data-toggle="tab" href="#dspamfilter"><?=$lang['edit']['spam_filter'];?></a></li>
+            <li><a data-toggle="tab" href="#dqwbcc"><?=$lang['edit']['quota_warning_bcc'];?></a></li>
+          </ul>
+          <hr>
+          <div class="tab-content">
+            <div id="dedit" class="tab-pane in active">
+            <form data-id="editdomain" class="form-horizontal" role="form" method="post">
+              <input type="hidden" value="0" name="active">
+              <input type="hidden" value="0" name="backupmx">
+              <input type="hidden" value="0" name="gal">
+              <input type="hidden" value="0" name="relay_all_recipients">
+              <input type="hidden" value="0" name="relay_unknown_only">
+              <div class="form-group" data-acl="<?=$_SESSION['acl']['domain_desc'];?>">
+                <label class="control-label col-sm-2" for="description"><?=$lang['edit']['description'];?></label>
                 <div class="col-sm-10">
-                    <input type="number" class="form-control" name="defquota" value="<?=intval($result['def_quota_for_mbox'] / 1048576);?>">
+                  <input type="text" class="form-control" name="description" value="<?=htmlspecialchars($result['description']);?>">
                 </div>
-            </div>
-            <div class="form-group">
-              <label class="control-label col-sm-2" for="maxquota"><?=$lang['edit']['max_quota'];?></label>
-              <div class="col-sm-10">
-                <input type="number" class="form-control" name="maxquota" value="<?=intval($result['max_quota_for_mbox'] / 1048576);?>">
               </div>
-            </div>
-            <div class="form-group">
-              <label class="control-label col-sm-2" for="quota"><?=$lang['edit']['domain_quota'];?></label>
-              <div class="col-sm-10">
-                <input type="number" class="form-control" name="quota" value="<?=intval($result['max_quota_for_domain'] / 1048576);?>">
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="control-label col-sm-2" for="quota"><?=$lang['edit']['relayhost'];?></label>
-              <div class="col-sm-10">
-                <select data-live-search="true" name="relayhost" class="form-control">
-                  <?php
-                  foreach ($rlyhosts as $rlyhost) {
-                  ?>
-                  <option value="<?=$rlyhost['id'];?>" <?=($result['relayhost'] == $rlyhost['id']) ? 'selected' : null;?>>ID <?=$rlyhost['id'];?>: <?=$rlyhost['hostname'];?> (<?=$rlyhost['username'];?>)</option>
-                  <?php
-                  }
-                  ?>
-                  <option value="" <?=($result['relayhost'] == "0") ? 'selected' : null;?>>None</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="control-label col-sm-2"><?=$lang['edit']['backup_mx_options'];?></label>
-              <div class="col-sm-10">
-                <div class="checkbox">
-                  <label><input type="checkbox" value="1" name="backupmx" <?=(isset($result['backupmx']) && $result['backupmx']=="1") ? "checked" : null;?>> <?=$lang['edit']['relay_domain'];?></label>
-                  <br>
-                  <label><input type="checkbox" value="1" name="relay_all_recipients" <?=(isset($result['relay_all_recipients']) && $result['relay_all_recipients']=="1") ? "checked" : null;?>> <?=$lang['edit']['relay_all'];?></label>
-                  <p><?=$lang['edit']['relay_all_info'];?></p>
-                  <label><input type="checkbox" value="1" name="relay_unknown_only" <?=(isset($result['relay_unknown_only']) && $result['relay_unknown_only']=="1") ? "checked" : null;?>> <?=$lang['edit']['relay_unknown_only'];?></label>
-                  <br>
-                  <p><?=$lang['edit']['relay_transport_info'];?></p>
-                  <hr style="margin:25px 0px 0px 0px">
+              <div class="form-group">
+                <label class="control-label col-sm-2" for="relayhost"><?=$lang['edit']['relayhost'];?></label>
+                <div class="col-sm-10">
+                  <select data-acl="<?=$_SESSION['acl']['domain_relayhost'];?>" data-live-search="true" id="relayhost" name="relayhost" class="form-control">
+                    <?php
+                    foreach ($rlyhosts as $rlyhost) {
+                    ?>
+                    <option class="<?=($rlyhost['active'] == 1) ? '' : 'background: #ff4136; color: #fff';?>" value="<?=$rlyhost['id'];?>" <?=($result['relayhost'] == $rlyhost['id']) ? 'selected' : null;?>>ID <?=$rlyhost['id'];?>: <?=$rlyhost['hostname'];?> (<?=$rlyhost['username'];?>)</option>
+                    <?php
+                    }
+                    ?>
+                    <option value="" <?=($result['relayhost'] == "0") ? 'selected' : null;?>>None</option>
+                  </select>
                 </div>
+              </div>
+              <?php
+              if ($_SESSION['mailcow_cc_role'] == "admin") {
+              ?>
+              <div class="form-group">
+                <label class="control-label col-sm-2" for="aliases"><?=$lang['edit']['max_aliases'];?></label>
+                <div class="col-sm-10">
+                  <input type="number" class="form-control" name="aliases" value="<?=intval($result['max_num_aliases_for_domain']);?>">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-sm-2" for="mailboxes"><?=$lang['edit']['max_mailboxes'];?></label>
+                <div class="col-sm-10">
+                  <input type="number" class="form-control" name="mailboxes" value="<?=intval($result['max_num_mboxes_for_domain']);?>">
+                </div>
+              </div>
+              <div class="form-group">
+                  <label class="control-label col-sm-2" for="defquota"><?=$lang['edit']['mailbox_quota_def'];?></label>
+                  <div class="col-sm-10">
+                      <input type="number" class="form-control" name="defquota" value="<?=intval($result['def_quota_for_mbox'] / 1048576);?>">
+                  </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-sm-2" for="maxquota"><?=$lang['edit']['max_quota'];?></label>
+                <div class="col-sm-10">
+                  <input type="number" class="form-control" name="maxquota" value="<?=intval($result['max_quota_for_mbox'] / 1048576);?>">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-sm-2" for="quota"><?=$lang['edit']['domain_quota'];?></label>
+                <div class="col-sm-10">
+                  <input type="number" class="form-control" name="quota" value="<?=intval($result['max_quota_for_domain'] / 1048576);?>">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-sm-2"><?=$lang['edit']['backup_mx_options'];?></label>
+                <div class="col-sm-10">
+                  <div class="checkbox">
+                    <label><input type="checkbox" value="1" name="backupmx" <?=(isset($result['backupmx']) && $result['backupmx']=="1") ? "checked" : null;?>> <?=$lang['edit']['relay_domain'];?></label>
+                    <br>
+                    <label><input type="checkbox" value="1" name="relay_all_recipients" <?=(isset($result['relay_all_recipients']) && $result['relay_all_recipients']=="1") ? "checked" : null;?>> <?=$lang['edit']['relay_all'];?></label>
+                    <p><?=$lang['edit']['relay_all_info'];?></p>
+                    <label><input type="checkbox" value="1" name="relay_unknown_only" <?=(isset($result['relay_unknown_only']) && $result['relay_unknown_only']=="1") ? "checked" : null;?>> <?=$lang['edit']['relay_unknown_only'];?></label>
+                    <br>
+                    <p><?=$lang['edit']['relay_transport_info'];?></p>
+                    <hr style="margin:25px 0px 0px 0px">
+                  </div>
+                </div>
+              </div>
+              <?php
+              }
+              ?>
+              <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                  <div class="checkbox">
+                    <label><input type="checkbox" value="1" name="gal" <?=(isset($result['gal']) && $result['gal']=="1") ? "checked" : null;?>> <?=$lang['edit']['gal'];?></label>
+                    <small class="help-block"><?=$lang['edit']['gal_info'];?></small>
+                  </div>
+                </div>
+              </div>
+              <hr>
+              <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                  <div class="checkbox">
+                    <label><input type="checkbox" value="1" name="active" <?=(isset($result['active']) && $result['active']=="1") ? "checked" : null;?> <?=($_SESSION['mailcow_cc_role'] == "admin") ? null : "disabled";?>> <?=$lang['edit']['active'];?></label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                  <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-success" data-action="edit_selected" data-id="editdomain" data-item="<?=$domain;?>" data-api-url='edit/domain' data-api-attr='{}' href="#"><?=$lang['admin']['save'];?></button>
+                </div>
+              </div>
+            </form>
+            <?php
+            if (!empty($dkim = dkim('details', $domain))) {
+            ?>
+            <hr>
+            <div class="row">
+              <div class="col-xs-12 col-sm-2">
+                <p>Domain: <strong><?=htmlspecialchars($result['domain_name']);?></strong> (<?=$dkim['dkim_selector'];?>._domainkey)</p>
+              </div>
+              <div class="col-xs-12 col-sm-10">
+                <pre><?=$dkim['dkim_txt'];?></pre>
               </div>
             </div>
             <?php
             }
             ?>
-            <div class="form-group">
-              <div class="col-sm-offset-2 col-sm-10">
-                <div class="checkbox">
-                  <label><input type="checkbox" value="1" name="gal" <?=(isset($result['gal']) && $result['gal']=="1") ? "checked" : null;?>> <?=$lang['edit']['gal'];?></label>
-                  <small class="help-block"><?=$lang['edit']['gal_info'];?></small>
+            </div>
+            <div id="dratelimit" class="tab-pane">
+              <form data-id="domratelimit" class="form-inline well" method="post">
+                <div class="form-group">
+                  <label class="control-label"><?=$lang['edit']['ratelimit'];?></label>
+                  <input name="rl_value" type="number" value="<?=(!empty($rl['value'])) ? $rl['value'] : null;?>" autocomplete="off" class="form-control" placeholder="disabled">
+                </div>
+                <div class="form-group">
+                  <select name="rl_frame" class="form-control">
+                    <option value="s" <?=(isset($rl['frame']) && $rl['frame'] == 's') ? 'selected' : null;?>>msgs / second</option>
+                    <option value="m" <?=(isset($rl['frame']) && $rl['frame'] == 'm') ? 'selected' : null;?>>msgs / minute</option>
+                    <option value="h" <?=(isset($rl['frame']) && $rl['frame'] == 'h') ? 'selected' : null;?>>msgs / hour</option>
+                    <option value="d" <?=(isset($rl['frame']) && $rl['frame'] == 'd') ? 'selected' : null;?>>msgs / day</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <button data-acl="<?=$_SESSION['acl']['ratelimit'];?>" class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default" data-action="edit_selected" data-id="domratelimit" data-item="<?=$domain;?>" data-api-url='edit/rl-domain' data-api-attr='{}' href="#"><?=$lang['admin']['save'];?></button>
+                </div>
+              </form>
+            </div>
+            <div id="dspamfilter" class="tab-pane">
+              <div class="row">
+                <div class="col-sm-6">
+                  <h4><?=$lang['user']['spamfilter_wl'];?></h4>
+                  <p><?=$lang['user']['spamfilter_wl_desc'];?></p>
+                  <form class="form-inline space20" data-id="add_wl_policy_domain">
+                    <div class="input-group" data-acl="<?=$_SESSION['acl']['spam_policy'];?>">
+                      <input type="text" class="form-control" name="object_from" placeholder="*@example.org" required>
+                      <span class="input-group-btn">
+                        <button class="btn btn-default" data-action="add_item" data-id="add_wl_policy_domain" data-api-url='add/domain-policy' data-api-attr='{"domain":"<?= $domain; ?>","object_list":"wl"}' href="#"><?=$lang['user']['spamfilter_table_add'];?></button>
+                      </span>
+                    </div>
+                  </form>
+                  <div class="table-responsive">
+                    <table class="table table-striped table-condensed" id="wl_policy_domain_table"></table>
+                  </div>
+                  <div class="mass-actions-user">
+                    <div class="btn-group" data-acl="<?=$_SESSION['acl']['spam_policy'];?>">
+                      <a class="btn btn-xs-half visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-sm btn-default" id="toggle_multi_select_all" data-id="policy_wl_domain" href="#"><i class="bi bi-check-all"></i> <?=$lang['mailbox']['toggle_all'];?></a>
+                      <a class="btn btn-xs-half visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-sm btn-danger" data-action="delete_selected" data-id="policy_wl_domain" data-api-url='delete/domain-policy' href="#"><?=$lang['mailbox']['remove'];?></a>
+                      <div class="clearfix visible-xs"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-6">
+                  <h4><?=$lang['user']['spamfilter_bl'];?></h4>
+                  <p><?=$lang['user']['spamfilter_bl_desc'];?></p>
+                  <form class="form-inline space20" data-id="add_bl_policy_domain">
+                    <div class="input-group" data-acl="<?=$_SESSION['acl']['spam_policy'];?>">
+                      <input type="text" class="form-control" name="object_from" placeholder="*@example.org" required>
+                      <span class="input-group-btn">
+                        <button class="btn btn-default" data-action="add_item" data-id="add_bl_policy_domain" data-api-url='add/domain-policy' data-api-attr='{"domain":"<?= $domain; ?>","object_list":"bl"}' href="#"><?=$lang['user']['spamfilter_table_add'];?></button>
+                      </span>
+                    </div>
+                  </form>
+                  <div class="table-responsive">
+                    <table class="table table-striped table-condensed" id="bl_policy_domain_table"></table>
+                  </div>
+                  <div class="mass-actions-user">
+                    <div class="btn-group" data-acl="<?=$_SESSION['acl']['spam_policy'];?>">
+                      <a class="btn btn-xs-half visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-sm btn-default" id="toggle_multi_select_all" data-id="policy_bl_domain" href="#"><i class="bi bi-check-all"></i> <?=$lang['mailbox']['toggle_all'];?></a>
+                      <a class="btn btn-xs-half visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-sm btn-danger" data-action="delete_selected" data-id="policy_bl_domain" data-api-url='delete/domain-policy' href="#"><?=$lang['mailbox']['remove'];?></a></li>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="form-group">
-              <div class="col-sm-offset-2 col-sm-10">
-                <div class="checkbox">
-                  <label><input type="checkbox" value="1" name="active" <?=(isset($result['active']) && $result['active']=="1") ? "checked" : null;?> <?=($_SESSION['mailcow_cc_role'] == "admin") ? null : "disabled";?>> <?=$lang['edit']['active'];?></label>
+            <div id="dqwbcc" class="tab-pane">
+              <div class="row">
+                <div class="col-sm-12">
+                  <h4><?=$lang['edit']['quota_warning_bcc'];?></h4>
+                  <p><?=$lang['edit']['quota_warning_bcc_info'];?></p>
+                  <form class="form-horizontal" data-id="quota_bcc">
+                    <input type="hidden" value="0" name="active">
+                    <div class="form-group">
+                      <label class="control-label col-sm-2" for="script_data"><?=$lang['edit']['target_address'];?>:</label>
+                      <div class="col-sm-10">
+                        <textarea spellcheck="false" autocorrect="off" autocapitalize="none" class="form-control" rows="10" id="bcc_rcpt" name="bcc_rcpt"><?=implode(PHP_EOL, $quota_notification_bcc['bcc_rcpts']);?></textarea>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <div class="col-sm-offset-2 col-sm-10">
+                        <div class="checkbox">
+                        <label><input type="checkbox" value="1" name="active" <?=($quota_notification_bcc['active']=="1") ? "checked" : "";?>> <?=$lang['edit']['active'];?></label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <div class="col-sm-offset-2 col-sm-10">
+                        <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-success" data-action="edit_selected" data-id="quota_bcc" data-item="quota_bcc" data-api-url='edit/quota_notification_bcc' data-api-attr='{"domain":"<?=$domain;?>"}' href="#"><?=$lang['edit']['save'];?></button>
+                      </div>
+                    </div>
+                  </form>
                 </div>
               </div>
             </div>
-            <div class="form-group">
-              <div class="col-sm-offset-2 col-sm-10">
-                <button class="btn btn-success" data-action="edit_selected" data-id="editdomain" data-item="<?=$domain;?>" data-api-url='edit/domain' data-api-attr='{}' href="#"><?=$lang['admin']['save'];?></button>
-              </div>
-            </div>
-          </form>
-          <?php
-          if (!empty($dkim = dkim('details', $domain))) {
-          ?>
-          <hr>
-          <div class="row">
-            <div class="col-xs-2">
-              <p>Domain: <strong><?=htmlspecialchars($result['domain_name']);?></strong> (<?=$dkim['dkim_selector'];?>._domainkey)</p>
-            </div>
-            <div class="col-xs-10">
-              <pre><?=$dkim['dkim_txt'];?></pre>
-            </div>
           </div>
-          <?php
-          }
-          ?>
-      <hr>
-      <form data-id="domratelimit" class="form-inline well" method="post">
-        <div class="form-group">
-          <label class="control-label"><?=$lang['acl']['ratelimit'];?></label>
-          <input name="rl_value" type="number" value="<?=(!empty($rl['value'])) ? $rl['value'] : null;?>" autocomplete="off" class="form-control" placeholder="disabled">
-        </div>
-        <div class="form-group">
-          <select name="rl_frame" class="form-control">
-            <option value="s" <?=(isset($rl['frame']) && $rl['frame'] == 's') ? 'selected' : null;?>>msgs / second</option>
-            <option value="m" <?=(isset($rl['frame']) && $rl['frame'] == 'm') ? 'selected' : null;?>>msgs / minute</option>
-            <option value="h" <?=(isset($rl['frame']) && $rl['frame'] == 'h') ? 'selected' : null;?>>msgs / hour</option>
-            <option value="d" <?=(isset($rl['frame']) && $rl['frame'] == 'd') ? 'selected' : null;?>>msgs / day</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <button data-acl="<?=$_SESSION['acl']['ratelimit'];?>" class="btn btn-default" data-action="edit_selected" data-id="domratelimit" data-item="<?=$domain;?>" data-api-url='edit/rl-domain' data-api-attr='{}' href="#"><?=$lang['admin']['save'];?></button>
-        </div>
-      </form>
-      <hr>
-      <div class="row">
-        <div class="col-sm-6">
-          <h4><?=$lang['user']['spamfilter_wl'];?></h4>
-          <p><?=$lang['user']['spamfilter_wl_desc'];?></p>
-          <div class="table-responsive">
-            <table class="table table-striped table-condensed" id="wl_policy_domain_table"></table>
-          </div>
-          <div class="mass-actions-user">
-            <div class="btn-group" data-acl="<?=$_SESSION['acl']['spam_policy'];?>">
-              <a class="btn btn-sm btn-default" id="toggle_multi_select_all" data-id="policy_wl_domain" href="#"><span class="glyphicon glyphicon-check" aria-hidden="true"></span> <?=$lang['mailbox']['toggle_all'];?></a>
-              <a class="btn btn-sm btn-danger" data-action="delete_selected" data-id="policy_wl_domain" data-api-url='delete/domain-policy' href="#"><?=$lang['mailbox']['remove'];?></a></li>
-            </div>
-          </div>
-          <form class="form-inline" data-id="add_wl_policy_domain">
-            <div class="input-group" data-acl="<?=$_SESSION['acl']['spam_policy'];?>">
-              <input type="text" class="form-control" name="object_from" placeholder="*@example.org" required>
-              <span class="input-group-btn">
-                <button class="btn btn-default" data-action="add_item" data-id="add_wl_policy_domain" data-api-url='add/domain-policy' data-api-attr='{"domain":"<?= $domain; ?>","object_list":"wl"}' href="#"><?=$lang['user']['spamfilter_table_add'];?></button>
-              </span>
-            </div>
-          </form>
-        </div>
-        <div class="col-sm-6">
-          <h4><?=$lang['user']['spamfilter_bl'];?></h4>
-          <p><?=$lang['user']['spamfilter_bl_desc'];?></p>
-          <div class="table-responsive">
-            <table class="table table-striped table-condensed" id="bl_policy_domain_table"></table>
-          </div>
-          <div class="mass-actions-user">
-            <div class="btn-group" data-acl="<?=$_SESSION['acl']['spam_policy'];?>">
-              <a class="btn btn-sm btn-default" id="toggle_multi_select_all" data-id="policy_bl_domain" href="#"><span class="glyphicon glyphicon-check" aria-hidden="true"></span> <?=$lang['mailbox']['toggle_all'];?></a>
-              <a class="btn btn-sm btn-danger" data-action="delete_selected" data-id="policy_bl_domain" data-api-url='delete/domain-policy' href="#"><?=$lang['mailbox']['remove'];?></a></li>
-            </div>
-          </div>
-          <form class="form-inline" data-id="add_bl_policy_domain">
-            <div class="input-group" data-acl="<?=$_SESSION['acl']['spam_policy'];?>">
-              <input type="text" class="form-control" name="object_from" placeholder="*@example.org" required>
-              <span class="input-group-btn">
-                <button class="btn btn-default" data-action="add_item" data-id="add_bl_policy_domain" data-api-url='add/domain-policy' data-api-attr='{"domain":"<?= $domain; ?>","object_list":"bl"}' href="#"><?=$lang['user']['spamfilter_table_add'];?></button>
-              </span>
-            </div>
-          </form>
-        </div>
-      </div>
           <?php
         }
         else {
@@ -477,7 +523,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
             </div>
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
-                <button class="btn btn-default" data-action="edit_selected" data-id="oauth2client" data-item="<?=$oauth2client;?>" data-api-url='edit/oauth2-client' data-api-attr='{}' href="#"><?=$lang['admin']['save'];?></button>
+                <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default" data-action="edit_selected" data-id="oauth2client" data-item="<?=$oauth2client;?>" data-api-url='edit/oauth2-client' data-api-attr='{}' href="#"><?=$lang['admin']['save'];?></button>
               </div>
             </div>
           </form>
@@ -523,7 +569,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
             </div>
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
-                <button class="btn btn-success" data-action="edit_selected" data-id="editaliasdomain" data-item="<?=$alias_domain;?>" data-api-url='edit/alias-domain' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
+                <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-success" data-action="edit_selected" data-id="editaliasdomain" data-item="<?=$alias_domain;?>" data-api-url='edit/alias-domain' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
               </div>
             </div>
           </form>
@@ -542,7 +588,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
               </select>
             </div>
             <div class="form-group">
-              <button class="btn btn-default" data-action="edit_selected" data-id="domratelimit" data-item="<?=$alias_domain;?>" data-api-url='edit/rl-domain' data-api-attr='{}' href="#"><?=$lang['admin']['save'];?></button>
+              <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default" data-action="edit_selected" data-id="domratelimit" data-item="<?=$alias_domain;?>" data-api-url='edit/rl-domain' data-api-attr='{}' href="#"><?=$lang['admin']['save'];?></button>
             </div>
           </form>
           <?php
@@ -550,10 +596,10 @@ if (isset($_SESSION['mailcow_cc_role'])) {
           ?>
           <hr>
           <div class="row">
-            <div class="col-xs-2">
+            <div class="col-xs-12 col-sm-2">
               <p>Domain: <strong><?=htmlspecialchars($result['alias_domain']);?></strong> (<?=$dkim['dkim_selector'];?>._domainkey)</p>
             </div>
-            <div class="col-xs-10">
+            <div class="col-xs-12 col-sm-10">
             <pre><?=$dkim['dkim_txt'];?></pre>
             </div>
           </div>
@@ -572,7 +618,9 @@ if (isset($_SESSION['mailcow_cc_role'])) {
       $rl = ratelimit('get', 'mailbox', $mailbox);
       $pushover_data = pushover('get', $mailbox);
       $quarantine_notification = mailbox('get', 'quarantine_notification', $mailbox);
+      $quarantine_category = mailbox('get', 'quarantine_category', $mailbox);
       $get_tls_policy = mailbox('get', 'tls_policy', $mailbox);
+      $rlyhosts = relayhost('get');
       if (!empty($result)) {
         ?>
         <h4><?=$lang['edit']['mailbox'];?></h4>
@@ -655,59 +703,104 @@ if (isset($_SESSION['mailcow_cc_role'])) {
 
               ?>
               </select>
-              <div style="display:none" id="sender_acl_disabled"><?=$lang['edit']['sender_acl_disabled'];?></div>
+              <div id="sender_acl_disabled"><i class="bi bi-shield-exclamation"></i> <?=$lang['edit']['sender_acl_disabled'];?></div>
               <small class="help-block"><?=$lang['edit']['sender_acl_info'];?></small>
             </div>
           </div>
           <div class="form-group">
-            <label class="control-label col-sm-2" for="sender_acl"><?=$lang['user']['quarantine_notification'];?></label>
+            <label class="control-label col-sm-2" for="relayhost"><?=$lang['edit']['relayhost'];?></label>
+            <div class="col-sm-10">
+              <select data-acl="<?=$_SESSION['acl']['mailbox_relayhost'];?>" data-live-search="true" id="relayhost" name="relayhost" class="form-control space20">
+                <?php
+                foreach ($rlyhosts as $rlyhost) {
+                ?>
+                    <option style="<?=($rlyhost['active'] == 1) ? '' : 'background: #ff4136; color: #fff';?>" value="<?=$rlyhost['id'];?>" <?=($result['attributes']['relayhost'] == $rlyhost['id']) ? 'selected' : null;?>>ID <?=$rlyhost['id'];?>: <?=$rlyhost['hostname'];?> (<?=$rlyhost['username'];?>)</option>
+                <?php
+                }
+                ?>
+                <option value="" <?=($result['attributes']['relayhost'] == "0") ? 'selected' : null;?>>None</option>
+              </select>
+              <p class="visible-xs" style="margin: 0;padding: 0">&nbsp;</p>
+              <small class="help-block"><?=$lang['edit']['mailbox_relayhost_info'];?></small>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2"><?=$lang['user']['quarantine_notification'];?></label>
             <div class="col-sm-10">
             <div class="btn-group" data-acl="<?=$_SESSION['acl']['quarantine_notification'];?>">
-              <button type="button" class="btn btn-sm btn-default <?=($quarantine_notification == "never") ? "active" : null;?>"
+              <button type="button" class="btn btn-sm btn-xs-quart visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default <?=($quarantine_notification == "never") ? "active" : null;?>"
                 data-action="edit_selected"
                 data-item="<?= htmlentities($mailbox); ?>"
                 data-id="quarantine_notification"
                 data-api-url='edit/quarantine_notification'
                 data-api-attr='{"quarantine_notification":"never"}'><?=$lang['user']['never'];?></button>
-              <button type="button" class="btn btn-sm btn-default <?=($quarantine_notification == "hourly") ? "active" : null;?>"
+              <button type="button" class="btn btn-sm btn-xs-quart visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default <?=($quarantine_notification == "hourly") ? "active" : null;?>"
                 data-action="edit_selected"
                 data-item="<?= htmlentities($mailbox); ?>"
                 data-id="quarantine_notification"
                 data-api-url='edit/quarantine_notification'
                 data-api-attr='{"quarantine_notification":"hourly"}'><?=$lang['user']['hourly'];?></button>
-              <button type="button" class="btn btn-sm btn-default <?=($quarantine_notification == "daily") ? "active" : null;?>"
+              <button type="button" class="btn btn-sm btn-xs-quart visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default <?=($quarantine_notification == "daily") ? "active" : null;?>"
                 data-action="edit_selected"
                 data-item="<?= htmlentities($mailbox); ?>"
                 data-id="quarantine_notification"
                 data-api-url='edit/quarantine_notification'
                 data-api-attr='{"quarantine_notification":"daily"}'><?=$lang['user']['daily'];?></button>
-              <button type="button" class="btn btn-sm btn-default <?=($quarantine_notification == "weekly") ? "active" : null;?>"
+              <button type="button" class="btn btn-sm btn-xs-quart visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default <?=($quarantine_notification == "weekly") ? "active" : null;?>"
                 data-action="edit_selected"
                 data-item="<?= htmlentities($mailbox); ?>"
                 data-id="quarantine_notification"
                 data-api-url='edit/quarantine_notification'
                 data-api-attr='{"quarantine_notification":"weekly"}'><?=$lang['user']['weekly'];?></button>
+                <div class="clearfix visible-xs"></div>
             </div>
-            <div style="display:none" id="user_acl_q_notify_disabled"><?=$lang['edit']['user_acl_q_notify_disabled'];?></div>
             <p class="help-block"><small><?=$lang['user']['quarantine_notification_info'];?></small></p>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="control-label col-sm-2"><?=$lang['user']['quarantine_category'];?></label>
+            <div class="col-sm-10">
+            <div class="btn-group" data-acl="<?=$_SESSION['acl']['quarantine_category'];?>">
+              <button type="button" class="btn btn-sm btn-xs-third visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default <?=($quarantine_category == "reject") ? "active" : null;?>"
+                data-action="edit_selected"
+                data-item="<?= htmlentities($mailbox); ?>"
+                data-id="quarantine_category"
+                data-api-url='edit/quarantine_category'
+                data-api-attr='{"quarantine_category":"reject"}'><?=$lang['user']['q_reject'];?></button>
+              <button type="button" class="btn btn-sm btn-xs-third visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default <?=($quarantine_category == "add_header") ? "active" : null;?>"
+                data-action="edit_selected"
+                data-item="<?= htmlentities($mailbox); ?>"
+                data-id="quarantine_category"
+                data-api-url='edit/quarantine_category'
+                data-api-attr='{"quarantine_category":"add_header"}'><?=$lang['user']['q_add_header'];?></button>
+              <button type="button" class="btn btn-sm btn-xs-third visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default <?=($quarantine_category == "all") ? "active" : null;?>"
+                data-action="edit_selected"
+                data-item="<?= htmlentities($mailbox); ?>"
+                data-id="quarantine_category"
+                data-api-url='edit/quarantine_category'
+                data-api-attr='{"quarantine_category":"all"}'><?=$lang['user']['q_all'];?></button>
+                <div class="clearfix visible-xs"></div>
+            </div>
+            <p class="help-block"><small><?=$lang['user']['quarantine_category_info'];?></small></p>
             </div>
           </div>
           <div class="form-group">
             <label class="control-label col-sm-2" for="sender_acl"><?=$lang['user']['tls_policy'];?></label>
             <div class="col-sm-10">
               <div class="btn-group" data-acl="<?=$_SESSION['acl']['tls_policy'];?>">
-                <button type="button" class="btn btn-sm btn-default <?=($get_tls_policy['tls_enforce_in'] == "1") ? "active" : null;?>"
+                <button type="button" class="btn btn-sm btn-xs-half visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default <?=($get_tls_policy['tls_enforce_in'] == "1") ? "active" : null;?>"
                   data-action="edit_selected"
                   data-item="<?= htmlentities($mailbox); ?>"
                   data-id="tls_policy"
                   data-api-url='edit/tls_policy'
                   data-api-attr='{"tls_enforce_in":<?=($get_tls_policy['tls_enforce_in'] == "1") ? "0" : "1";?>}'><?=$lang['user']['tls_enforce_in'];?></button>
-                <button type="button" class="btn btn-sm btn-default <?=($get_tls_policy['tls_enforce_out'] == "1") ? "active" : null;?>"
+                <button type="button" class="btn btn-sm btn-xs-half visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default <?=($get_tls_policy['tls_enforce_out'] == "1") ? "active" : null;?>"
                   data-action="edit_selected"
                   data-item="<?= htmlentities($mailbox); ?>"
                   data-id="tls_policy"
                   data-api-url='edit/tls_policy'
                   data-api-attr='{"tls_enforce_out":<?=($get_tls_policy['tls_enforce_out'] == "1") ? "0" : "1";?>}'><?=$lang['user']['tls_enforce_out'];?></button>
+                  <div class="clearfix visible-xs"></div>
               </div>
             </div>
           </div>
@@ -777,7 +870,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
           <?php } ?>
           <div class="form-group">
             <div class="col-sm-offset-2 col-sm-10">
-              <button class="btn btn-success" data-action="edit_selected" data-id="editmailbox" data-item="<?=htmlspecialchars($result['username']);?>" data-api-url='edit/mailbox' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
+              <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-success" data-action="edit_selected" data-id="editmailbox" data-item="<?=htmlspecialchars($result['username']);?>" data-api-url='edit/mailbox' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
             </div>
           </div>
         </form>
@@ -831,8 +924,8 @@ if (isset($_SESSION['mailcow_cc_role'])) {
                     </div>
                   </div>
                   <div class="col-sm-12">
-                    <legend style="cursor:pointer;margin-top:10px" data-target="#po_advanced" class="arrow-toggle" unselectable="on" data-toggle="collapse">
-                      <span style="font-size:12px" class="arrow rotate glyphicon glyphicon-menu-down"></span> <?=$lang['edit']['advanced_settings'];?>
+                    <legend style="cursor:pointer;margin-top:10px" data-target="#po_advanced" unselectable="on" data-toggle="collapse">
+                      <i class="bi bi-plus"></i> <?=$lang['edit']['advanced_settings'];?>
                     </legend>
                   </div>
                   <div class="col-sm-12">
@@ -852,9 +945,10 @@ if (isset($_SESSION['mailcow_cc_role'])) {
                 </div>
               </div>
               <div class="btn-group" data-acl="<?=$_SESSION['acl']['pushover'];?>">
-                  <a class="btn btn-sm btn-default" data-action="edit_selected" data-id="pushover" data-item="<?=htmlspecialchars($mailbox);?>" data-api-url='edit/pushover' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></a>
-                  <a class="btn btn-sm btn-default" data-action="edit_selected" data-id="pushover-test" data-item="<?=htmlspecialchars($mailbox);?>" data-api-url='edit/pushover-test' data-api-attr='{}' href="#"><span class="glyphicon glyphicon-check" aria-hidden="true"></span> <?=$lang['edit']['pushover_verify'];?></a>
-                  <a id="pushover_delete" class="btn btn-sm btn-danger" data-action="edit_selected" data-id="pushover-delete" data-item="<?=htmlspecialchars($mailbox);?>" data-api-url='edit/pushover' data-api-attr='{"delete":"true"}' href="#"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> <?=$lang['edit']['remove'];?></a>
+                  <a class="btn btn-sm btn-xs-half visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default" data-action="edit_selected" data-id="pushover" data-item="<?=htmlspecialchars($mailbox);?>" data-api-url='edit/pushover' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></a>
+                  <a class="btn btn-sm btn-xs-half visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default" data-action="edit_selected" data-id="pushover-test" data-item="<?=htmlspecialchars($mailbox);?>" data-api-url='edit/pushover-test' data-api-attr='{}' href="#"><i class="bi bi-check-lg"></i> <?=$lang['edit']['pushover_verify'];?></a>
+                  <div class="clearfix visible-xs"></div>
+                  <a id="pushover_delete" class="btn btn-sm visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-danger" data-action="edit_selected" data-id="pushover-delete" data-item="<?=htmlspecialchars($mailbox);?>" data-api-url='edit/pushover' data-api-attr='{"delete":"true"}' href="#"><i class="bi bi-trash"></i> <?=$lang['edit']['remove'];?></a>
               </div>
             </div>
           </div>
@@ -878,7 +972,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
                 </select>
               </div>
               <div class="form-group">
-                <button class="btn btn-default" data-action="edit_selected" data-id="mboxratelimit" data-item="<?=htmlspecialchars($mailbox);?>" data-api-url='edit/rl-mbox' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
+                <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default" data-action="edit_selected" data-id="mboxratelimit" data-item="<?=htmlspecialchars($mailbox);?>" data-api-url='edit/rl-mbox' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
               </div>
               <p class="help-block"><?=$lang['edit']['mbox_rl_info'];?></p>
             </div>
@@ -903,7 +997,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
                 </select>
               </div>
               <div class="form-group">
-                <button class="btn btn-default" data-action="edit_selected" data-id="useracl" data-item="<?=htmlspecialchars($mailbox);?>" data-api-url='edit/user-acl' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
+                <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-default" data-action="edit_selected" data-id="useracl" data-item="<?=htmlspecialchars($mailbox);?>" data-api-url='edit/user-acl' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
               </div>
             </div>
           </div>
@@ -947,7 +1041,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
             </div>
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
-                <button class="btn btn-success" data-action="edit_selected" data-id="editrelayhost" data-item="<?=htmlspecialchars($result['id']);?>" data-api-url='edit/relayhost' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
+                <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-success" data-action="edit_selected" data-id="editrelayhost" data-item="<?=htmlspecialchars($result['id']);?>" data-api-url='edit/relayhost' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
               </div>
             </div>
           </form>
@@ -967,6 +1061,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
           <h4><?=$lang['edit']['resource'];?></h4>
           <form class="form-horizontal" role="form" method="post" data-id="edittransport">
             <input type="hidden" value="0" name="active">
+            <input type="hidden" value="0" name="is_mx_based">
             <div class="form-group">
               <label class="control-label col-sm-2" for="destination"><?=$lang['add']['destination'];?></label>
               <div class="col-sm-10">
@@ -994,13 +1089,20 @@ if (isset($_SESSION['mailcow_cc_role'])) {
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
                 <div class="checkbox">
+                <label><input type="checkbox" value="1" name="is_mx_based" <?=($result['is_mx_based']=="1") ? "checked" : null;?>> <?=$lang['edit']['lookup_mx'];?></label>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="col-sm-offset-2 col-sm-10">
+                <div class="checkbox">
                 <label><input type="checkbox" value="1" name="active" <?=($result['active']=="1") ? "checked" : null;?>> <?=$lang['edit']['active'];?></label>
                 </div>
               </div>
             </div>
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
-                <button class="btn btn-success" data-action="edit_selected" data-id="edittransport" data-item="<?=htmlspecialchars($result['id']);?>" data-api-url='edit/transport' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
+                <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-success" data-action="edit_selected" data-id="edittransport" data-item="<?=htmlspecialchars($result['id']);?>" data-api-url='edit/transport' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
               </div>
             </div>
           </form>
@@ -1060,7 +1162,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
             </div>
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
-                <button class="btn btn-success" data-action="edit_selected" data-id="editresource" data-item="<?=htmlspecialchars($result['name']);?>" data-api-url='edit/resource' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
+                <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-success" data-action="edit_selected" data-id="editresource" data-item="<?=htmlspecialchars($result['name']);?>" data-api-url='edit/resource' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
               </div>
             </div>
           </form>
@@ -1106,7 +1208,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
             </div>
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
-                <button class="btn btn-success" data-action="edit_selected" data-id="editbcc" data-item="<?=$bcc;?>" data-api-url='edit/bcc' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
+                <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-success" data-action="edit_selected" data-id="editbcc" data-item="<?=$bcc;?>" data-api-url='edit/bcc' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
               </div>
             </div>
           </form>
@@ -1155,7 +1257,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
             </div>
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
-                <button class="btn btn-success" data-action="edit_selected" data-id="edit_recipient_map" data-item="<?=$map;?>" data-api-url='edit/recipient_map' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
+                <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-success" data-action="edit_selected" data-id="edit_recipient_map" data-item="<?=$map;?>" data-api-url='edit/recipient_map' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
               </div>
             </div>
           </form>
@@ -1216,7 +1318,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
             </div>
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
-                <button class="btn btn-success" data-action="edit_selected" data-id="edit_tls_policy_maps" data-item="<?=$map;?>" data-api-url='edit/tls-policy-map' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
+                <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-success" data-action="edit_selected" data-id="edit_tls_policy_maps" data-item="<?=$map;?>" data-api-url='edit/tls-policy-map' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
               </div>
             </div>
           </form>
@@ -1384,7 +1486,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
             </div>
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
-                <button class="btn btn-success" data-action="edit_selected" data-id="editsyncjob" data-item="<?=htmlspecialchars($result['id']);?>" data-api-url='edit/syncjob' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
+                <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-success" data-action="edit_selected" data-id="editsyncjob" data-item="<?=htmlspecialchars($result['id']);?>" data-api-url='edit/syncjob' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
               </div>
             </div>
           </form>
@@ -1435,7 +1537,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
             </div>
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
-                <button class="btn btn-success" data-action="edit_selected" data-id="editfilter" data-item="<?=htmlspecialchars($result['id']);?>" data-api-url='edit/filter' data-api-attr='{}' href="#"><?=$lang['edit']['validate_save'];?></button>
+                <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-success" data-action="edit_selected" data-id="editfilter" data-item="<?=htmlspecialchars($result['id']);?>" data-api-url='edit/filter' data-api-attr='{}' href="#"><?=$lang['edit']['validate_save'];?></button>
               </div>
             </div>
           </form>
@@ -1483,7 +1585,7 @@ if (isset($_SESSION['mailcow_cc_role'])) {
             </div>
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
-                <button class="btn btn-success" data-action="edit_selected" data-id="editapp" data-item="<?=htmlspecialchars($result['id']);?>" data-api-url='edit/app-passwd' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
+                <button class="btn btn-xs-lg visible-xs-block visible-sm-inline visible-md-inline visible-lg-inline btn-success" data-action="edit_selected" data-id="editapp" data-item="<?=htmlspecialchars($result['id']);?>" data-api-url='edit/app-passwd' data-api-attr='{}' href="#"><?=$lang['edit']['save'];?></button>
               </div>
             </div>
           </form>

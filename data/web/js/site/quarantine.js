@@ -53,12 +53,12 @@ jQuery(function($){
         {"name":"sender","title":lang.sender},
         {"name":"subject","title":lang.subj, "type": "text"},
         {"name":"rspamdaction","title":lang.rspamd_result, "type": "html"},
-        {"name":"rcpt","title":lang.rcpt, "breakpoints":"xs sm md", "type": "text"},
+        {"name":"rcpt","title":lang.rcpt, "type": "text"},
         {"name":"virus","title":lang.danger, "type": "text"},
         {"name":"score","title": lang.spam_score, "type": "text"},
         {"name":"notified","title":lang.notified, "type": "text"},
         {"name":"created","formatter":function unix_time_format(tm) { var date = new Date(tm ? tm * 1000 : 0); return date.toLocaleDateString(undefined, {year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit"});},"title":lang.received,"style":{"width":"170px"}},
-        {"name":"action","filterable": false,"sortable": false,"style":{"text-align":"right"},"style":{"min-width":"200px"},"type":"html","title":lang.action,"breakpoints":"xs sm md"}
+        {"name":"action","filterable": false,"sortable": false,"style":{"text-align":"right"},"style":{"min-width":"250px"},"type":"html","title":lang.action,"breakpoints":"xs sm md"}
       ],
       "rows": $.ajax({
         dataType: 'json',
@@ -95,14 +95,14 @@ jQuery(function($){
               item.notified = '&#10006;';
             }
             if (acl_data.login_as === 1) {
-            item.action = '<div class="btn-group">' +
-              '<a href="#" data-item="' + encodeURI(item.id) + '" class="btn btn-xs btn-info show_qid_info"><span class="glyphicon glyphicon-modal-window"></span> ' + lang.show_item + '</a>' +
-              '<a href="#" data-action="delete_selected" data-id="del-single-qitem" data-api-url="delete/qitem" data-item="' + encodeURI(item.id) + '" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-trash"></span> ' + lang.remove + '</a>' +
+            item.action = '<div class="btn-group footable-actions">' +
+              '<a href="#" data-item="' + encodeURI(item.id) + '" class="btn btn-xs btn-xs-half btn-info show_qid_info"><i class="bi bi-box-arrow-up-right"></i> ' + lang.show_item + '</a>' +
+              '<a href="#" data-action="delete_selected" data-id="del-single-qitem" data-api-url="delete/qitem" data-item="' + encodeURI(item.id) + '" class="btn btn-xs  btn-xs-half btn-danger"><i class="bi bi-trash"></i> ' + lang.remove + '</a>' +
               '</div>';
             }
             else {
             item.action = '<div class="btn-group">' +
-              '<a href="#" data-item="' + encodeURI(item.id) + '" class="btn btn-xs btn-info show_qid_info"><span class="glyphicon glyphicon-modal-window"></span> ' + lang.show_item + '</a>' +
+              '<a href="#" data-item="' + encodeURI(item.id) + '" class="btn btn-xs btn-info show_qid_info"><i class="bi bi-file-earmark-text"></i> ' + lang.show_item + '</a>' +
               '</div>';
             }
             item.chkbox = '<input type="checkbox" data-id="qitems" name="multi_select" value="' + item.id + '" />';
@@ -111,6 +111,7 @@ jQuery(function($){
       }),
       "empty": lang.empty,
       "paging": {"enabled": true,"limit": 5,"size": pagination_size},
+      "state": {"enabled": true},
       "sorting": {"enabled": true},
       "filtering": {"enabled": true,"position": "left","connectors": false,"placeholder": lang.filter_table},
       "toggleSelector": "table tbody span.footable-toggle",
@@ -130,7 +131,7 @@ jQuery(function($){
 
   $('body').on('click', '.show_qid_info', function (e) {
     e.preventDefault();
-    var qitem = $(this).data('item');
+    var qitem = $(this).attr('data-item');
     var qError = $("#qid_error");
 
     $('#qidDetailModal').modal('show');
@@ -145,6 +146,10 @@ jQuery(function($){
         $('[data-id="qitems_single"]').each(function(index) {
           $(this).attr("data-item", qitem);
         });
+
+        $("#quick_download_link").attr("onclick", "window.open('/inc/ajax/qitem_details.php?id=" + qitem + "&eml', '_blank')");
+        $("#quick_release_link").attr("onclick", "window.open('/inc/ajax/qitem_details.php?id=" + qitem + "&quick_release', '_blank')");
+        $("#quick_delete_link").attr("onclick", "window.open('/inc/ajax/qitem_details.php?id=" + qitem + "&quick_delete', '_blank')");
 
         $('#qid_detail_subj').text(data.subject);
         $('#qid_detail_hfrom').text(data.header_from);
@@ -215,6 +220,15 @@ jQuery(function($){
       },
       error: function(data){
         if (typeof data.error !== 'undefined') {
+          $('#qid_detail_subj').text('-');
+          $('#qid_detail_hfrom').text('-');
+          $('#qid_detail_efrom').text('-');
+          $('#qid_detail_score').html('-');
+          $('#qid_detail_recipients').html('-');
+          $('#qid_detail_symbols').html('-');
+          $('#qid_detail_fuzzy').html('-');
+          $('#qid_detail_text').text('-');
+          $('#qid_detail_text_from_html').text('-');
           qError.text("Error loading quarantine item");
           qError.show();
         }
