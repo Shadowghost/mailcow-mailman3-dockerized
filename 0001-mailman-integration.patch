@@ -1,0 +1,176 @@
+From d130f5493140e31f517f2f303b1aa8af987af98a Mon Sep 17 00:00:00 2001
+From: Shadowghost <Shadowghost@users.noreply.github.com>
+Date: Sat, 27 Nov 2021 18:35:26 +0100
+Subject: [PATCH] mailman integration
+
+---
+ data/conf/mailman-core/mailman-extra.cfg | 10 +++
+ data/conf/mailman-web/settings_local.py  |  1 +
+ data/conf/postfix/extra.cf               | 14 ++++
+ docker-compose.override.yml              | 84 ++++++++++++++++++++++++
+ generate_config.sh                       | 11 ++++
+ import/.gitkeep                          |  0
+ 6 files changed, 120 insertions(+)
+ create mode 100644 data/conf/mailman-core/mailman-extra.cfg
+ create mode 100644 data/conf/mailman-web/settings_local.py
+ create mode 100644 data/conf/postfix/extra.cf
+ create mode 100644 docker-compose.override.yml
+ create mode 100644 import/.gitkeep
+
+diff --git a/data/conf/mailman-core/mailman-extra.cfg b/data/conf/mailman-core/mailman-extra.cfg
+new file mode 100644
+index 00000000..15b13b7b
+--- /dev/null
++++ b/data/conf/mailman-core/mailman-extra.cfg
+@@ -0,0 +1,10 @@
++[mailman]
++[language.en]
++charset: utf-8
++
++[language.de]
++charset: utf-8
+diff --git a/data/conf/mailman-web/settings_local.py b/data/conf/mailman-web/settings_local.py
+new file mode 100644
+index 00000000..55635db1
+--- /dev/null
++++ b/data/conf/mailman-web/settings_local.py
+@@ -0,0 +1 @@
++DEBUG = False
+\ No newline at end of file
+diff --git a/data/conf/postfix/extra.cf b/data/conf/postfix/extra.cf
+new file mode 100644
+index 00000000..be7d6cfa
+--- /dev/null
++++ b/data/conf/postfix/extra.cf
+@@ -0,0 +1,14 @@
++myhostname = mail.abh.whka.de
++# Networks
++mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128 [fe80::]/10 172.22.1.0/24 [fd4d:6169:6c63:6f77::]/64 
++# Mailman
++local_recipient_maps = $alias_maps
++  regexp:/opt/mailman/core/var/data/postfix_lmtp
++  proxy:unix:passwd.byname
++transport_maps = pcre:/opt/postfix/conf/custom_transport.pcre,
++  pcre:/opt/postfix/conf/local_transport,
++  proxy:mysql:/opt/postfix/conf/sql/mysql_relay_ne.cf,
++  proxy:mysql:/opt/postfix/conf/sql/mysql_transport_maps.cf
++  regexp:/opt/mailman/core/var/data/postfix_lmtp
++virtual_mailbox_maps = proxy:mysql:/opt/postfix/conf/sql/mysql_virtual_mailbox_maps.cf,
++  regexp:/opt/mailman/core/var/data/postfix_lmtp
+diff --git a/docker-compose.override.yml b/docker-compose.override.yml
+new file mode 100644
+index 00000000..7f358aeb
+--- /dev/null
++++ b/docker-compose.override.yml
+@@ -0,0 +1,84 @@
++version: '2.1'
++services:
++    mailman-core:
++      image: maxking/mailman-core:0.4
++      depends_on:
++        - mailman-database
++      environment:
++        - TZ=${TZ}
++        - DATABASE_URL=postgres://mailman:${MMDBPASS}@mailman-database/mailmandb
++        - DATABASE_TYPE=postgres
++        - DATABASE_CLASS=mailman.database.postgresql.PostgreSQLDatabase
++        - HYPERKITTY_API_KEY=${MMHKAPIKEY}
++        - SMTP_HOST=postfix-mailcow
++        - MTA=postfix
++      volumes:
++        - mailman-core-vol-1:/opt/mailman/:Z
++        - crypt-vol-1:/mail_crypt/:z
++        - ./data/conf/mailman-core/mailman-extra.cfg:/opt/mailman/mailman-extra.cfg
++#        - /home/sambashares/mailinglists/lists:/import/lists
++      restart: always
++      dns:
++        - ${IPV4_NETWORK:-172.22.1}.254
++      networks:
++        mailcow-network:
++          aliases:
++            - mailman-core
++
++    mailman-web:
++      image: maxking/mailman-web:0.4
++      depends_on:
++        - mailman-database
++        - mailman-core
++      environment:
++        - TZ=${TZ}
++        - DATABASE_URL=postgres://mailman:${MMDBPASS}@mailman-database/mailmandb
++        - DATABASE_TYPE=postgres
++        - HYPERKITTY_API_KEY=${MMHKAPIKEY}
++        - SECRET_KEY=${MMDJSECRET}
++        - DYLD_LIBRARY_PATH=/usr/local/mysql/lib/
++        - SERVE_FROM_DOMAIN=lists.${DOMAINNAME}
++        - UWSGI_STATIC_MAP=/static=/opt/mailman-web-data/static
++      volumes:
++        - mailman-web-vol-1:/opt/mailman-web-data:z
++#        - ./data/conf/mailman-web/settings_local.py:/opt/mailman-web-data/settings_local.py
++#        - /home/sambashares/mailinglists/archives/private:/import/backup
++      restart: always
++      ports:
++        - "${HTTP_BIND:-:}:7081:8080"
++      dns:
++        - ${IPV4_NETWORK:-172.22.1}.254
++      networks:
++        mailcow-network:
++          aliases:
++            - mailman-web
++
++    mailman-database:
++      image: postgres:13-alpine
++      environment:
++        - TZ=${TZ}
++        - POSTGRES_DB=mailmandb
++        - POSTGRES_USER=mailman
++        - POSTGRES_PASSWORD=${MMDBPASS}
++      volumes:
++        - mailman-database-vol-1:/var/lib/postgresql/data:Z
++      restart: always
++      dns:
++        - ${IPV4_NETWORK:-172.22.1}.254
++      networks:
++        mailcow-network:
++          aliases:
++            - mailman-database
++
++    mysql-mailcow:
++      depends_on:
++        - mailman-core
++
++    postfix-mailcow:
++      volumes:
++        - mailman-core-vol-1:/opt/mailman/core/:z
++
++volumes:
++  mailman-core-vol-1:
++  mailman-database-vol-1:
++  mailman-web-vol-1:
+\ No newline at end of file
+diff --git a/generate_config.sh b/generate_config.sh
+index 67ff3acf..3f955165 100755
+--- a/generate_config.sh
++++ b/generate_config.sh
+@@ -134,6 +134,17 @@ DBUSER=mailcow
+ DBPASS=$(LC_ALL=C </dev/urandom tr -dc A-Za-z0-9 | head -c 28)
+ DBROOT=$(LC_ALL=C </dev/urandom tr -dc A-Za-z0-9 | head -c 28)
+ 
++# ------------------------------------
++# Mailman3 configuration
++# ------------------------------------
++
++MMHKAPIKEY=$(LC_ALL=C </dev/urandom tr -dc A-Za-z0-9 | head -c 28)
++
++MMDBPASS=$(LC_ALL=C </dev/urandom tr -dc A-Za-z0-9 | head -c 28)
++MMDBROOT=$(LC_ALL=C </dev/urandom tr -dc A-Za-z0-9 | head -c 28)
++
++MMDJSECRET=$(LC_ALL=C </dev/urandom tr -dc A-Za-z0-9 | head -c 28)
++
+ # ------------------------------
+ # HTTP/S Bindings
+ # ------------------------------
+diff --git a/import/.gitkeep b/import/.gitkeep
+new file mode 100644
+index 00000000..e69de29b
+-- 
